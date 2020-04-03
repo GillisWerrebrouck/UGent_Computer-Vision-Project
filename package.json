@@ -1,0 +1,17 @@
+{
+  "name": "group10",
+  "description": "This is just a file to save some commands so we don't need to type them everytime.",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
+  "main": "src/index.py",
+  "repository": {
+    "type": "git",
+    "url": "https://github.ugent.be/gwerrebr/UGent_Computer-Vision-Project.git"
+  },
+  "scripts": {
+    "preinstall": "node -e 'throw new Error(\"This is not an npm-package: do not run install!\")'",
+    "start-mongo": "docker-compose up --force-recreate -d mongodb",
+    "stop-mongo": "docker-compose down",
+    "start": "cd src && python index.py"
+  }
+}
