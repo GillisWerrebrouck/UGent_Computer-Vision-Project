@@ -16,7 +16,7 @@ First, install MongoDB using the documentation on their website: [https://docs.m
 Thereafter, install all required Python-packages:
 
 ```bash
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 
 Finally, run the project:
