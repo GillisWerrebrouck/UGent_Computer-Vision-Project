@@ -13,10 +13,10 @@ This tutorial assumes you have the following dependencies already installed on y
 
 First, install MongoDB using the documentation on their website: [https://docs.mongodb.com/manual/administration/install-community/](https://docs.mongodb.com/manual/administration/install-community/).
 
-Thereafter, install `pymongo`:
+Thereafter, install all required Python-packages:
 
 ```bash
-pip3 install pymongo
+pip3 install requirements.txt
 ```
 
 Finally, run the project:
