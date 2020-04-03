@@ -1,0 +1,13 @@
+version: '3'
+services:
+  mongodb:
+    container_name: mongodb
+    image: mongo:3.6
+    volumes:
+      - ./.mongodb/:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: computervision
+      MONGO_INITDB_ROOT_USERNAME: devuser
+      MONGO_INITDB_ROOT_PASSWORD: devpwd

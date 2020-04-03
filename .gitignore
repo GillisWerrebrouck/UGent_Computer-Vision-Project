@@ -1,0 +1,5 @@
+# Python rubbish
+**/__pycache__/
+
+# MongoDB volume
+.mongodb/
