@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-from core.filter import apply_grayscale_for_painting_detection
-from core.visualize import show_image
+from core.visualize import show_image, resize_image
 
 def detect_corners(image):
   """
@@ -61,11 +60,11 @@ def detect_corners3(image):
 
   imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-  imgray = cv2.dilate(imgray, kernel, iterations=1)
-  imgray = cv2.erode(imgray, kernel, iterations=2)
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))
+  imgray = cv2.dilate(imgray, kernel)
+  imgray = cv2.erode(imgray, kernel)
 
-  imgray = cv2.medianBlur(imgray, 13)
+  imgray = cv2.medianBlur(imgray, 21)
   ret, thresh = cv2.threshold(imgray, 127, 255, cv2.THRESH_BINARY)
 
   canny = cv2.Canny(thresh, threshold1=50, threshold2=150, apertureSize=3)
@@ -74,7 +73,6 @@ def detect_corners3(image):
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  # original = cv2.drawContours(original, contours, -1, (0,255,0), 3)
   for c in contours:
     x, y, w, h = cv2.boundingRect(c)
 
