@@ -13,6 +13,19 @@ def show_image(title, image):
   cv2.waitKey()
   cv2.destroyAllWindows()
 
+def resize_image(image, scale):
+  """
+  Resize the image with a given scale.
+
+  Parameters
+  ----------
+  - image -- The image to resize.
+  - scale -- The scale value between 0 and 1.
+  """
+  width = int(image.shape[1] * scale)
+  height = int(image.shape[0] * scale)
+  dimensions = (width, height)
+  return cv2.resize(image, dimensions, interpolation=cv2.INTER_AREA)
 
 def show_dog(dog):
   """
