@@ -3,3 +3,6 @@
 
 # MongoDB volume
 .mongodb/
+
+# VS Code files
+.vscode
