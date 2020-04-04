@@ -6,10 +6,6 @@ from logger import get_root_logger
 
 logger = get_root_logger()
 
-# 1: kijk of de file calibrationMatrixXXXYY.txt en roiXXXYY.txt bestaan, indien 1 van de 2 niet bestaat, alles weg en nieuwe starten
-# 2: indien ze bestaan -> return de inhoud in een tuple
-# 3: indien niet -> kijken of video bestaat -> inladen en uitvoeren
-
 
 def __output_tuple_from_files(mtxFN, distFN):
     logger.info(
