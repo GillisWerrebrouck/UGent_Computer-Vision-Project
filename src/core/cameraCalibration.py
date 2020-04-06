@@ -8,12 +8,29 @@ logger = get_root_logger()
 
 
 def __output_tuple_from_files(mtxFN, distFN):
+    """
+    Read the calibration matrix and dist params from there files.
+    Parameters
+    ----------
+    - mtxFN -- File containing the matrix formatted by the nm.savetxt().
+    - distFN -- File containing the dist formatted by the nm.savetxt().
+    Returns: a tuple of 2 np.array object containting the matrix and dist arrays in this order.
+    """
+
     logger.info(
-        "Returning output form file: {}, {} as tuple".format(mtxFN, distFN))
+        "Returning output from file: {}, {} as tuple".format(mtxFN, distFN))
     return (np.loadtxt(mtxFN, delimiter=','), np.loadtxt(distFN, delimiter=','))
 
 
 def __check_file_existance(filename):
+    """
+    Check if a given file exists
+    Parameters
+    ----------
+    - filename -- file to be checked.
+    Returns: a boolean if the file exists
+    """
+
     if os.path.isfile(filename):
         logger.info("file: {} found".format(filename))
         return True
@@ -22,12 +39,36 @@ def __check_file_existance(filename):
         return False
 
 
-def __delete_file(fn):
+def __delete_file(filename):
+    """
+    Delete a given file
+    Parameters
+    ----------
+    - filename -- file to be deleted 
+    Returns: void
+    """
     logger.debug("Removing file: {}".format(fn))
     os.remove(fn)
 
 
 def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, imgpoints, matrixFilename, distortionFilename, startVideo):
+    """
+    Calculate the calibration matrix and dist array for a given video and output these results to there speciefied files.
+    Parameters
+    ----------
+    - videoFN -- filename of the video.
+    - cols -- number of colums on the calibratrion paper.
+    - rows -- number of rows on the calibratrion paper.
+    - skip -- number of frames to skip when searching for the chessboard corners. (lower = more longer calculation time)
+    - dim -- the dimention of the black squares in tht calibration paper in mm.
+    - objp -- array containing the objectpoints.
+    - objpoints -- array containing the objectpoints.
+    - imgpoints -- array containing the imgpoints.
+    - matrixFilename -- filename for the matix parameter
+    - distortionFilename -- filename for the distortion parameter
+    - startVideo -- TODO: output a video for debuging.
+    Returns: void
+    """
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, dim, 0.001)
 
@@ -88,6 +129,20 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
 
 
 def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, startVideo=False):
+    """
+    Public function to calculate the calibration parameters for a given fideo. If the file for this video is present, the content will be returned. Otherwise the calculations wel be done.
+    Parameters
+    ----------
+    - video -- filename of the video.
+    - fps -- the frames per second for the video.
+    - quality -- the quality of the video.
+    - cols -- number of colums on the calibratrion paper.
+    - rows -- number of rows on the calibratrion paper.
+    - skip -- number of frames to skip when searching for the chessboard corners. (lower = more longer calculation time)
+    - dim -- the dimention of the black squares in tht calibration paper in mm.
+    - startVideo -- TODO: output a video for debuging.
+    Returns: a boolean if the file exists
+    """
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((rows * cols, 3), np.float32)
