@@ -118,14 +118,33 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
     logger.info("Got matrix")
 
     h, w = grayFrame.shape[:2]
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
-        mtx, dist, (w, h), 1, (w, h))
     logger.info("Got dist")
 
     logger.info("Writing matrix to {}".format(matrixFilename))
     np.savetxt(matrixFilename, mtx, delimiter=',')
     logger.info("Writing dist to {}".format(distortionFilename))
     np.savetxt(distortionFilename, dist, delimiter=',')
+
+
+def undistort_frame(frame, params):
+    """
+    Given a frame, this function wil return the undistorted image.
+    Parameters
+    ----------
+    - frame -- the frame to be processed
+    -params -- the matrix and dist tuple 
+    Returns: the undistorted image
+    """
+
+    h,  w = frame.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
+        params[0], params[1], (w, h), 1, (w, h))
+    mapx, mapy = cv2.initUndistortRectifyMap(
+        params[0], params[1], None, newcameramtx, (w, h), 5)
+    dst = cv2.remap(frame, mapx, mapy, cv2.INTER_LINEAR)
+    x, y, w, h = roi
+    dst = dst[y:y + h, x:x + w]
+    return dst
 
 
 def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, startVideo=False):
