@@ -141,7 +141,7 @@ def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60,
     - skip -- number of frames to skip when searching for the chessboard corners. (lower = more longer calculation time)
     - dim -- the dimention of the black squares in tht calibration paper in mm.
     - startVideo -- TODO: output a video for debuging.
-    Returns: a boolean if the file exists
+    Returns: a tuple of 2 np.array object containting the matrix and dist arrays in this order.
     """
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -173,7 +173,3 @@ def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60,
 
     logger.info(__output_tuple_from_files(matrixFilename, distortionFilename))
     return __output_tuple_from_files(matrixFilename, distortionFilename)
-
-
-get_calibration_matrix(
-    "/Users/pieter-janphilips/Desktop/telin.ugent.be/dvhamme/computervisie_2020/videos/gopro/calibration_M.mp4")
