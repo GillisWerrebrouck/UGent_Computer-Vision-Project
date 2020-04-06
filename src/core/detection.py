@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from core.visualize import show_image, resize_image
+import os
 
 def detect_corners(image):
   """
@@ -51,6 +52,15 @@ def detect_corners2(image):
   image=original
 
 
+
+
+resize_factor = 5
+
+def onMouse(k, x, y, s, param):
+    if k == cv2.EVENT_LBUTTONDOWN:
+        param.append((x*resize_factor, y*resize_factor))
+
+
 def detect_corners3(image):
   original = image
 
@@ -73,7 +83,37 @@ def detect_corners3(image):
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  for c in contours:
+
+
+
+
+  mouseClicks = []
+  selectedContours = []
+
+  temp_show_img = resize_image(original, 1.0/resize_factor)
+
+
+  cv2.namedWindow('Klik op schilderijen')
+  cv2.setMouseCallback('Klik op schilderijen', onMouse, mouseClicks)
+  cv2.imshow('Klik op schilderijen', temp_show_img)
+  os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
+
+  key = cv2.waitKey(10)
+  while(key != 13):
+      key = cv2.waitKey(10)
+  cv2.destroyAllWindows()
+
+
+  for contour in contours:
+    for click in mouseClicks:
+      x, y, w, h = cv2.boundingRect(contour)
+      if(click[0] >= x and click[0] <= x+w and click[1] >= y and click[1] <= y+h):
+        selectedContours.append(contour)
+        break
+
+
+
+  for c in selectedContours:
     x, y, w, h = cv2.boundingRect(c)
 
     if (w >= minWidth and h >= minHeight):
