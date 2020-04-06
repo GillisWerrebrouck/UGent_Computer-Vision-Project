@@ -18,3 +18,4 @@ for filename in glob('../../data/images/dataset_pictures_msk/zaal_*/*.jpg'):
   img = detect_corners3(img)
   img = resize_image(img, 0.2)
   show_image('Result', img)
+  break
