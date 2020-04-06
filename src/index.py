@@ -3,7 +3,7 @@ import sys
 import glob
 from data.connect import connect_mongodb_database
 from core.visualize import show_image, resize_image
-from core.detection import detect_corners, detect_corners2, detect_corners3
+from core.detection import detect_corners3
 from glob import glob
 
 # mydb = connect_mongodb_database('localhost', 27017, 'computervision', 'devuser', 'devpwd')

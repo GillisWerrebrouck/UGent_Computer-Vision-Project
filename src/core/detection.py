@@ -144,9 +144,9 @@ def detect_corners3(image):
   if(len(selectedContours) > 0):
     add_contours_to_image(selectedContours, temp_img)
     temp_img = resize_image(temp_img, 1.0/resize_factor)
-    cv2.namedWindow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren')
-    cv2.setMouseCallback('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren', onMouse, mouseClicks)
-    cv2.imshow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren', temp_img)
+    cv2.namedWindow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan')
+    cv2.setMouseCallback('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', onMouse, mouseClicks)
+    cv2.imshow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', temp_img)
     os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
 
     key = cv2.waitKey(10)
