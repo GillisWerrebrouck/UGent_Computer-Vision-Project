@@ -9,7 +9,7 @@ class Point:
     y = None
 
     def printit(self):
-        print('(', str(self.x) + ',' + str(self.y) + ')')
+        return str('(' + str(self.x) + ',' + str(self.y) + ')')
 
 class Quadrilateral:
     TLPoint = Point()
@@ -109,7 +109,6 @@ def init(dragObj, image, contours, windowName, windowWidth, windowHeight, resize
 # enddef
 
 def dragrect(event, x, y, flags, dragObj):
-    print("NONDEJU")
     if x < dragObj.keepWithin.x:
         x = dragObj.keepWithin.x
     # endif
@@ -203,7 +202,6 @@ def mouseDown(eX, eY, dragObj):
 # enddef
 
 def mouseMove(eX, eY, dragObj):
-    print("MOVE")
     # if dragObj.drag & dragObj.active:
     #     dragObj.outQuad.w = eX - dragObj.outQuad.x
     #     dragObj.outQuad.h = eY - dragObj.outQuad.y
@@ -212,7 +210,6 @@ def mouseMove(eX, eY, dragObj):
     # # endif
 
     if dragObj.hold:
-        print("HOLD")
         # dragObj.outQuad.x = eX - dragObj.anchor.x
         # dragObj.outQuad.y = eY - dragObj.anchor.y
 

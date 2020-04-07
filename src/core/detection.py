@@ -216,7 +216,7 @@ def detect_corners3(image):
       key = cv2.waitKey(1)
 
   print("Dragged quadrilateral coordinates")
-  print(str(quadrilateral.outQuad.LUPoint.printit()) + ',' + str(quadrilateral.outQuad.RUPoint.printit()) + ',' + str(quadrilateral.outQuad.LBPoint.printit()) + ',' + str(quadrilateral.outQuad.RBPoint.printit()))
+  print(str(quadrilateral.outQuad.TLPoint.printit()) + ',' + str(quadrilateral.outQuad.TRPoint.printit()) + ',' + str(quadrilateral.outQuad.BLPoint.printit()) + ',' + str(quadrilateral.outQuad.BRPoint.printit()))
 
 
   cv2.destroyAllWindows()
