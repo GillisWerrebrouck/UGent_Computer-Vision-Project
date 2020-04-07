@@ -1,5 +1,5 @@
-import cv2 # Opencv ver 3.1.0 used
-import numpy as np
+import cv2
+from visualize import resize_image
 
 import sys
 # Set recursion limit
@@ -12,11 +12,9 @@ rectI = selectinwindow.dragRect
 
 # Initialize the  drag object
 wName = "select region"
-imageWidth = 320
-imageHeight = 240
-image = np.ones([imageHeight, imageWidth, 3], dtype=np.uint8) # OR read an image using imread()
-image *= 255
-selectinwindow.init(rectI, image, wName, imageWidth, imageHeight)
+image = cv2.imread('/Users/jochen/Ugent/Master/Computervisie/Project/images/Computervisie 2020 Project Database/dataset_pictures_msk/zaal_1/IMG_20190323_111717.jpg')
+image = resize_image(image, 0.2)
+selectinwindow.init(rectI, image, wName, image.shape[0], image.shape[1])
 
 cv2.namedWindow(rectI.wname)
 cv2.setMouseCallback(rectI.wname, selectinwindow.dragrect, rectI)
