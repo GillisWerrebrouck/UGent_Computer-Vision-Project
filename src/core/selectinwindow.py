@@ -1,5 +1,5 @@
 import cv2
-from shapely.geometry import Point
+from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry.polygon import Polygon
 import numpy as np
 import copy
@@ -45,6 +45,7 @@ class dragRect:
     initialized = False
 
     # Image
+    original_image = None
     image = None
 
     # Window Name
@@ -64,14 +65,9 @@ class dragRect:
     BL = False
     BR = False
     hold = False
-
-
 # endclass
 
-def init(dragObj, Img, contours, windowName, windowWidth, windowHeight, resize_factor):
-    # Image
-    dragObj.image = Img
-
+def init(dragObj, image, contours, windowName, windowWidth, windowHeight, resize_factor):
     # Window name
     dragObj.wname = windowName
 
@@ -97,10 +93,23 @@ def init(dragObj, Img, contours, windowName, windowWidth, windowHeight, resize_f
     dragObj.outQuad.BRPoint.x = x + w
     dragObj.outQuad.BRPoint.y = y + h
 
+    # Image
+    dragObj.original_image = image
+    tmp = image.copy()
+    pts = [[dragObj.outQuad.TLPoint.x, dragObj.outQuad.TLPoint.y],
+           [dragObj.outQuad.TRPoint.x, dragObj.outQuad.TRPoint.y],
+           [dragObj.outQuad.BRPoint.x, dragObj.outQuad.BRPoint.y],
+           [dragObj.outQuad.BLPoint.x, dragObj.outQuad.BLPoint.y]]
+    pts = np.array(pts, np.int32)
+    pts = pts.reshape((-1, 1, 2))
+    tmp = cv2.polylines(tmp, [pts], True, (0, 255, 0), thickness=2)
+    dragObj.image = tmp
 
+    #initialize(dragObj)
 # enddef
 
 def dragrect(event, x, y, flags, dragObj):
+    print("NONDEJU")
     if x < dragObj.keepWithin.x:
         x = dragObj.keepWithin.x
     # endif
@@ -123,20 +132,13 @@ def dragrect(event, x, y, flags, dragObj):
     if event == cv2.EVENT_MOUSEMOVE:
         mouseMove(x, y, dragObj)
     # endif
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        mouseDoubleClick(x, y, dragObj)
-    # endif
 
 # enddef
 
-def pointInQuad(pX, pY, luP, ruP, lbP, rbP):
-    point = Point(pX, pY)
-    polygon = Polygon([(luP.x, luP.y), (ruP.x, ruP.y), (lbP.x, lbP.y), (rbP.x, rbP.y)])
-    if(polygon.contains(point)):
-        return True
-    else:
-        return False
-    # endelseif
+def initialize(dragObj):
+    if not dragObj.initialized:
+        clearCanvasNDraw(dragObj)
+        dragObj.initialized = True
 
 def pointInRect(pX, pY, rX, rY, rW, rH):
     if rX <= pX <= (rX + rW) and rY <= pY <= (rY + rH):
@@ -148,26 +150,15 @@ def pointInRect(pX, pY, rX, rY, rW, rH):
 
 # enddef
 
-def mouseDoubleClick(eX, eY, dragObj):
-    if dragObj.active:
-
-        if pointInQuad(eX, eY, dragObj.outQuad.TLPoint, dragObj.outQuad.TRPoint, dragObj.outQuad.BLPoint, dragObj.outQuad.BRPoint):
-            dragObj.returnflag = True
-            cv2.destroyWindow(dragObj.wname)
-        # endif
-
-    # endif
-
-
-# enddef
-
 def mouseDown(eX, eY, dragObj):
     if dragObj.active:
 
         if pointInRect(eX, eY, dragObj.outQuad.TLPoint.x - dragObj.sBlk,
                        dragObj.outQuad.TLPoint.y - dragObj.sBlk,
                        dragObj.sBlk * 2, dragObj.sBlk * 2):
+            print(dragObj.TL)
             dragObj.TL = True
+            print(dragObj.TL)
             return
         # endif
         if pointInRect(eX, eY, dragObj.outQuad.TRPoint.x - dragObj.sBlk,
@@ -199,7 +190,6 @@ def mouseDown(eX, eY, dragObj):
 
         #     return
         # # endif
-
     # else:
     #     dragObj.outQuad.x = eX
     #     dragObj.outQuad.y = eY
@@ -213,6 +203,7 @@ def mouseDown(eX, eY, dragObj):
 # enddef
 
 def mouseMove(eX, eY, dragObj):
+    print("MOVE")
     # if dragObj.drag & dragObj.active:
     #     dragObj.outQuad.w = eX - dragObj.outQuad.x
     #     dragObj.outQuad.h = eY - dragObj.outQuad.y
@@ -221,6 +212,7 @@ def mouseMove(eX, eY, dragObj):
     # # endif
 
     if dragObj.hold:
+        print("HOLD")
         # dragObj.outQuad.x = eX - dragObj.anchor.x
         # dragObj.outQuad.y = eY - dragObj.anchor.y
 
@@ -317,12 +309,12 @@ def disableResizeButtons(dragObj):
 
 # enddef
 
-def clearCanvasNDraw(dragObj):
+def  clearCanvasNDraw(dragObj):
     # Draw
-    tmp = dragObj.image.copy()
-    pts = [[dragObj.outQuad.TLPoint.x, dragObj.outQuad.TLPoint.y], 
-           [dragObj.outQuad.TRPoint.x, dragObj.outQuad.TRPoint.y], 
-           [dragObj.outQuad.BRPoint.x, dragObj.outQuad.BRPoint.y], 
+    tmp = dragObj.original_image.copy()
+    pts = [[dragObj.outQuad.TLPoint.x, dragObj.outQuad.TLPoint.y],
+           [dragObj.outQuad.TRPoint.x, dragObj.outQuad.TRPoint.y],
+           [dragObj.outQuad.BRPoint.x, dragObj.outQuad.BRPoint.y],
            [dragObj.outQuad.BLPoint.x, dragObj.outQuad.BLPoint.y]]
     pts = np.array(pts, np.int32)
     pts = pts.reshape((-1,1,2))
@@ -331,7 +323,6 @@ def clearCanvasNDraw(dragObj):
     drawSelectMarkers(tmp, dragObj)
     cv2.imshow(dragObj.wname, tmp)
     cv2.waitKey()
-
 
 # enddef
 
@@ -342,7 +333,7 @@ def drawSelectMarkers(image, dragObj):
                   (dragObj.outQuad.TLPoint.x + dragObj.sBlk, dragObj.outQuad.TLPoint.y + dragObj.sBlk),
                   (0, 255, 0), 2)
     # Top-Right
-    cv2.rectangle(image, 
+    cv2.rectangle(image,
                   (dragObj.outQuad.TRPoint.x - dragObj.sBlk, dragObj.outQuad.TRPoint.y - dragObj.sBlk),
                   (dragObj.outQuad.TRPoint.x + dragObj.sBlk, dragObj.outQuad.TRPoint.y + dragObj.sBlk),
                   (0, 255, 0), 2)

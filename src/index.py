@@ -13,7 +13,7 @@ from glob import glob
 #   exit(-1)
 
 # Difficult one: ../../data/images/dataset_pictures_msk/Zaal_A/20190323_111950.jpg
-for filename in glob('../../data/images/dataset_pictures_msk/zaal_*/*.jpg'):
+for filename in glob('../../images/dataset_pictures_msk/zaal_*/*.jpg'):
   img = cv2.imread(filename)
   # TODO: todo's oplossen in detect_corners
   img = detect_corners3(img)
