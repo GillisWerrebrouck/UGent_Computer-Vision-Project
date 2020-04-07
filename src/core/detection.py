@@ -191,7 +191,9 @@ def detect_corners3(image):
 
 
 
-
+  # TODO: contour initieel tonen
+  # TODO: resultaat terug geven bij dubbelklik
+  # TODO: alle contouren oplossing vinden
   # Contouren verfijnen
   cv2.destroyAllWindows()
   # Set recursion limit
