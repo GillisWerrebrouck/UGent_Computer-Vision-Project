@@ -4,6 +4,7 @@ from core.visualize import show_image, resize_image
 import os
 import copy
 import sys
+import core.selectinwindow as window
 
 # def detect_corners(image):
 #   """
@@ -193,8 +194,31 @@ def detect_corners3(image):
 
 
   # Contouren verfijnen
+  # Set recursion limit
+  sys.setrecursionlimit(10 ** 9)
+  # Define the drag object
+  quadrilateral = window.dragRect 
+  wName = "select region"
+  temp_img = copy.deepcopy(image)
+  temp_img = resize_image(temp_img, 1.0/resize_factor)
+  window.init(quadrilateral, temp_img, selectedContours, wName, temp_img.shape[1], temp_img.shape[0])
 
+  cv2.namedWindow(quadrilateral.wname)
+  cv2.setMouseCallback(quadrilateral.wname, window.dragrect, quadrilateral)
 
+  # keep looping until rectangle finalized
+  while True:
+      # display the image
+      cv2.imshow(wName, quadrilateral.image)
+      key = cv2.waitKey(1) & 0xFF
+
+      # if returnflag is True, break from the loop
+      if quadrilateral.returnflag == True:
+          break
+
+  print("Dragged quadrilateral coordinates")
+  print(str(quadrilateral.outRect.LUPoint) + ',' + str(quadrilateral.outRect.RUPoint) + ',' + \
+        str(quadrilateral.outRect.LBPoint) + ',' + str(quadrilateral.outRect.RBPoint))
 
 
   cv2.destroyAllWindows()

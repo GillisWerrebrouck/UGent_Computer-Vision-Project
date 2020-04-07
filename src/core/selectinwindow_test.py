@@ -12,7 +12,7 @@ rectI = selectinwindow.dragRect
 
 # Initialize the  drag object
 wName = "select region"
-image = cv2.imread('/Users/jochen/Ugent/Master/Computervisie/Project/images/Computervisie 2020 Project Database/dataset_pictures_msk/zaal_1/IMG_20190323_111717.jpg')
+image = cv2.imread('../../data/images/dataset_pictures_msk/zaal_1/IMG_20190323_111717.jpg')
 image = resize_image(image, 0.2)
 selectinwindow.init(rectI, image, wName, image.shape[0], image.shape[1])
 

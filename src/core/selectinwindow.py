@@ -1,5 +1,17 @@
 import cv2
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+import numpy as np
 
+class Point:
+    x = None
+    y = None
+
+class Quadrilateral:
+    TLPoint = Point
+    TRPoint = Point
+    BLPoint = Point
+    BRPoint = Point
 
 class Rect:
     x = None
@@ -17,7 +29,7 @@ class dragRect:
     # Limits on the canvas
     keepWithin = Rect()
     # To store rectangle
-    outRect = Rect()
+    outQuad = Quadrilateral()
     # To store rectangle anchor point
     # Here the rect class object is used to store
     # the distance in the x and y direction from
@@ -41,22 +53,18 @@ class dragRect:
     # Rect already present
     active = False
     # Drag for rect resize in progress
-    drag = False
+    # drag = False
     # Marker flags by positions
     TL = False
-    TM = False
     TR = False
-    LM = False
-    RM = False
     BL = False
-    BM = False
     BR = False
     hold = False
 
 
 # endclass
 
-def init(dragObj, Img, windowName, windowWidth, windowHeight):
+def init(dragObj, Img, contours, windowName, windowWidth, windowHeight):
     # Image
     dragObj.image = Img
 
@@ -70,10 +78,17 @@ def init(dragObj, Img, windowName, windowWidth, windowHeight):
     dragObj.keepWithin.h = windowHeight
 
     # Set rect to zero width and height
-    dragObj.outRect.x = 0
-    dragObj.outRect.y = 0
-    dragObj.outRect.w = 0
-    dragObj.outRect.h = 0
+    (x, y, w, h) = contours[0]
+    
+
+    dragObj.outQuad.TLPoint.x = x
+    dragObj.outQuad.TLPoint.y = y
+    dragObj.outQuad.TRPoint.x = x + w
+    dragObj.outQuad.TRPoint.y = y
+    dragObj.outQuad.BLPoint.x = x
+    dragObj.outQuad.BLPoint.y = y + h
+    dragObj.outQuad.BRPoint.x = x + w
+    dragObj.outQuad.BRPoint.y = y + h
 
 
 # enddef
@@ -107,6 +122,15 @@ def dragrect(event, x, y, flags, dragObj):
 
 # enddef
 
+def pointInQuad(pX, pY, luP, ruP, lbP, rbP):
+    point = Point(pX, pY)
+    polygon = Polygon([(luP.x, luP.y), (ruP.x, ruP.y), (lbP.x, lbP.y), (rbP.x, rbP.y)])
+    if(polygon.contains(point)):
+        return True
+    else:
+        return False
+    # endelseif
+
 def pointInRect(pX, pY, rX, rY, rW, rH):
     if rX <= pX <= (rX + rW) and rY <= pY <= (rY + rH):
         return True
@@ -120,7 +144,7 @@ def pointInRect(pX, pY, rX, rY, rW, rH):
 def mouseDoubleClick(eX, eY, dragObj):
     if dragObj.active:
 
-        if pointInRect(eX, eY, dragObj.outRect.x, dragObj.outRect.y, dragObj.outRect.w, dragObj.outRect.h):
+        if pointInQuad(eX, eY, dragObj.outQuad.TLPoint, dragObj.outQuad.TRPoint, dragObj.outQuad.BLPoint, dragObj.outQuad.BRPoint):
             dragObj.returnflag = True
             cv2.destroyWindow(dragObj.wname)
         # endif
@@ -133,102 +157,91 @@ def mouseDoubleClick(eX, eY, dragObj):
 def mouseDown(eX, eY, dragObj):
     if dragObj.active:
 
-        if pointInRect(eX, eY, dragObj.outRect.x - dragObj.sBlk,
-                       dragObj.outRect.y - dragObj.sBlk,
+        if pointInRect(eX, eY, dragObj.outQuad.TLPoint.x - dragObj.sBlk,
+                       dragObj.outQuad.TLPoint.y - dragObj.sBlk,
                        dragObj.sBlk * 2, dragObj.sBlk * 2):
             dragObj.TL = True
             return
         # endif
-        if pointInRect(eX, eY, dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk,
-                       dragObj.outRect.y - dragObj.sBlk,
+        if pointInRect(eX, eY, dragObj.outQuad.TRPoint.x - dragObj.sBlk,
+                       dragObj.outQuad.TRPoint.y - dragObj.sBlk,
                        dragObj.sBlk * 2, dragObj.sBlk * 2):
             dragObj.TR = True
             return
         # endif
-        if pointInRect(eX, eY, dragObj.outRect.x - dragObj.sBlk,
-                       dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk,
+        if pointInRect(eX, eY, dragObj.outQuad.BLPoint.x - dragObj.sBlk,
+                       dragObj.outQuad.BLPoint.y - dragObj.sBlk,
                        dragObj.sBlk * 2, dragObj.sBlk * 2):
             dragObj.BL = True
             return
         # endif
-        if pointInRect(eX, eY, dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk,
-                       dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk,
+        if pointInRect(eX, eY, dragObj.outQuad.BRPoint.x - dragObj.sBlk,
+                       dragObj.outQuad.BRPoint.y - dragObj.sBlk,
                        dragObj.sBlk * 2, dragObj.sBlk * 2):
             dragObj.BR = True
             return
         # endif
 
-        if pointInRect(eX, eY, dragObj.outRect.x + dragObj.outRect.w / 2 - dragObj.sBlk,
-                       dragObj.outRect.y - dragObj.sBlk,
-                       dragObj.sBlk * 2, dragObj.sBlk * 2):
-            dragObj.TM = True
-            return
-        # endif
-        if pointInRect(eX, eY, dragObj.outRect.x + dragObj.outRect.w / 2 - dragObj.sBlk,
-                       dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk,
-                       dragObj.sBlk * 2, dragObj.sBlk * 2):
-            dragObj.BM = True
-            return
-        # endif
-        if pointInRect(eX, eY, dragObj.outRect.x - dragObj.sBlk,
-                       dragObj.outRect.y + dragObj.outRect.h / 2 - dragObj.sBlk,
-                       dragObj.sBlk * 2, dragObj.sBlk * 2):
-            dragObj.LM = True
-            return
-        # endif
-        if pointInRect(eX, eY, dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk,
-                       dragObj.outRect.y + dragObj.outRect.h / 2 - dragObj.sBlk,
-                       dragObj.sBlk * 2, dragObj.sBlk * 2):
-            dragObj.RM = True
-            return
-        # endif
+        # # This has to be below all of the other conditions
+        # if pointInQuad(eX, eY, dragObj.outQuad.x, dragObj.outQuad.y, dragObj.outQuad.w, dragObj.outQuad.h):
+        #     dragObj.anchor.x = eX - dragObj.outQuad.x
+        #     dragObj.anchor.w = dragObj.outQuad.w - dragObj.anchor.x
+        #     dragObj.anchor.y = eY - dragObj.outQuad.y
+        #     dragObj.anchor.h = dragObj.outQuad.h - dragObj.anchor.y
+        #     dragObj.hold = True
 
-        # This has to be below all of the other conditions
-        if pointInRect(eX, eY, dragObj.outRect.x, dragObj.outRect.y, dragObj.outRect.w, dragObj.outRect.h):
-            dragObj.anchor.x = eX - dragObj.outRect.x
-            dragObj.anchor.w = dragObj.outRect.w - dragObj.anchor.x
-            dragObj.anchor.y = eY - dragObj.outRect.y
-            dragObj.anchor.h = dragObj.outRect.h - dragObj.anchor.y
-            dragObj.hold = True
+        #     return
+        # # endif
 
-            return
-        # endif
+    # else:
+    #     dragObj.outQuad.x = eX
+    #     dragObj.outQuad.y = eY
+    #     dragObj.drag = True
+    #     dragObj.active = True
+    #     return
 
-    else:
-        dragObj.outRect.x = eX
-        dragObj.outRect.y = eY
-        dragObj.drag = True
-        dragObj.active = True
-        return
-
-    # endelseif
+    # # endelseif
 
 
 # enddef
 
 def mouseMove(eX, eY, dragObj):
-    if dragObj.drag & dragObj.active:
-        dragObj.outRect.w = eX - dragObj.outRect.x
-        dragObj.outRect.h = eY - dragObj.outRect.y
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
+    # if dragObj.drag & dragObj.active:
+    #     dragObj.outQuad.w = eX - dragObj.outQuad.x
+    #     dragObj.outQuad.h = eY - dragObj.outQuad.y
+    #     clearCanvasNDraw(dragObj)
+    #     return
+    # # endif
 
     if dragObj.hold:
-        dragObj.outRect.x = eX - dragObj.anchor.x
-        dragObj.outRect.y = eY - dragObj.anchor.y
+        # dragObj.outQuad.x = eX - dragObj.anchor.x
+        # dragObj.outQuad.y = eY - dragObj.anchor.y
 
-        if dragObj.outRect.x < dragObj.keepWithin.x:
-            dragObj.outRect.x = dragObj.keepWithin.x
+        # Make sure object stays within border
+        if dragObj.outQuad.TLPoint.x < dragObj.keepWithin.x:
+            dragObj.outQuad.TLPoint.x = dragObj.keepWithin.x
         # endif
-        if dragObj.outRect.y < dragObj.keepWithin.y:
-            dragObj.outRect.y = dragObj.keepWithin.y
+        if dragObj.outQuad.BLPoint.x < dragObj.keepWithin.x:
+            dragObj.outQuad.BLPoint.x = dragObj.keepWithin.x
         # endif
-        if (dragObj.outRect.x + dragObj.outRect.w) > (dragObj.keepWithin.x + dragObj.keepWithin.w - 1):
-            dragObj.outRect.x = dragObj.keepWithin.x + dragObj.keepWithin.w - 1 - dragObj.outRect.w
+        if (dragObj.outQuad.TRPoint.x) > (dragObj.keepWithin.x + dragObj.keepWithin.w - 1):
+            dragObj.outQuad.TRPoint.x = dragObj.keepWithin.x + dragObj.keepWithin.w - 1
         # endif
-        if (dragObj.outRect.y + dragObj.outRect.h) > (dragObj.keepWithin.y + dragObj.keepWithin.h - 1):
-            dragObj.outRect.y = dragObj.keepWithin.y + dragObj.keepWithin.h - 1 - dragObj.outRect.h
+        if (dragObj.outQuad.BRPoint.x) > (dragObj.keepWithin.x + dragObj.keepWithin.w - 1):
+            dragObj.outQuad.BRPoint.x = dragObj.keepWithin.x + dragObj.keepWithin.w - 1
+        # endif
+
+        if dragObj.outQuad.TLPoint.y < dragObj.keepWithin.y:
+            dragObj.outQuad.TLPoint.y = dragObj.keepWithin.y
+        # endif
+        if dragObj.outQuad.BLPoint.y < dragObj.keepWithin.y:
+            dragObj.outQuad.BLPoint.y = dragObj.keepWithin.y
+        # endif
+        if (dragObj.outQuad.TRPoint.y) > (dragObj.keepWithin.y + dragObj.keepWithin.h - 1):
+            dragObj.outQuad.TRPoint.y = dragObj.keepWithin.y + dragObj.keepWithin.h - 1
+        # endif
+        if (dragObj.outQuad.BRPoint.y) > (dragObj.keepWithin.y + dragObj.keepWithin.h - 1):
+            dragObj.outQuad.BRPoint.y = dragObj.keepWithin.y + dragObj.keepWithin.h - 1
         # endif
 
         clearCanvasNDraw(dragObj)
@@ -236,53 +249,26 @@ def mouseMove(eX, eY, dragObj):
     # endif
 
     if dragObj.TL:
-        dragObj.outRect.w = (dragObj.outRect.x + dragObj.outRect.w) - eX
-        dragObj.outRect.h = (dragObj.outRect.y + dragObj.outRect.h) - eY
-        dragObj.outRect.x = eX
-        dragObj.outRect.y = eY
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
-    if dragObj.BR:
-        dragObj.outRect.w = eX - dragObj.outRect.x
-        dragObj.outRect.h = eY - dragObj.outRect.y
+        dragObj.outQuad.TLPoint.x = eX
+        dragObj.outQuad.TLPoint.y = eY
         clearCanvasNDraw(dragObj)
         return
     # endif
     if dragObj.TR:
-        dragObj.outRect.h = (dragObj.outRect.y + dragObj.outRect.h) - eY
-        dragObj.outRect.y = eY
-        dragObj.outRect.w = eX - dragObj.outRect.x
+        dragObj.outQuad.TRPoint.x = eX
+        dragObj.outQuad.TRPoint.y = eY
         clearCanvasNDraw(dragObj)
         return
     # endif
     if dragObj.BL:
-        dragObj.outRect.w = (dragObj.outRect.x + dragObj.outRect.w) - eX
-        dragObj.outRect.x = eX
-        dragObj.outRect.h = eY - dragObj.outRect.y
+        dragObj.outQuad.BLPoint.x = eX
+        dragObj.outQuad.BLPoint.y = eY
         clearCanvasNDraw(dragObj)
         return
     # endif
-
-    if dragObj.TM:
-        dragObj.outRect.h = (dragObj.outRect.y + dragObj.outRect.h) - eY
-        dragObj.outRect.y = eY
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
-    if dragObj.BM:
-        dragObj.outRect.h = eY - dragObj.outRect.y
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
-    if dragObj.LM:
-        dragObj.outRect.w = (dragObj.outRect.x + dragObj.outRect.w) - eX
-        dragObj.outRect.x = eX
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
-    if dragObj.RM:
-        dragObj.outRect.w = eX - dragObj.outRect.x
+    if dragObj.BR:
+        dragObj.outQuad.BRPoint.x = eX
+        dragObj.outQuad.BRPoint.y = eY
         clearCanvasNDraw(dragObj)
         return
     # endif
@@ -291,12 +277,12 @@ def mouseMove(eX, eY, dragObj):
 # enddef
 
 def mouseUp(eX, eY, dragObj):
-    dragObj.drag = False
+    # dragObj.drag = False
     disableResizeButtons(dragObj)
-    straightenUpRect(dragObj)
-    if dragObj.outRect.w == 0 or dragObj.outRect.h == 0:
-        dragObj.active = False
-    # endif
+    # straightenUpRect(dragObj)
+    # if dragObj.outQuad.w == 0 or dragObj.outQuad.h == 0:
+    #     dragObj.active = False
+    # # endif
 
     clearCanvasNDraw(dragObj)
 
@@ -304,23 +290,22 @@ def mouseUp(eX, eY, dragObj):
 # enddef
 
 def disableResizeButtons(dragObj):
-    dragObj.TL = dragObj.TM = dragObj.TR = False
-    dragObj.LM = dragObj.RM = False
-    dragObj.BL = dragObj.BM = dragObj.BR = False
+    dragObj.TL = dragObj.TR = False
+    dragObj.BL = dragObj.BR = False
     dragObj.hold = False
 
 
 # enddef
 
-def straightenUpRect(dragObj):
-    if dragObj.outRect.w < 0:
-        dragObj.outRect.x = dragObj.outRect.x + dragObj.outRect.w
-        dragObj.outRect.w = -dragObj.outRect.w
-    # endif
-    if dragObj.outRect.h < 0:
-        dragObj.outRect.y = dragObj.outRect.y + dragObj.outRect.h
-        dragObj.outRect.h = -dragObj.outRect.h
-    # endif
+# def straightenUpRect(dragObj):
+#     if dragObj.outQuad.w < 0:
+#         dragObj.outQuad.x = dragObj.outQuad.x + dragObj.outQuad.w
+#         dragObj.outQuad.w = -dragObj.outQuad.w
+#     # endif
+#     if dragObj.outQuad.h < 0:
+#         dragObj.outQuad.y = dragObj.outQuad.y + dragObj.outQuad.h
+#         dragObj.outQuad.h = -dragObj.outQuad.h
+#     # endif
 
 
 # enddef
@@ -328,9 +313,14 @@ def straightenUpRect(dragObj):
 def clearCanvasNDraw(dragObj):
     # Draw
     tmp = dragObj.image.copy()
-    cv2.rectangle(tmp, (dragObj.outRect.x, dragObj.outRect.y),
-                  (dragObj.outRect.x + dragObj.outRect.w,
-                   dragObj.outRect.y + dragObj.outRect.h), (0, 255, 0), 2)
+    pts = [[dragObj.outQuad.TLPoint.x, dragObj.outQuad.TLPoint.y], 
+           [dragObj.outQuad.TRPoint.x, dragObj.outQuad.TRPoint.y], 
+           [dragObj.outQuad.BRPoint.x, dragObj.outQuad.BRPoint.y], 
+           [dragObj.outQuad.BLPoint.x, dragObj.outQuad.BLPoint.y]]
+    pts = np.array(pts, np.int32)
+    pts = pts.reshape((-1,1,2))
+    tmp	= cv2.polylines(tmp, pts, True, (0, 255, 0), thickness = 2)
+
     drawSelectMarkers(tmp, dragObj)
     cv2.imshow(dragObj.wname, tmp)
     cv2.waitKey()
@@ -341,27 +331,23 @@ def clearCanvasNDraw(dragObj):
 def drawSelectMarkers(image, dragObj):
     # Top-Left
     cv2.rectangle(image,
-                  (dragObj.outRect.x - dragObj.sBlk, dragObj.outRect.y - dragObj.sBlk),
-                  (dragObj.outRect.x - dragObj.sBlk + dragObj.sBlk * 2,dragObj.outRect.y - dragObj.sBlk + dragObj.sBlk * 2),
-                  (0, 255, 0),
-                  2)
-    # Top-Rigth
-    cv2.rectangle(image, (dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk,
-                          dragObj.outRect.y - dragObj.sBlk),
-                  (dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk + dragObj.sBlk * 2,
-                   dragObj.outRect.y - dragObj.sBlk + dragObj.sBlk * 2),
+                  (dragObj.outQuad.TLPoint.x - dragObj.sBlk, dragObj.outQuad.TLPoint.y - dragObj.sBlk),
+                  (dragObj.outQuad.TLPoint.x + dragObj.sBlk, dragObj.outQuad.TLPoint.y + dragObj.sBlk),
+                  (0, 255, 0), 2)
+    # Top-Right
+    cv2.rectangle(image, 
+                  (dragObj.outQuad.TRPoint.x - dragObj.sBlk, dragObj.outQuad.TRPoint.y - dragObj.sBlk),
+                  (dragObj.outQuad.TRPoint.x + dragObj.sBlk, dragObj.outQuad.TRPoint.y + dragObj.sBlk),
                   (0, 255, 0), 2)
     # Bottom-Left
-    cv2.rectangle(image, (dragObj.outRect.x - dragObj.sBlk,
-                          dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk),
-                  (dragObj.outRect.x - dragObj.sBlk + dragObj.sBlk * 2,
-                   dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk + dragObj.sBlk * 2),
+    cv2.rectangle(image,
+                  (dragObj.outQuad.BLPoint.x - dragObj.sBlk, dragObj.outQuad.BLPoint.y - dragObj.sBlk),
+                  (dragObj.outQuad.BLPoint.x + dragObj.sBlk, dragObj.outQuad.BLPoint.y + dragObj.sBlk),
                   (0, 255, 0), 2)
     # Bottom-Right
-    cv2.rectangle(image, (dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk,
-                          dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk),
-                  (dragObj.outRect.x + dragObj.outRect.w - dragObj.sBlk + dragObj.sBlk * 2,
-                   dragObj.outRect.y + dragObj.outRect.h - dragObj.sBlk + dragObj.sBlk * 2),
+    cv2.rectangle(image,
+                  (dragObj.outQuad.BRPoint.x - dragObj.sBlk, dragObj.outQuad.BRPoint.y - dragObj.sBlk),
+                  (dragObj.outQuad.BRPoint.x + dragObj.sBlk, dragObj.outQuad.BRPoint.y + dragObj.sBlk),
                   (0, 255, 0), 2)
 
 # enddef
