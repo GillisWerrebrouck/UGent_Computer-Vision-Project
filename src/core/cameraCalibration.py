@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 from logger import get_root_logger
+import re
 
 logger = get_root_logger()
 
@@ -75,7 +76,7 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
     cap = cv2.VideoCapture(videoFN)
     if (cap.isOpened() == False):
         logger.warning("Videofile not found")
-    aantal = 0
+    count = 0
 
     logger.info("Start analysing video")
     while (cap.isOpened()):
@@ -89,7 +90,7 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
                 grayFrame, (cols, rows), None)
 
             if ret == True:
-                aantal += 1
+                count += 1
                 objpoints.append(objp)
 
                 corners2 = cv2.cornerSubPix(
@@ -107,7 +108,7 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
         for i in range(0, skip):
             cap.read()
 
-    logger.info("Done Analysing video, got {} usable images".format(aantal))
+    logger.info("Done Analysing video, got {} usable images".format(count))
 
     cap.release()
     logger.debug("Releasing video")
@@ -126,7 +127,10 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
     np.savetxt(distortionFilename, dist, delimiter=',')
 
 
-def undistort_frame(frame, params):
+def undistort_frame(frame, **kwargs):
+    params = kwargs.get('params', None)
+    mtx = kwargs.get('mtx', None)
+    dist = kwargs.get('dist', None)
     """
     Given a frame, this function wil return the undistorted image.
     Parameters
@@ -138,21 +142,26 @@ def undistort_frame(frame, params):
 
     h,  w = frame.shape[:2]
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
-        params[0], params[1], (w, h), 1, (w, h))
+        params[0], params[1], (w, h), 0, (w, h))
+
     mapx, mapy = cv2.initUndistortRectifyMap(
         params[0], params[1], None, newcameramtx, (w, h), 5)
     dst = cv2.remap(frame, mapx, mapy, cv2.INTER_LINEAR)
+
+    # crop the image
     x, y, w, h = roi
-    dst = dst[y:y + h, x:x + w]
+    dst = dst[y:y+h, x:x+w]
+
     return dst
 
 
-def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, startVideo=False):
+def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, startVideo=False):
     """
     Public function to calculate the calibration parameters for a given fideo. If the file for this video is present, the content will be returned. Otherwise the calculations wel be done.
     Parameters
     ----------
     - video -- filename of the video.
+    - fov -- Field of view: M or W
     - fps -- the frames per second for the video.
     - quality -- the quality of the video.
     - cols -- number of colums on the calibratrion paper.
@@ -172,8 +181,10 @@ def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60,
     imgpoints = []  # 2d points in image plane.
 
     # See if matrix allready exists
-    matrixFilename = "calibrationMatrix{}{}.txt".format(quality, fps)
-    distortionFilename = "calibrationDistortion{}{}.txt".format(quality, fps)
+    matrixFilename = "calibrationMatrix{}{}{}.txt".format(
+        quality, fps, fov)
+    distortionFilename = "calibrationDistortion{}{}{}.txt".format(
+        quality, fps, fov)
 
     logger.debug(matrixFilename)
     logger.debug(distortionFilename)
@@ -192,3 +203,24 @@ def get_calibration_matrix(video, fps=60, quality=720, cols=6, rows=10, skip=60,
 
     logger.info(__output_tuple_from_files(matrixFilename, distortionFilename))
     return __output_tuple_from_files(matrixFilename, distortionFilename)
+
+
+params = get_calibration_matrix(
+    "/Users/pieter-janphilips/Desktop/telin.ugent.be/dvhamme/computervisie_2020/videos/gopro/calibration_M.mp4", fov='M')
+
+cap = cv2.VideoCapture(
+    "/Users/pieter-janphilips/Desktop/telin.ugent.be/dvhamme/computervisie_2020/videos/gopro/MSK_12.mp4")
+if (cap.isOpened() == False):
+    logger.warning("Videofile not found")
+
+while (cap.isOpened()):
+
+    success, frame = cap.read()
+
+    if success:
+        dst = undistort_frame(frame, params=params)
+        cv2.imshow('dst', dst)
+        cv2.waitKey(1)
+
+
+cv2.destroyAllWindows()
