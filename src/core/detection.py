@@ -213,12 +213,11 @@ def detect_corners3(image):
       key = cv2.waitKey(1) & 0xFF
 
       # if returnflag is True, break from the loop
-      if quadrilateral.returnflag == True:
+      if (quadrilateral.returnflag):
           break
 
   print("Dragged quadrilateral coordinates")
-  print(str(quadrilateral.outRect.LUPoint) + ',' + str(quadrilateral.outRect.RUPoint) + ',' + \
-        str(quadrilateral.outRect.LBPoint) + ',' + str(quadrilateral.outRect.RBPoint))
+  print(str(quadrilateral.outRect.LUPoint.printit()) + ',' + str(quadrilateral.outRect.RUPoint.printit()) + ',' + str(quadrilateral.outRect.LBPoint.printit()) + ',' + str(quadrilateral.outRect.RBPoint.printit()))
 
 
   cv2.destroyAllWindows()

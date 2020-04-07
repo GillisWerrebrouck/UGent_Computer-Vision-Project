@@ -8,6 +8,9 @@ class Point:
     x = None
     y = None
 
+    def printit(self):
+        print('(', str(self.x) + ',' + str(self.y) + ')')
+
 class Quadrilateral:
     TLPoint = Point()
     TRPoint = Point()
