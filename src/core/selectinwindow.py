@@ -2,16 +2,17 @@ import cv2
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import numpy as np
+import copy
 
 class Point:
     x = None
     y = None
 
 class Quadrilateral:
-    TLPoint = Point
-    TRPoint = Point
-    BLPoint = Point
-    BRPoint = Point
+    TLPoint = Point()
+    TRPoint = Point()
+    BLPoint = Point()
+    BRPoint = Point()
 
 class Rect:
     x = None
@@ -51,7 +52,7 @@ class dragRect:
 
     # FLAGS
     # Rect already present
-    active = False
+    active = True
     # Drag for rect resize in progress
     # drag = False
     # Marker flags by positions
@@ -64,7 +65,7 @@ class dragRect:
 
 # endclass
 
-def init(dragObj, Img, contours, windowName, windowWidth, windowHeight):
+def init(dragObj, Img, contours, windowName, windowWidth, windowHeight, resize_factor):
     # Image
     dragObj.image = Img
 
@@ -79,7 +80,10 @@ def init(dragObj, Img, contours, windowName, windowWidth, windowHeight):
 
     # Set rect to zero width and height
     (x, y, w, h) = contours[0]
-    
+    x = round(x / resize_factor)
+    y = round(y / resize_factor)
+    w = round(w / resize_factor)
+    h = round(h / resize_factor)
 
     dragObj.outQuad.TLPoint.x = x
     dragObj.outQuad.TLPoint.y = y
@@ -319,7 +323,7 @@ def clearCanvasNDraw(dragObj):
            [dragObj.outQuad.BLPoint.x, dragObj.outQuad.BLPoint.y]]
     pts = np.array(pts, np.int32)
     pts = pts.reshape((-1,1,2))
-    tmp	= cv2.polylines(tmp, pts, True, (0, 255, 0), thickness = 2)
+    tmp	= cv2.polylines(tmp, [pts], True, (0, 255, 0), thickness = 2)
 
     drawSelectMarkers(tmp, dragObj)
     cv2.imshow(dragObj.wname, tmp)

@@ -192,8 +192,8 @@ def detect_corners3(image):
 
 
 
-
   # Contouren verfijnen
+  cv2.destroyAllWindows()
   # Set recursion limit
   sys.setrecursionlimit(10 ** 9)
   # Define the drag object
@@ -201,7 +201,7 @@ def detect_corners3(image):
   wName = "select region"
   temp_img = copy.deepcopy(image)
   temp_img = resize_image(temp_img, 1.0/resize_factor)
-  window.init(quadrilateral, temp_img, selectedContours, wName, temp_img.shape[1], temp_img.shape[0])
+  window.init(quadrilateral, temp_img, selectedContours, wName, temp_img.shape[1], temp_img.shape[0], resize_factor)
 
   cv2.namedWindow(quadrilateral.wname)
   cv2.setMouseCallback(quadrilateral.wname, window.dragrect, quadrilateral)
