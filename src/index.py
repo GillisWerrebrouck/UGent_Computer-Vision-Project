@@ -15,6 +15,7 @@ from glob import glob
 # Difficult one: ../../data/images/dataset_pictures_msk/Zaal_A/20190323_111950.jpg
 for filename in glob('../../data/images/dataset_pictures_msk/zaal_*/*.jpg'):
   img = cv2.imread(filename)
+  # TODO: todo's oplossen in detect_corners
   img = detect_corners3(img)
   img = resize_image(img, 0.2)
   show_image('Result', img)

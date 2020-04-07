@@ -54,7 +54,7 @@ import sys
 #   image=original
 
 
-
+# TODO: consistentie naamgeving, soms capitalCasing, soms niet_capital_casing
 
 resize_factor = 5
 
@@ -63,16 +63,26 @@ def onMouse(k, x, y, s, param):
         param.append((x*resize_factor, y*resize_factor))
 
 def add_contours_to_image(contours, image):
+  # de contours zijn van de vorm list(tuple(x, y, w, h))
   for c in contours:
-    x, y, w, h = cv2.boundingRect(c)
+    (x, y, w, h) = c
     image = cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 14)
   return image
 
-# zegt of het punt in de contour ligt. positieve waarde is binnen, negatieve is buiten. grootte is de afstand
-# dit is een naïve methode en controleert enkel horizontal afstand bij verticale lijnen 
-# methode van opencv werkt niet correct: https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga1a539e8db2135af2566103705d7a5722
+def show_contours(title, image, clicks, contours):
+  temp_img = copy.deepcopy(image)
+  add_contours_to_image(contours, temp_img)
+  temp_img = resize_image(temp_img, 1.0/resize_factor)
+  cv2.namedWindow(title)
+  cv2.setMouseCallback(title, onMouse, clicks)
+  cv2.imshow(title, temp_img)
+  os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
+
+# Zegt of het punt in de contour ligt. positieve waarde is binnen, negatieve is buiten. grootte is de afstand
+# Dit is een naïve methode en controleert enkel horizontal afstand bij verticale lijnen 
+# Methode van opencv werkt niet correct: https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga1a539e8db2135af2566103705d7a5722
 def pointContourTest(contour, point):
-  x, y, w, h = cv2.boundingRect(contour)
+  (x, y, w, h) = contour
   X, Y = point
   dist = abs(x - X)
   dist = min(dist, abs(y - Y))
@@ -84,8 +94,6 @@ def pointContourTest(contour, point):
 
 
 def detect_corners3(image):
-  original = copy.deepcopy(image)
-
   (rows, cols) = image.shape[:2]
   minHeight = rows / 32.0
   minWidth = cols / 32.0
@@ -105,7 +113,7 @@ def detect_corners3(image):
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  # te kleine contours wegfilteren
+  # Te kleine contours wegfilteren
   temp_contours = []
   for contour in contours:
     x, y, w, h = cv2.boundingRect(contour)
@@ -114,65 +122,81 @@ def detect_corners3(image):
   contours = temp_contours
 
   mouseClicks = []
+  # Bij selected contours wordt overgegaan naar rectangles vanwege makkelijker gebruik. Deze selectedContours zijn van de vorm list(tuple(x, y, w, h))
   selectedContours = []
+  show_contours('Klik op schilderijen om de randen te detecteren, enter om door te gaan', image, mouseClicks, selectedContours)
 
-  temp_img = copy.deepcopy(image)
-  temp_img = resize_image(temp_img, 1.0/resize_factor)
-
-
-  cv2.namedWindow('Klik op schilderijen om de randen te detecteren')
-  cv2.setMouseCallback('Klik op schilderijen om de randen te detecteren', onMouse, mouseClicks)
-  cv2.imshow('Klik op schilderijen om de randen te detecteren', temp_img)
-  os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
-
+  previous_amount_of_clicks = len(mouseClicks)
   key = cv2.waitKey(10)
   while(key != 13):
       key = cv2.waitKey(10)
-  cv2.destroyAllWindows()
+      if(len(mouseClicks) > previous_amount_of_clicks):
+        selectedContours = []
+        previous_amount_of_clicks = len(mouseClicks)
+        # Selecteren welke contouren we willen behouden
+        for contour in contours:
+          #TODO: hier zijn performantie mogelijkheden misschien mogelijk, dezelfde mouseClicks worden per klik allemaal opnieuw overlopen, als dit aangepast wordt moet wel opgelet worden op duplicate contours!
+          for click in mouseClicks:
+            x, y, w, h = cv2.boundingRect(contour)
+            if(pointContourTest((x, y, w, h), click) >= 0):
+              selectedContours.append((x, y, w, h))
+              break
+        show_contours('Klik op schilderijen om de randen te detecteren, enter om door te gaan', image, mouseClicks, selectedContours)
+        
 
-  # selecteren welke contouren we willen behouden
-  for contour in contours:
-    for click in mouseClicks:
-      x, y, w, h = cv2.boundingRect(contour)
-      if(pointContourTest(contour, click) >= 0):
-        selectedContours.append(contour)
-        break
 
-  mouseClicks = []
-  temp_img = copy.deepcopy(image)
+
   # Kijk bij welke contour een klik het dichtste ligt en verwijder deze
   if(len(selectedContours) > 0):
-    add_contours_to_image(selectedContours, temp_img)
-    temp_img = resize_image(temp_img, 1.0/resize_factor)
-    cv2.namedWindow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan')
-    cv2.setMouseCallback('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', onMouse, mouseClicks)
-    cv2.imshow('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', temp_img)
-    os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
+    mouseClicks = []
+
+    cv2.destroyAllWindows()
+    show_contours('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', image, mouseClicks, selectedContours)
 
     key = cv2.waitKey(10)
     while(key != 13):
         key = cv2.waitKey(10)
-    cv2.destroyAllWindows()
-
-
-    removeIndices = []
-    for click in mouseClicks:
-      # we willen de kortste afstand vinden, dus moeten we op een groot genoege waarde starten
-      dist = sys.maxsize
-      index = -1
-      for i in range(len(selectedContours)):
-        if(abs(pointContourTest(selectedContours[i], click)) < dist):
-          dist = abs(abs(pointContourTest(selectedContours[i], click)))
-          index = i
-      removeIndices.append(index)
-    removeIndices = list(dict.fromkeys(removeIndices))
-    # van groot naar klein, zodat we geen andere verwijder indexen aanpassen
-    removeIndices.sort(reverse = True) 
-    for i in range(len(removeIndices)):
-      selectedContours.pop(removeIndices[i])
+        if(len(mouseClicks) > 0):
+          dist = sys.maxsize
+          index = -1 
+          for i in range(len(selectedContours)):
+            if(abs(pointContourTest(selectedContours[i], mouseClicks[0])) < dist):
+              dist = abs(pointContourTest(selectedContours[i], mouseClicks[0]))
+              index = i
+          selectedContours.pop(index)
+          mouseClicks = []
+          show_contours('Klik zo dicht mogelijk bij de randen van de te verwijderen contouren, enter om door te gaan', image, mouseClicks, selectedContours)
+  
 
 
 
 
-  add_contours_to_image(selectedContours, original)
-  return original
+  # Nieuwe vierkanten bijtekenen
+  mouseClicks = []
+  cv2.destroyAllWindows()
+  # TODO: willen we eender welke overeenstaande hoeken toestaan?
+  show_contours('Klik op de linker bovenhoek en de rechter onderhoek van een schilderij om een nieuwe contour te tekenen, enter om door te gaan', image, mouseClicks, selectedContours)
+
+  key = cv2.waitKey(10)
+  while(key != 13):
+    key = cv2.waitKey(10)
+    if(len(mouseClicks) == 2):
+      # Naief: eerste click is linksboven, tweede rechtsonder
+      (x1, y1) = mouseClicks[0]
+      (x2, y2) = mouseClicks[1]
+      selectedContours.append((x1, y1, abs(x1 - x2), abs(y1 - y2)))
+      mouseClicks = []
+      show_contours('Klik op de linker bovenhoek en de rechter onderhoek van een schilderij om een nieuwe contour te tekenen, enter om door te gaan', image, mouseClicks, selectedContours)
+
+
+
+
+
+  # Contouren verfijnen
+
+
+
+
+  cv2.destroyAllWindows()
+  add_contours_to_image(selectedContours, image)
+  return image
