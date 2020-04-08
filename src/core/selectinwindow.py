@@ -1,10 +1,8 @@
 import cv2
-from shapely.geometry import Point as ShapelyPoint
-from shapely.geometry.polygon import Polygon
 import numpy as np
-import copy
 
-# Based on https://github.com/arccoder/opencvdragrect 
+
+# Based on https://github.com/arccoder/opencvdragrect
 # edited to work with quadrilateral instead of rectangles
 
 class Point:
@@ -37,15 +35,8 @@ class dragRect:
     keepWithin = Rect()
     # To store rectangle
     outQuad = Quadrilateral()
-    # To store rectangle anchor point
-    # Here the rect class object is used to store
-    # the distance in the x and y direction from
-    # the anchor point to the top-left and the bottom-right corner
-    anchor = Rect()
     # Selection marker size
     sBlk = 4
-    # Whether initialized or not
-    initialized = False
 
     # Image
     original_image = None
@@ -54,14 +45,9 @@ class dragRect:
     # Window Name
     wname = ""
 
-    # Return flag
-    returnflag = False
-
     # FLAGS
     # Rect already present
     active = True
-    # Drag for rect resize in progress
-    # drag = False
     # Marker flags by positions
     TL = False
     TR = False
@@ -108,7 +94,6 @@ def init(dragObj, image, contours, windowName, windowWidth, windowHeight, resize
     tmp = cv2.polylines(tmp, [pts], True, (0, 255, 0), thickness=2)
     dragObj.image = tmp
 
-    #initialize(dragObj)
 # enddef
 
 def dragrect(event, x, y, flags, dragObj):
@@ -137,18 +122,12 @@ def dragrect(event, x, y, flags, dragObj):
 
 # enddef
 
-def initialize(dragObj):
-    if not dragObj.initialized:
-        clearCanvasNDraw(dragObj)
-        dragObj.initialized = True
-
 def pointInRect(pX, pY, rX, rY, rW, rH):
     if rX <= pX <= (rX + rW) and rY <= pY <= (rY + rH):
         return True
     else:
         return False
     # endelseif
-
 
 # enddef
 
@@ -182,71 +161,11 @@ def mouseDown(eX, eY, dragObj):
             return
         # endif
 
-        # # This has to be below all of the other conditions
-        # if pointInQuad(eX, eY, dragObj.outQuad.x, dragObj.outQuad.y, dragObj.outQuad.w, dragObj.outQuad.h):
-        #     dragObj.anchor.x = eX - dragObj.outQuad.x
-        #     dragObj.anchor.w = dragObj.outQuad.w - dragObj.anchor.x
-        #     dragObj.anchor.y = eY - dragObj.outQuad.y
-        #     dragObj.anchor.h = dragObj.outQuad.h - dragObj.anchor.y
-        #     dragObj.hold = True
-
-        #     return
-        # # endif
-    # else:
-    #     dragObj.outQuad.x = eX
-    #     dragObj.outQuad.y = eY
-    #     dragObj.drag = True
-    #     dragObj.active = True
-    #     return
-
-    # # endelseif
-
+    # endelseif
 
 # enddef
 
 def mouseMove(eX, eY, dragObj):
-    # if dragObj.drag & dragObj.active:
-    #     dragObj.outQuad.w = eX - dragObj.outQuad.x
-    #     dragObj.outQuad.h = eY - dragObj.outQuad.y
-    #     clearCanvasNDraw(dragObj)
-    #     return
-    # # endif
-
-    if dragObj.hold:
-        # dragObj.outQuad.x = eX - dragObj.anchor.x
-        # dragObj.outQuad.y = eY - dragObj.anchor.y
-
-        # Make sure object stays within border
-        if dragObj.outQuad.TLPoint.x < dragObj.keepWithin.x:
-            dragObj.outQuad.TLPoint.x = dragObj.keepWithin.x
-        # endif
-        if dragObj.outQuad.BLPoint.x < dragObj.keepWithin.x:
-            dragObj.outQuad.BLPoint.x = dragObj.keepWithin.x
-        # endif
-        if (dragObj.outQuad.TRPoint.x) > (dragObj.keepWithin.x + dragObj.keepWithin.w - 1):
-            dragObj.outQuad.TRPoint.x = dragObj.keepWithin.x + dragObj.keepWithin.w - 1
-        # endif
-        if (dragObj.outQuad.BRPoint.x) > (dragObj.keepWithin.x + dragObj.keepWithin.w - 1):
-            dragObj.outQuad.BRPoint.x = dragObj.keepWithin.x + dragObj.keepWithin.w - 1
-        # endif
-
-        if dragObj.outQuad.TLPoint.y < dragObj.keepWithin.y:
-            dragObj.outQuad.TLPoint.y = dragObj.keepWithin.y
-        # endif
-        if dragObj.outQuad.BLPoint.y < dragObj.keepWithin.y:
-            dragObj.outQuad.BLPoint.y = dragObj.keepWithin.y
-        # endif
-        if (dragObj.outQuad.TRPoint.y) > (dragObj.keepWithin.y + dragObj.keepWithin.h - 1):
-            dragObj.outQuad.TRPoint.y = dragObj.keepWithin.y + dragObj.keepWithin.h - 1
-        # endif
-        if (dragObj.outQuad.BRPoint.y) > (dragObj.keepWithin.y + dragObj.keepWithin.h - 1):
-            dragObj.outQuad.BRPoint.y = dragObj.keepWithin.y + dragObj.keepWithin.h - 1
-        # endif
-
-        clearCanvasNDraw(dragObj)
-        return
-    # endif
-
     if dragObj.TL:
         dragObj.outQuad.TLPoint.x = eX
         dragObj.outQuad.TLPoint.y = eY
@@ -272,19 +191,12 @@ def mouseMove(eX, eY, dragObj):
         return
     # endif
 
-
 # enddef
 
 def mouseUp(eX, eY, dragObj):
-    # dragObj.drag = False
     disableResizeButtons(dragObj)
-    # straightenUpRect(dragObj)
-    # if dragObj.outQuad.w == 0 or dragObj.outQuad.h == 0:
-    #     dragObj.active = False
-    # # endif
 
     clearCanvasNDraw(dragObj)
-
 
 # enddef
 
@@ -292,20 +204,6 @@ def disableResizeButtons(dragObj):
     dragObj.TL = dragObj.TR = False
     dragObj.BL = dragObj.BR = False
     dragObj.hold = False
-
-
-# enddef
-
-# def straightenUpRect(dragObj):
-#     if dragObj.outQuad.w < 0:
-#         dragObj.outQuad.x = dragObj.outQuad.x + dragObj.outQuad.w
-#         dragObj.outQuad.w = -dragObj.outQuad.w
-#     # endif
-#     if dragObj.outQuad.h < 0:
-#         dragObj.outQuad.y = dragObj.outQuad.y + dragObj.outQuad.h
-#         dragObj.outQuad.h = -dragObj.outQuad.h
-#     # endif
-
 
 # enddef
 
