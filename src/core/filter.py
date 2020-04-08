@@ -5,7 +5,6 @@ import math
 def apply_filters(image):
   """
   ...
-
   Parameters
   ----------
   - image -- The image to apply filters to.
