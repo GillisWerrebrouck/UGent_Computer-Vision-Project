@@ -4,6 +4,9 @@ from shapely.geometry.polygon import Polygon
 import numpy as np
 import copy
 
+# Based on https://github.com/arccoder/opencvdragrect 
+# edited to work with quadrilateral instead of rectangles
+
 class Point:
     x = None
     y = None
