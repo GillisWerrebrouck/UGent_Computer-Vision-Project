@@ -212,7 +212,7 @@ def run_task_01(db_connection):
 
   # read all filenames
   filenames = []
-  for filename in glob('./data/dataset_pictures_msk/zaal_1/*.jpg'):
+  for filename in glob('./data/dataset_pictures_msk/zaal_*/*.jpg'):
     filenames.append(filename)
 
   # the layout of the window

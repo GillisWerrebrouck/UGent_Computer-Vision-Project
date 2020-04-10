@@ -18,11 +18,14 @@ def detect_contours(image):
 
   Returns: The detected contours.
   """
-  
+
   logger.info('Starting naive contour detection')
 
   (height, width) = image.shape[:2]
   max_allowed_ratio = 10
+
+  image = resize_image(image, 0.2)
+  image = resize_image(image, 1/0.2)
 
   imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -31,14 +34,13 @@ def detect_contours(image):
   imgray = cv2.erode(imgray, kernel)
 
   imgray = cv2.medianBlur(imgray, 21)
-  ret, thresh = cv2.threshold(imgray, 127, 255, cv2.THRESH_BINARY)
 
-  canny = cv2.Canny(thresh, threshold1=50, threshold2=150, apertureSize=3)
+  canny = cv2.Canny(imgray, threshold1=50, threshold2=80, apertureSize=3)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-  
+
   logger.info('Detected {} contour(s)'.format(len(contours)))
 
   filtered_contours = []
