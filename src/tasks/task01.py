@@ -217,7 +217,15 @@ def run_task_01(db_connection):
 
   # the layout of the window
   layout = [
-    [sg.Text('Task 1'), sg.Button('Add'), sg.Button('Remove'), sg.Button('Drag'), sg.Button('Convert'), sg.Button('Save to database'), sg.Button('Next image')],
+    [sg.Text('Add, remove and modify contours in the displayed images by using the provided actions.', font=('Helvetica', 12, ''))], 
+    [
+      sg.Button('Add', font=('Helvetica', 10, '')), 
+      sg.Button('Remove', font=('Helvetica', 10, '')), 
+      sg.Button('Drag', font=('Helvetica', 10, '')), 
+      sg.Button('Convert', font=('Helvetica', 10, '')), 
+      sg.Button('Save to database', font=('Helvetica', 10, '')), 
+      sg.Button('Next image', font=('Helvetica', 10, ''))
+    ],
     [sg.Frame('Image',[[
       sg.Graph(
         canvas_size=graph_size,

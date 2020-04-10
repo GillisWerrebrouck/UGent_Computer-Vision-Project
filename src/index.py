@@ -17,8 +17,11 @@ if (db_connection == None):
 # create a window with all tasks listed and set theme
 sg.theme('DefaultNoMoreNagging')
 layout = [
-    [sg.Text('Choose a task')],
-    [sg.Button('Task 1')],
+    [sg.Text('Choose a task', font=('Helvetica', 12, ''))],
+    [sg.Button('Run task 1', font=('Helvetica', 10, ''))],
+    [sg.Button('Run task 2', font=('Helvetica', 10, ''))],
+    [sg.Button('Run task 3', font=('Helvetica', 10, ''))],
+    [sg.Button('Run task 4', font=('Helvetica', 10, ''))],
 ]
 window = get_window('Tasks', layout)
 
@@ -27,7 +30,7 @@ window = get_window('Tasks', layout)
 while True:
   event, values = window.Read()
 
-  if event == 'Task 1':
+  if event == 'Run task 1':
     window.close()
     run_task_01(db_connection)
 
