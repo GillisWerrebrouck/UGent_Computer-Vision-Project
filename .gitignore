@@ -6,3 +6,6 @@
 
 # VS Code files
 .vscode
+
+# Dataset
+/src/data/dataset_pictures_msk
