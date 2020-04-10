@@ -2,9 +2,13 @@ import cv2
 import PySimpleGUI as sg
 from glob import glob
 
+from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
 from core.detection import detect_contours, get_contour, get_contour_with_id
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+
+logger = get_root_logger()
+
 
 # size of the canvas (graph); tuple: (height, width)
 graph_size = (800, 800)
@@ -88,6 +92,8 @@ def show_next_image(graph, filenames):
   filepath = filenames[0]
   filenames.remove(filenames[0])
 
+  logger.info('Loading next image; {}'.format(filepath))
+
   img = cv2.imread(filepath)
 
   factor = get_image_resize_factor(img)
@@ -120,6 +126,8 @@ def add_contour_event(point, graph, visible_contours, invisible_contours):
   - visible_contours -- All visible rectangular contours (not quadrilateral).
   - invisible_contours -- All invisible rectangular contours.
   """
+
+  logger.info('Add-contour-event triggered')
   
   contour = get_contour(point, invisible_contours)
   if(contour is not None):
@@ -139,6 +147,8 @@ def remove_contour_event(point, graph, visible_contours, invisible_contours):
   - visible_contours -- All visible rectangular contours (not quadrilateral).
   - invisible_contours -- All invisible rectangular contours.
   """
+
+  logger.info('Remove-contour-event triggered')
 
   contour = get_contour_with_id(point, visible_contours)
   if(contour is not None):
@@ -163,6 +173,8 @@ def convert_contours_event(graph, visible_contours, invisible_contours, all_quad
   Returns: The converted and drawn quadrilateral figure objects.
   """
 
+  logger.info('Convert-contours-event triggered')
+
   for c in visible_contours:
     all_quadrilaterals.append(c[0])
     graph.DeleteFigure(c[1])
@@ -179,6 +191,8 @@ def run_task_01(db_connection):
   ----------
   - db_connection -- The database connection to use for database queries.
   """
+
+  logger.info('Task 1 started')
 
   # variables to drag a rectangle contour
   dragging_contour = False
@@ -228,6 +242,8 @@ def run_task_01(db_connection):
   visible_contours = []
   # display the first image
   invisible_contours = show_next_image(graph, filenames)
+
+  logger.info('Starting event loop of task 1')
 
   # the event loop
   while True:

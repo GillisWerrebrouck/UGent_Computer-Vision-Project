@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
+
+from core.logger import get_root_logger
 from core.visualize import show_image, resize_image
 from core.shape import Point, Rect
+
+logger = get_root_logger()
 
 
 def detect_contours(image):
@@ -14,6 +18,8 @@ def detect_contours(image):
 
   Returns: The detected contours.
   """
+  
+  logger.info('Starting naive contour detection')
 
   (height, width) = image.shape[:2]
   max_allowed_ratio = 10
@@ -32,6 +38,8 @@ def detect_contours(image):
   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  
+  logger.info('Detected {} contour(s)'.format(len(contours)))
 
   filtered_contours = []
   for contour in contours:
@@ -39,6 +47,8 @@ def detect_contours(image):
     if max(w/h, h/w) <= max_allowed_ratio:
       rectangle = Rect(Point(x, y), Point(x+w, y+h))
       filtered_contours.append(rectangle)
+
+  logger.info('Detected {} contour(s) after filtering out contours with abnormal ratio'.format(len(contours)))
 
   return filtered_contours
 

@@ -19,6 +19,8 @@ def get_window(title, layout):
   Returns: The created window object.
   """
 
+  logger.info('Creating a window with title: {}'.format(title))
+
   window = sg.Window(title, layout)
   window.Finalize()
   return window
