@@ -179,6 +179,8 @@ def convert_contours_event(graph, visible_contours, invisible_contours, all_quad
   for c in visible_contours:
     all_quadrilaterals.append(c[0])
     graph.DeleteFigure(c[1])
+    invisible_contours.append(c[0])
+  visible_contours = []
   remove_quadrilateral_figures(graph, all_quadrilateral_figures)
   return draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
@@ -271,17 +273,34 @@ def run_task_01(db_connection):
         current_action = "drag"
       if event == "Convert":
         all_quadrilateral_figures = convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures)
+        visible_contours = []
       if event == "Clear canvas":
         graph.erase()
         temp_old_filenames = old_filenames.copy()
         show_next_image(graph, old_filenames)
         old_filenames = temp_old_filenames
-        
+
+        all_quadrilaterals = []
+        all_quadrilateral_figures = []
+
         for contour in visible_contours:
           invisible_contours.append(contour[0])
+        visible_contours = []
       
       if event == "Save to database":
-        print("save")
+        for quadrilateral in all_quadrilaterals:
+          x1 = quadrilateral.TLPoint.x
+          y1 = quadrilateral.TLPoint.y
+          x2 = quadrilateral.TRPoint.x
+          y2 = quadrilateral.TRPoint.y
+          x3 = quadrilateral.BRPoint.x
+          y3 = quadrilateral.BRPoint.y
+          x4 = quadrilateral.BLPoint.x
+          y4 = quadrilateral.BLPoint.y
+
+          print("[SAVE TO DATABASE] P(" + str(x1) + ", " + str(y1) + ") - P(" + str(x2) + ", " + str(y2) + ") - P(" + str(x3) + ", " + str(y3) + ") - P(" + str(x4) + ", " + str(y4) + ")")
+          # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its points, keypoints and feature vector (histogram, etc.) to the db
+
       if event == "Next image":
         if len(filenames) == 0:
           window.close()
