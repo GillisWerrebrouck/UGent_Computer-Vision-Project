@@ -50,7 +50,7 @@ def detect_contours(image):
       rectangle = Rect(Point(x, y), Point(x+w, y+h))
       filtered_contours.append(rectangle)
 
-  logger.info('Detected {} contour(s) after filtering out contours with abnormal ratio'.format(len(contours)))
+  logger.info('Detected {} contour(s) after filtering out contours with abnormal ratio'.format(len(filtered_contours)))
 
   return filtered_contours
 

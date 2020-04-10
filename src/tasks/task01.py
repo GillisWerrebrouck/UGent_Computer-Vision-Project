@@ -106,7 +106,8 @@ def show_next_image(graph, filenames):
 
   # reset the coordinate system of the graph to display the image
   graph.change_coordinates((0, graph_size[1]), (graph_size[0], 0))
-  graph.DrawImage(data=image_to_byte_string(img), location=loc)
+  byte_string = image_to_byte_string(img)
+  graph.DrawImage(data=byte_string, location=loc)
 
   (graph_width, graph_height) = graph_size[:2]
   # change the coordinate system of the canvas (graph) to be according to the displayed (centered) image
@@ -223,6 +224,7 @@ def run_task_01(db_connection):
       sg.Button('Remove', font=('Helvetica', 10, '')), 
       sg.Button('Drag', font=('Helvetica', 10, '')), 
       sg.Button('Convert', font=('Helvetica', 10, '')), 
+      sg.Button('Clear canvas', font=('Helvetica', 10, '')), 
       sg.Button('Save to database', font=('Helvetica', 10, '')), 
       sg.Button('Next image', font=('Helvetica', 10, ''))
     ],
@@ -248,6 +250,7 @@ def run_task_01(db_connection):
     return
   
   visible_contours = []
+  old_filenames = filenames.copy()
   # display the first image
   invisible_contours = show_next_image(graph, filenames)
 
@@ -268,6 +271,15 @@ def run_task_01(db_connection):
         current_action = "drag"
       if event == "Convert":
         all_quadrilateral_figures = convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures)
+      if event == "Clear canvas":
+        graph.erase()
+        temp_old_filenames = old_filenames.copy()
+        show_next_image(graph, old_filenames)
+        old_filenames = temp_old_filenames
+        
+        for contour in visible_contours:
+          invisible_contours.append(contour[0])
+      
       if event == "Save to database":
         print("save")
       if event == "Next image":
@@ -276,6 +288,7 @@ def run_task_01(db_connection):
           return
         
         visible_contours = []
+        old_filenames = filenames.copy()
         invisible_contours = show_next_image(graph, filenames)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
