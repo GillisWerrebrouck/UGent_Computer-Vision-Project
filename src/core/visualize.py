@@ -26,7 +26,7 @@ def get_window(title, layout):
   return window
 
 
-def draw_contour(graph, contour):
+def draw_contour(graph, contour, width=2, color="red"):
   """
   Draw the given rectangular contour on the canvas (graph).
 
@@ -40,12 +40,12 @@ def draw_contour(graph, contour):
 
   (x1, y1) = contour.TLPoint.x, contour.TLPoint.y
   (x2, y2) = contour.BRPoint.x, contour.BRPoint.y
-  id = graph.DrawRectangle((x1, y1), (x2, y2), line_color="red")
+  id = graph.DrawRectangle((x1, y1), (x2, y2), fill_color=None, line_color=color, line_width=width)
 
   return id
 
 
-def draw_quadrilaterals(graph, quadrilaterals, point_size=15, color="green"):
+def draw_quadrilaterals(graph, quadrilaterals, point_size=15, width=2, color="red"):
   """
   Draw the given quadrilaterals on the canvas (graph).
 
@@ -63,10 +63,10 @@ def draw_quadrilaterals(graph, quadrilaterals, point_size=15, color="green"):
   point_shift = point_size/2
 
   for q in quadrilaterals:
-    TopLineId = graph.DrawLine((q.TLPoint.x, q.TLPoint.y), (q.TRPoint.x, q.TRPoint.y), color=color, width=1)
-    RightLineId = graph.DrawLine((q.TRPoint.x, q.TRPoint.y), (q.BRPoint.x, q.BRPoint.y), color=color, width=1)
-    BottomLineId = graph.DrawLine((q.BRPoint.x, q.BRPoint.y), (q.BLPoint.x, q.BLPoint.y), color=color, width=1)
-    LeftLineId = graph.DrawLine((q.BLPoint.x, q.BLPoint.y), (q.TLPoint.x, q.TLPoint.y), color=color, width=1)
+    TopLineId = graph.DrawLine((q.TLPoint.x, q.TLPoint.y), (q.TRPoint.x, q.TRPoint.y), color=color, width=width)
+    RightLineId = graph.DrawLine((q.TRPoint.x, q.TRPoint.y), (q.BRPoint.x, q.BRPoint.y), color=color, width=width)
+    BottomLineId = graph.DrawLine((q.BRPoint.x, q.BRPoint.y), (q.BLPoint.x, q.BLPoint.y), color=color, width=width)
+    LeftLineId = graph.DrawLine((q.BLPoint.x, q.BLPoint.y), (q.TLPoint.x, q.TLPoint.y), color=color, width=width)
 
     TLPointId = graph.DrawRectangle((q.TLPoint.x - point_shift, q.TLPoint.y - point_shift), (q.TLPoint.x + point_shift, q.TLPoint.y + point_shift), fill_color=color, line_color=None, line_width=None)
     TRPointId = graph.DrawRectangle((q.TRPoint.x - point_shift, q.TRPoint.y - point_shift), (q.TRPoint.x + point_shift, q.TRPoint.y + point_shift), fill_color=color, line_color=None, line_width=None)

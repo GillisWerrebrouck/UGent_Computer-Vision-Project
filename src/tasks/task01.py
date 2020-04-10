@@ -131,7 +131,7 @@ def add_contour_event(point, graph, visible_contours, invisible_contours):
   
   contour = get_contour(point, invisible_contours)
   if(contour is not None):
-    id = draw_contour(graph, contour)
+    id = draw_contour(graph, contour, color="red")
     visible_contours.append([contour, id])
 
 
@@ -179,7 +179,7 @@ def convert_contours_event(graph, visible_contours, invisible_contours, all_quad
     all_quadrilaterals.append(c[0])
     graph.DeleteFigure(c[1])
   remove_quadrilateral_figures(graph, all_quadrilateral_figures)
-  return draw_quadrilaterals(graph, all_quadrilaterals)
+  return draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
 
 def run_task_01(db_connection):
@@ -304,13 +304,13 @@ def run_task_01(db_connection):
               graph.DeleteFigure(current_dragging_contour_id)
             
             current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
-            current_dragging_contour_id = draw_contour(graph, current_dragging_contour)
+            current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
           
           elif dragging_quadrilateral == True:
             dragging_corner_point.x = point.x
             dragging_corner_point.y = point.y
             remove_quadrilateral_figures(graph, all_quadrilateral_figures)
-            all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals)
+            all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
       if event == "graph+UP":
         if current_action == "drag":
@@ -320,7 +320,7 @@ def run_task_01(db_connection):
 
             if current_dragging_contour is not None:
               current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
-              current_dragging_contour_id = draw_contour(graph, current_dragging_contour)
+              current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
 
               visible_contours.append([current_dragging_contour, current_dragging_contour_id])
 
