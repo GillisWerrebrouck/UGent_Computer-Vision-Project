@@ -1,19 +1,22 @@
 import cv2
 import numpy as np
 from core.visualize import show_image, resize_image
-import os
-import copy
-import sys
-from core.shape import Rect, Point
+from core.shape import Point, Rect
 
-# TODO: consistentie naamgeving, soms capitalCasing, soms niet_capital_casing
-
-resize_factor = 5
 
 def detect_contours(image):
+  """
+  Detect (in a naive way) contours of images in an image.
+
+  Parameters
+  ----------
+  - image --  The image to detect contours in.
+
+  Returns: The detected contours.
+  """
+
   (height, width) = image.shape[:2]
-  minHeight = height / 32.0
-  minWidth = width / 32.0
+  max_allowed_ratio = 10
 
   imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -30,17 +33,28 @@ def detect_contours(image):
   canny = cv2.dilate(canny, kernel)
   contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  # Te kleine contours wegfilteren
   filtered_contours = []
   for contour in contours:
     x, y, w, h = cv2.boundingRect(contour)
-    if (w >= minWidth and h >= minHeight):
+    if max(w/h, h/w) <= max_allowed_ratio:
       rectangle = Rect(Point(x, y), Point(x+w, y+h))
       filtered_contours.append(rectangle)
 
   return filtered_contours
 
-def get_contour(contours, point):
+
+def get_contour(point, contours):
+  """
+  Detect the contour in which the point exists, if a contour around this point exists.
+
+  Parameters
+  ----------
+  - point --  The coordinate of a point.
+  - contours --  All contours from which to find a surrounding contour.
+
+  Returns: The detected contour, if one exists.
+  """
+
   for c in contours:
     if(c.has_point(point)):
       copy = c
@@ -48,18 +62,22 @@ def get_contour(contours, point):
       return copy
   return None
 
-def get_contour_with_id(contours, point):
+
+def get_contour_with_id(point, contours):
+  """
+  Detect the contour in which the point exists, if a contour around this point exists.
+  
+  Parameters
+  ----------
+  - point --  The coordinate of a point.
+  - contours --  All contours from which to find a surrounding contour. The contours are tupples; (Rect contour, figure id).
+
+  Returns: The detected contour, if one exists.
+  """
+
   for c in contours:
     if(c[0].has_point(point)):
       copy = c
       contours.remove(c)
       return copy
-  return None
-
-def remove_contour(contours, point):
-  for c in contours:
-    if(c[0].has_point(point)):
-      id = c[1]
-      contours.remove(c)
-      return id
   return None

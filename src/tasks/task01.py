@@ -1,0 +1,316 @@
+import cv2
+import PySimpleGUI as sg
+from glob import glob
+
+from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
+from core.detection import detect_contours, get_contour, get_contour_with_id
+from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+
+# size of the canvas (graph); tuple: (height, width)
+graph_size = (800, 800)
+
+
+def image_to_byte_string(image):
+  """
+  Convert an image to a byte string.
+  This operation is very expensive in terms of performance therefore it should only be used when necessary.
+
+  Parameters
+  ----------
+  - image -- The image to convert.
+
+  Returns: A byte string of the given image.
+  """
+
+  is_success, im_buf_arr = cv2.imencode(".png", image)
+  byte_im = im_buf_arr.tobytes()
+  return byte_im
+
+
+def get_image_resize_factor(image):
+  """
+  Calculates the resize factor for the image to fit in the canvas (graph).
+
+  Parameters
+  ----------
+  - image -- The image to get the resize factor for.
+
+  Returns: The resize factor for the given image in the canvas.
+  """
+  
+  (height, width) = image.shape[:2]
+  (graph_width, graph_height) = graph_size[:2]
+
+  if height >= width:
+    return graph_height/height
+  
+  if height < width:
+    return graph_width/width
+
+
+def get_image_location_in_graph(image):
+  """
+  Calculates the location of the image in the canvas (graph).
+  The location is calculated so that the image is always positioned in the center in both x and y direction.
+
+  Parameters
+  ----------
+  - image -- The image to get the location for.
+
+  Returns: The location (tuple: (x, y)) for the given image to be positioned in the center of the canvas, based on the size of the image and the canvas.
+  """
+  
+  (height, width) = image.shape[:2]
+  (graph_width, graph_height) = graph_size[:2]
+
+  if height == graph_height:
+    return ((graph_width-width)/2, 0)
+  
+  if width == graph_width:
+    return (0, (graph_height-height)/2)
+
+
+def show_next_image(graph, filenames):
+  """
+  Display the next image in the canvas (graph).
+
+  Parameters
+  ----------
+  - graph -- The canvas element to display the image in.
+  - filenames -- Used as queue of filenames, the image to be displayed is removed from the queue.
+
+  Returns: The detected contours in the image with its coordinates relative to the current image size.
+  """
+  
+  if len(filenames) == 0:
+    return
+  
+  filepath = filenames[0]
+  filenames.remove(filenames[0])
+
+  img = cv2.imread(filepath)
+
+  factor = get_image_resize_factor(img)
+  img = resize_image(img, factor)
+
+  detected_contours = detect_contours(img)
+  graph.erase()
+
+  loc = get_image_location_in_graph(img)
+
+  # reset the coordinate system of the graph to display the image
+  graph.change_coordinates((0, graph_size[1]), (graph_size[0], 0))
+  graph.DrawImage(data=image_to_byte_string(img), location=loc)
+
+  (graph_width, graph_height) = graph_size[:2]
+  # change the coordinate system of the canvas (graph) to be according to the displayed (centered) image
+  graph.change_coordinates((-loc[0], graph_size[1]-loc[1]), (graph_size[0]-loc[0], -loc[1]))
+
+  return detected_contours
+
+
+def add_contour_event(point, graph, visible_contours, invisible_contours):
+  """
+  Function as part of the event loop (while True ...) to add contours by clicking on the image.
+
+  Parameters
+  ----------
+  - point -- The position of the cursor when the event was triggered.
+  - graph -- The canvas element in which the click event occured.
+  - visible_contours -- All visible rectangular contours (not quadrilateral).
+  - invisible_contours -- All invisible rectangular contours.
+  """
+  
+  contour = get_contour(point, invisible_contours)
+  if(contour is not None):
+    id = draw_contour(graph, contour)
+    visible_contours.append([contour, id])
+
+
+def remove_contour_event(point, graph, visible_contours, invisible_contours):
+  """
+  Function as part of the event loop (while True ...) to remove contours (make invisible) by clicking on the image.
+  The contour in which has been clicked is removed.
+
+  Parameters
+  ----------
+  - point -- The position of the cursor when the event was triggered.
+  - graph -- The canvas element in which the click event occured.
+  - visible_contours -- All visible rectangular contours (not quadrilateral).
+  - invisible_contours -- All invisible rectangular contours.
+  """
+
+  contour = get_contour_with_id(point, visible_contours)
+  if(contour is not None):
+    invisible_contours.append(contour[0])
+    id = contour[1]
+    graph.DeleteFigure(id)
+
+
+# convert rectangle contours to quadrilateral contour objects
+def convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures):
+  """
+  Function as part of the event loop (while True ...) to convert contours from rectangular contours to quadrilateral objects.
+
+  Parameters
+  ----------
+  - graph -- The canvas element in which the click event occured.
+  - visible_contours -- All visible rectangular contours (not quadrilateral).
+  - invisible_contours -- All invisible rectangular contours.
+  - all_quadrilaterals -- All quadrilateral contours objects.
+  - all_quadrilateral_figures -- All quadrilateral figure objects.
+
+  Returns: The converted and drawn quadrilateral figure objects.
+  """
+
+  for c in visible_contours:
+    all_quadrilaterals.append(c[0])
+    graph.DeleteFigure(c[1])
+  remove_quadrilateral_figures(graph, all_quadrilateral_figures)
+  return draw_quadrilaterals(graph, all_quadrilaterals)
+
+
+def run_task_01(db_connection):
+  """
+  Run task 1.
+  Open a window and display the first image.
+
+  Parameters
+  ----------
+  - db_connection -- The database connection to use for database queries.
+  """
+
+  # variables to drag a rectangle contour
+  dragging_contour = False
+  current_dragging_contour = None
+  current_dragging_contour_id = None
+
+  # variables to drag a quadrilateral by dragging its points
+  dragging_quadrilateral = False
+  current_dragging_quadrilateral = None
+  current_dragging_quadrilateral_figure = None
+  dragging_corner_point = None
+  all_quadrilaterals = []
+  all_quadrilateral_figures = []
+  
+  # the current selected action
+  current_action = "add"
+
+  # read all filenames
+  filenames = []
+  for filename in glob('./data/dataset_pictures_msk/zaal_1/*.jpg'):
+    filenames.append(filename)
+
+  # the layout of the window
+  layout = [
+    [sg.Text('Task 1'), sg.Button('Add'), sg.Button('Remove'), sg.Button('Drag'), sg.Button('Convert'), sg.Button('Save to database'), sg.Button('Next image')],
+    [sg.Frame('Image',[[
+      sg.Graph(
+        canvas_size=graph_size,
+        graph_bottom_left=(0, graph_size[1]),
+        graph_top_right=(graph_size[0], 0),
+        key="graph",
+        pad=None,
+        enable_events=True,
+        drag_submits=True,
+      )
+    ]])]
+  ]
+
+  window = get_window("Task 1", layout)
+  graph = window.Element("graph")
+  
+  # close the window if no filenames could be found
+  if len(filenames) == 0:
+    window.close()
+    return
+  
+  visible_contours = []
+  # display the first image
+  invisible_contours = show_next_image(graph, filenames)
+
+  # the event loop
+  while True:
+      event, values = window.Read()
+      if values is not None:
+          point = Point(values["graph"][0], values["graph"][1])
+
+      # button click events
+      if event == "Add":
+        current_action = "add"
+      if event == "Remove":
+        current_action = "remove"
+      if event == "Drag":
+        current_action = "drag"
+      if event == "Convert":
+        all_quadrilateral_figures = convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures)
+      if event == "Save to database":
+        print("save")
+      if event == "Next image":
+        if len(filenames) == 0:
+          window.close()
+          return
+        
+        visible_contours = []
+        invisible_contours = show_next_image(graph, filenames)
+        all_quadrilaterals = []
+        all_quadrilateral_figures = []
+      
+      # the canvas (graph) events
+      if event == "graph":
+        if current_action == "add":
+          add_contour_event(point, graph, visible_contours, invisible_contours)
+        
+        if current_action == "remove":
+          remove_contour_event(point, graph, visible_contours, invisible_contours)
+        
+        if current_action == "drag":
+          if(dragging_contour == False and dragging_quadrilateral == False):
+            current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point = detect_dragging_quadrilateral(point, all_quadrilaterals, all_quadrilateral_figures)
+            
+            if current_dragging_quadrilateral is not None:
+              dragging_quadrilateral = True
+
+          if dragging_quadrilateral == False:
+            if dragging_contour == False:
+              dragging_contour = True
+              current_dragging_contour = Rect(point, point)
+            
+            if current_dragging_contour_id is not None:
+              graph.DeleteFigure(current_dragging_contour_id)
+            
+            current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
+            current_dragging_contour_id = draw_contour(graph, current_dragging_contour)
+          
+          elif dragging_quadrilateral == True:
+            dragging_corner_point.x = point.x
+            dragging_corner_point.y = point.y
+            remove_quadrilateral_figures(graph, all_quadrilateral_figures)
+            all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals)
+
+      if event == "graph+UP":
+        if current_action == "drag":
+          if dragging_quadrilateral == False:
+            if current_dragging_contour_id is not None:
+              graph.DeleteFigure(current_dragging_contour_id)
+
+            if current_dragging_contour is not None:
+              current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
+              current_dragging_contour_id = draw_contour(graph, current_dragging_contour)
+
+              visible_contours.append([current_dragging_contour, current_dragging_contour_id])
+
+            dragging_contour = False
+            start_of_drag = None
+            current_dragging_contour_id = None
+
+          elif dragging_quadrilateral == True:
+            dragging_quadrilateral = False
+            current_dragging_quadrilateral = None
+            current_dragging_quadrilateral_figure = None
+            dragging_corner_point = None
+                  
+      if event == None:
+        break
+
+  window.close()
