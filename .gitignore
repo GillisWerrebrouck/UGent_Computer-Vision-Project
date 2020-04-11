@@ -8,4 +8,4 @@
 .vscode
 
 # Dataset
-/src/data/dataset_pictures_msk
+/src/datasets

@@ -214,7 +214,7 @@ def run_task_01(db_connection):
   current_action = "add"
 
   # read all filenames
-  filenames = glob('./data/dataset_pictures_msk/zaal_*/*.jpg')
+  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 
   # the layout of the window
   layout = [
