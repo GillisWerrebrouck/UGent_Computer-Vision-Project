@@ -11,7 +11,7 @@ logger = get_root_logger()
 
 
 # size of the canvas (graph); tuple: (height, width)
-graph_size = (800, 800)
+graph_size = (600, 600)
 
 
 def image_to_byte_string(image):
@@ -158,6 +158,119 @@ def on_remove_contour_event(point, graph, visible_contours, invisible_contours):
     graph.DeleteFigure(id)
 
 
+def on_draw_event(point, graph, dragging_contour, current_dragging_contour, current_dragging_contour_id):
+  """
+  Function as part of the event loop (while True ...) to draw a contour.
+
+  Parameters
+  ----------
+  - point -- The position of the cursor when the event was triggered.
+  - graph -- The canvas element in which the click event occured.
+  - dragging_contour -- Boolean value that indicates that drawing a contour is in progress.
+  - current_dragging_contour -- The contour that is being drawn.
+  - current_dragging_contour_id -- The id of the contour that is being drawn.
+
+  Returns: The updated values for dragging_contour, current_dragging_contour and current_dragging_contour_id.
+  """
+
+  if dragging_contour == False:
+    dragging_contour = True
+    current_dragging_contour = Rect(point, point)
+  
+  if current_dragging_contour_id is not None:
+    graph.DeleteFigure(current_dragging_contour_id)
+  
+  current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
+  current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
+
+  return dragging_contour, current_dragging_contour, current_dragging_contour_id
+
+
+def on_draw_done_event(point, graph, dragging_contour, current_dragging_contour, current_dragging_contour_id, visible_contours):
+  """
+  Function as part of the event loop (while True ...) that indicates the end of drawing a contour.
+
+  Parameters
+  ----------
+  - point -- The position of the cursor when the event was triggered.
+  - graph -- The canvas element in which the click event occured.
+  - dragging_contour -- Boolean value that indicates that drawing a contour is in progress.
+  - current_dragging_contour -- The contour that is being drawn.
+  - current_dragging_contour_id -- The id of the contour that is being drawn.
+  - visible_contours -- The visible contours on the canvas (graph). A drawn contour is added to the visible contours.
+
+  Returns: The updated values for dragging_contour, current_dragging_contour, current_dragging_contour_id and visible_contours.
+  """
+
+  if current_dragging_contour_id is not None:
+    graph.DeleteFigure(current_dragging_contour_id)
+
+  if current_dragging_contour is not None:
+    current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
+    current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
+
+    visible_contours.append([current_dragging_contour, current_dragging_contour_id])
+
+  dragging_contour = False
+  current_dragging_contour_id = None
+
+  return dragging_contour, current_dragging_contour, current_dragging_contour_id, visible_contours
+
+
+def on_drag_event(point, graph, dragging_quadrilateral, dragging_corner_point, all_quadrilaterals, all_quadrilateral_figures):
+  """
+  Function as part of the event loop (while True ...) to drag a contour.
+
+  Parameters
+  ----------
+  - point -- The position of the cursor when the event was triggered.
+  - graph -- The canvas element in which the click event occured.
+  - dragging_quadrilateral -- Boolean value that indicates that dragging a contour is in progress.
+  - dragging_corner_point -- The current corner point that is being dragged.
+  - all_quadrilaterals -- A list with all qudrilateral objects on the canvas (graph).
+  - all_quadrilateral_figures -- A list with all qudrilateral figure objects on the canvas (graph).
+
+  Returns: The updated values for dragging_quadrilateral, all_quadrilaterals, all_quadrilateral_figures and dragging_corner_point.
+  """
+
+  if(dragging_quadrilateral == False):
+    current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point = detect_dragging_quadrilateral(point, all_quadrilaterals, all_quadrilateral_figures)
+    
+    if current_dragging_quadrilateral is not None:
+      dragging_quadrilateral = True
+  
+  if dragging_quadrilateral == True:
+    dragging_corner_point.x = point.x
+    dragging_corner_point.y = point.y
+    remove_quadrilateral_figures(graph, all_quadrilateral_figures)
+    all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals, color="red")
+  
+  return dragging_quadrilateral, all_quadrilaterals, all_quadrilateral_figures, dragging_corner_point
+
+
+def on_drag_done_event(dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point):
+  """
+  Function as part of the event loop (while True ...) that indicates the end of dragging a contour.
+
+  Parameters
+  ----------
+  - dragging_quadrilateral -- Boolean value that indicates that dragging a contour is in progress.
+  - current_dragging_quadrilateral -- The quadrilateral object that has been dragged.
+  - current_dragging_quadrilateral_figure -- The quadrilateral figure object that has been dragged.
+  - dragging_corner_point -- The current corner point that has been dragged.
+
+  Returns: The updated values for dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure and dragging_corner_point.
+  """
+
+  if dragging_quadrilateral == True:
+    dragging_quadrilateral = False
+    current_dragging_quadrilateral = None
+    current_dragging_quadrilateral_figure = None
+    dragging_corner_point = None
+  
+  return dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point
+
+
 def on_convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures):
   """
   Function as part of the event loop (while True ...) to convert contours from rectangular contours to quadrilateral objects.
@@ -222,6 +335,7 @@ def run_task_01(db_connection):
     [
       sg.Button('Add', font=('Helvetica', 10, '')), 
       sg.Button('Remove', font=('Helvetica', 10, '')), 
+      sg.Button('Draw', font=('Helvetica', 10, '')), 
       sg.Button('Drag', font=('Helvetica', 10, '')), 
       sg.Button('Convert', font=('Helvetica', 10, '')), 
       sg.Button('Clear canvas', font=('Helvetica', 10, '')), 
@@ -266,6 +380,8 @@ def run_task_01(db_connection):
         current_action = "add"
       if event == "Remove":
         current_action = "remove"
+      if event == "Draw":
+        current_action = "draw"
       if event == "Drag":
         current_action = "drag"
       if event == "Convert":
@@ -317,52 +433,18 @@ def run_task_01(db_connection):
         if current_action == "remove":
           on_remove_contour_event(point, graph, visible_contours, invisible_contours)
         
+        if current_action == "draw":
+          dragging_contour, current_dragging_contour, current_dragging_contour_id = on_draw_event(point, graph, dragging_contour, current_dragging_contour, current_dragging_contour_id)
+        
         if current_action == "drag":
-          if(dragging_contour == False and dragging_quadrilateral == False):
-            current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point = detect_dragging_quadrilateral(point, all_quadrilaterals, all_quadrilateral_figures)
-            
-            if current_dragging_quadrilateral is not None:
-              dragging_quadrilateral = True
+          dragging_quadrilateral, all_quadrilaterals, all_quadrilateral_figures, dragging_corner_point = on_drag_event(point, graph, dragging_quadrilateral, dragging_corner_point, all_quadrilaterals, all_quadrilateral_figures)
 
-          if dragging_quadrilateral == False:
-            if dragging_contour == False:
-              dragging_contour = True
-              current_dragging_contour = Rect(point, point)
-            
-            if current_dragging_contour_id is not None:
-              graph.DeleteFigure(current_dragging_contour_id)
-            
-            current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
-            current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
-          
-          elif dragging_quadrilateral == True:
-            dragging_corner_point.x = point.x
-            dragging_corner_point.y = point.y
-            remove_quadrilateral_figures(graph, all_quadrilateral_figures)
-            all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals, color="red")
+      if event == "graph+UP" and current_action == "draw":
+        dragging_contour, current_dragging_contour, current_dragging_contour_id, visible_contours = on_draw_done_event(point, graph, dragging_contour, current_dragging_contour, current_dragging_contour_id, visible_contours)
 
-      if event == "graph+UP":
-        if current_action == "drag":
-          if dragging_quadrilateral == False:
-            if current_dragging_contour_id is not None:
-              graph.DeleteFigure(current_dragging_contour_id)
+      if event == "graph+UP" and current_action == "drag":
+        dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point = on_drag_done_event(dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point)
 
-            if current_dragging_contour is not None:
-              current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
-              current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
-
-              visible_contours.append([current_dragging_contour, current_dragging_contour_id])
-
-            dragging_contour = False
-            start_of_drag = None
-            current_dragging_contour_id = None
-
-          elif dragging_quadrilateral == True:
-            dragging_quadrilateral = False
-            current_dragging_quadrilateral = None
-            current_dragging_quadrilateral_figure = None
-            dragging_corner_point = None
-                  
       if event == None:
         break
 
