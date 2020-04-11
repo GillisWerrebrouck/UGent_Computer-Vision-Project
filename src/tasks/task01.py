@@ -10,8 +10,8 @@ from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
 logger = get_root_logger()
 
 
-# size of the canvas (graph); tuple: (height, width)
-graph_size = (600, 600)
+# size of the canvas (graph); tuple: (width, height)
+graph_size = (600, 500)
 
 
 def image_to_byte_string(image):
