@@ -1,8 +1,9 @@
 # Python rubbish
 **/__pycache__/
 
-# MongoDB volume
+# MongoDB volume and dumps
 .mongodb/
+mongo-dump/
 
 # VS Code files
 .vscode
