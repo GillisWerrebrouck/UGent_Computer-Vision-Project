@@ -40,6 +40,12 @@ class QuadrilateralFigure:
     self.RightLineId = R
     self.BottomLineId = B
     self.LeftLineId = L
+  
+  def get_all_ids(self):
+    return [
+      self.TLPointId, self.TRPointId, self.BLPointId, self.BRPointId, 
+      self.TopLineId, self.RightLineId, self.BottomLineId, self.LeftLineId, 
+    ]
 
 # A rect is an object which inherits from Quadrilateral and for which the constructor only needs 2 point (top left and bottom right).
 class Rect(Quadrilateral):

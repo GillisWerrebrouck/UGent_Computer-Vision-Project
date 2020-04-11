@@ -89,14 +89,8 @@ def remove_quadrilateral_figures(graph, quadrilateral_figures):
   """
 
   for quadrilateral_figure in quadrilateral_figures:
-    graph.DeleteFigure(quadrilateral_figure.TLPointId)
-    graph.DeleteFigure(quadrilateral_figure.TRPointId)
-    graph.DeleteFigure(quadrilateral_figure.BLPointId)
-    graph.DeleteFigure(quadrilateral_figure.BRPointId)
-    graph.DeleteFigure(quadrilateral_figure.TopLineId)
-    graph.DeleteFigure(quadrilateral_figure.RightLineId)
-    graph.DeleteFigure(quadrilateral_figure.BottomLineId)
-    graph.DeleteFigure(quadrilateral_figure.LeftLineId)
+    for id in quadrilateral_figure.get_all_ids():
+      graph.DeleteFigure(id)
 
 
 def show_image(title, image):
