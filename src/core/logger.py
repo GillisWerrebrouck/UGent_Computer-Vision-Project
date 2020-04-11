@@ -11,4 +11,3 @@ def get_root_logger():
 
 def get_child_logger(name):
   return rootLogger.getChild(name)
-

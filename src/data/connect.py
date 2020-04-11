@@ -29,6 +29,3 @@ def connect_mongodb_database(host, port, database, username, password):
     return mongoClient.get_database()
   except ServerSelectionTimeoutError as err:
     logger.critical('PyMongo could not connect to the database with url {}'.format(url))
-
-
-
