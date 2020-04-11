@@ -71,23 +71,23 @@ def get_image_location_in_graph(image):
     return (0, (graph_height-height)/2)
 
 
-def show_next_image(graph, filenames):
+def show_next_image(graph, filenames, file_number):
   """
-  Display the next image in the canvas (graph).
+  Display the image in the canvas (graph) at position file_counter in filenames.
 
   Parameters
   ----------
   - graph -- The canvas element to display the image in.
-  - filenames -- Used as queue of filenames, the image to be displayed is removed from the queue.
+  - filenames -- All filenames.
+  - file_number -- The file to display.
 
   Returns: The detected contours in the image with its coordinates relative to the current image size.
   """
   
-  if len(filenames) == 0:
-    return
+  if len(filenames) <= file_number:
+    return None
   
-  filepath = filenames[0]
-  filenames.remove(filenames[0])
+  filepath = filenames[file_number]
 
   logger.info('Loading next image; {}'.format(filepath))
 
@@ -337,7 +337,8 @@ def run_task_01(db_connection):
       sg.Button('Convert', font=('Helvetica', 10, '')), 
       sg.Button('Clear canvas', font=('Helvetica', 10, '')), 
       sg.Button('Save to database', font=('Helvetica', 10, '')), 
-      sg.Button('Next image', font=('Helvetica', 10, ''))
+      sg.Button('Next image', font=('Helvetica', 10, '')),
+      sg.StatusBar('---/---', key='file_counter', font=('Helvetica', 12, '')), 
     ],
     [sg.Frame('Image',[[
       sg.Graph(
@@ -360,9 +361,11 @@ def run_task_01(db_connection):
     return
 
   visible_contours = []
-  old_filenames = filenames.copy()
+  file_counter = 0
   # display the first image
-  invisible_contours = show_next_image(graph, filenames)
+  invisible_contours = show_next_image(graph, filenames, file_counter)
+
+  window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
   logger.info('Starting event loop of task 1')
 
@@ -386,16 +389,9 @@ def run_task_01(db_connection):
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
-        temp_old_filenames = old_filenames.copy()
-        show_next_image(graph, old_filenames)
-        old_filenames = temp_old_filenames
-
+        invisible_contours = show_next_image(graph, filenames, file_counter)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
-
-        for contour in visible_contours:
-          invisible_contours.append(contour[0])
-        visible_contours = []
       
       if event == "Save to database":
         for quadrilateral in all_quadrilaterals:
@@ -417,8 +413,13 @@ def run_task_01(db_connection):
           return
         
         visible_contours = []
-        old_filenames = filenames.copy()
-        invisible_contours = show_next_image(graph, filenames)
+        file_counter += 1
+        invisible_contours = show_next_image(graph, filenames, file_counter)
+        if invisible_contours is None:
+          break
+
+        window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
+
         all_quadrilaterals = []
         all_quadrilateral_figures = []
       
