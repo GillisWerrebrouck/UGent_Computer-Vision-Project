@@ -1,5 +1,6 @@
 import cv2
 import PySimpleGUI as sg
+from functools import partial
 
 from data.connect import connect_mongodb_database
 from core.visualize import get_window
@@ -25,14 +26,19 @@ layout = [
 ]
 window = get_window('Tasks', layout)
 
+switcher = {
+  'Run task 1': partial(run_task_01, db_connection),
+}
 
 # event loop of the main window
 while True:
   event, values = window.Read()
 
-  if event == 'Run task 1':
+  task = switcher.get(event)
+  if task is not None:
     window.close()
-    run_task_01(db_connection)
+    task()
+    break
 
   if event == None:
     break
