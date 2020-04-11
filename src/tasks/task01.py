@@ -45,11 +45,8 @@ def get_image_resize_factor(image):
   (height, width) = image.shape[:2]
   (graph_width, graph_height) = graph_size[:2]
 
-  if height >= width:
-    return graph_height/height
-  
-  if height < width:
-    return graph_width/width
+  # get minimal resize factor for best fit in canvas (graph)
+  return min(graph_height/height, graph_width/width)
 
 
 def get_image_location_in_graph(image):
