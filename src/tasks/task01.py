@@ -243,14 +243,13 @@ def run_task_01(db_connection):
     ]])]
   ]
 
-  window = get_window("Task 1", layout)
-  graph = window.Element("graph")
-  
   # close the window if no filenames could be found
-  if len(filenames) == 0:
-    window.close()
+  if len(filenames) != 0:
+    window = get_window("Task 1", layout)
+    graph = window.Element("graph")
+  else:
     return
-  
+
   visible_contours = []
   old_filenames = filenames.copy()
   # display the first image
