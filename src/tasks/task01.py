@@ -158,10 +158,10 @@ def on_remove_contour_event(point, graph, visible_contours, invisible_contours):
     graph.DeleteFigure(id)
 
 
-# convert rectangle contours to quadrilateral contour objects
 def on_convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures):
   """
   Function as part of the event loop (while True ...) to convert contours from rectangular contours to quadrilateral objects.
+  All visible contours become quadrilateral figures and the original contours are made invisible.
 
   Parameters
   ----------
