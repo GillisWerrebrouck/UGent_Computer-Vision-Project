@@ -4,7 +4,7 @@ from glob import glob
 
 from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
-from core.detection import detect_contours, get_contour, get_contour_with_id
+from core.detection import detect_contours, pop_contour, pop_contour_with_id
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
 
 logger = get_root_logger()
@@ -130,7 +130,7 @@ def add_contour_event(point, graph, visible_contours, invisible_contours):
 
   logger.info('Add-contour-event triggered')
   
-  contour = get_contour(point, invisible_contours)
+  contour = pop_contour(point, invisible_contours)
   if(contour is not None):
     id = draw_contour(graph, contour, color="red")
     visible_contours.append([contour, id])
@@ -151,7 +151,7 @@ def remove_contour_event(point, graph, visible_contours, invisible_contours):
 
   logger.info('Remove-contour-event triggered')
 
-  contour = get_contour_with_id(point, visible_contours)
+  contour = pop_contour_with_id(point, visible_contours)
   if(contour is not None):
     invisible_contours.append(contour[0])
     id = contour[1]

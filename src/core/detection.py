@@ -55,9 +55,10 @@ def detect_contours(image):
   return filtered_contours
 
 
-def get_contour(point, contours):
+def pop_contour(point, contours):
   """
   Detect the contour in which the point exists, if a contour around this point exists.
+  If found, the contour is removed from the list and returned.
 
   Parameters
   ----------
@@ -75,9 +76,10 @@ def get_contour(point, contours):
   return None
 
 
-def get_contour_with_id(point, contours):
+def pop_contour_with_id(point, contours):
   """
   Detect the contour in which the point exists, if a contour around this point exists.
+  If found, the contour is removed from the list and returned.
   
   Parameters
   ----------
