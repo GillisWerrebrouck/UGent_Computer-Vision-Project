@@ -1,11 +1,13 @@
 import cv2
 import PySimpleGUI as sg
 from glob import glob
+from ntpath import basename
 
 from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
 from core.detection import detect_contours, pop_contour, pop_contour_with_id
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+from data.imageRepo import create_image
 
 logger = get_root_logger()
 
@@ -111,7 +113,7 @@ def show_next_image(graph, filenames, file_number):
   # change the coordinate system of the canvas (graph) to be according to the displayed (centered) image
   graph.change_coordinates((-loc[0], graph_size[1]-loc[1]), (graph_size[0]-loc[0], -loc[1]))
 
-  return detected_contours
+  return (detected_contours, filepath)
 
 
 def on_add_contour_event(point, graph, visible_contours, invisible_contours):
@@ -296,14 +298,43 @@ def on_convert_contours_event(graph, visible_contours, invisible_contours, all_q
   return draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
 
-def run_task_01(db_connection):
+def set_button_color(window, btnId, colors):
   """
-  Run task 1.
-  Open a window and display the first image.
+  Set the color of the given button.
 
   Parameters
   ----------
-  - db_connection -- The database connection to use for database queries.
+  - window -- Reference to the window the button lives in.
+  - btnId -- The name of the button to change.
+  - color -- The color to set as the button's fore- and backgroundcolor, e.g. ('white', 'red').
+  """
+
+  if (btnId is not None):
+    btn = window.FindElement(btnId)
+
+    if (btn is not None):
+      btn.Update(button_color=colors)
+
+
+def toggle_active_button(window, current_active_btn, new_active_btn):
+  """
+  Change the currently active button.
+
+  Parameters
+  ----------
+  - window -- Reference to the window the button lives in.
+  - current_active_btn -- The name of the currently active button.
+  - new_active_btn -- The name of the button that needs to become active.
+  """
+
+  set_button_color(window, current_active_btn, sg.DEFAULT_BUTTON_COLOR)
+  set_button_color(window, new_active_btn, ('white', 'red'))
+
+
+def run_task_01():
+  """
+  Run task 1.
+  Open a window and display the first image.
   """
 
   logger.info('Task 1 started')
@@ -323,6 +354,9 @@ def run_task_01(db_connection):
 
   # the current selected action
   current_action = "add"
+
+  # the previous event (used for active buttons)
+  previous_event = "Add"
 
   # read all filenames
   filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
@@ -364,17 +398,24 @@ def run_task_01(db_connection):
   visible_contours = []
   file_counter = 0
   # display the first image
-  invisible_contours = show_next_image(graph, filenames, file_counter)
+  invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
 
   window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
   logger.info('Starting event loop of task 1')
+
+  # show to the user the active button ('Add' on start)
+  toggle_active_button(window, previous_event, 'Add')
 
   # the event loop
   while True:
       event, values = window.Read()
       if values is not None:
           point = Point(values["graph"][0], values["graph"][1])
+
+      if (event is not None and 'graph' not in event):
+        toggle_active_button(window, previous_event, event)
+        previous_event = event
 
       # button click events
       if event == "Add":
@@ -390,7 +431,7 @@ def run_task_01(db_connection):
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
-        invisible_contours = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
 
@@ -405,21 +446,31 @@ def run_task_01(db_connection):
           x4 = quadrilateral.BLPoint.x
           y4 = quadrilateral.BLPoint.y
 
-          print("[SAVE TO DATABASE] P(" + str(x1) + ", " + str(y1) + ") - P(" + str(x2) + ", " + str(y2) + ") - P(" + str(x3) + ", " + str(y3) + ") - P(" + str(x4) + ", " + str(y4) + ")")
+          create_image(basename(filepath), [
+            [x1, y1],
+            [x2, y2],
+            [x3, y3],
+            [x4, y4],
+          ])
           # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its points, keypoints and feature vector (histogram, etc.) to the db
 
-      if event == "Next image":
+      if event == "Next image" or event == "Save to database":
         if len(filenames) == 0:
           window.close()
           return
 
         visible_contours = []
         file_counter += 1
-        invisible_contours = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
         if invisible_contours is None:
           break
 
         window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
+
+        # make add againt the current action
+        toggle_active_button(window, previous_event, 'Add')
+        previous_event = 'Add'
+        current_action = 'add'
 
         all_quadrilaterals = []
         all_quadrilateral_figures = []
