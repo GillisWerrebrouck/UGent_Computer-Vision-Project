@@ -113,7 +113,7 @@ def show_next_image(graph, filenames, file_number):
   # change the coordinate system of the canvas (graph) to be according to the displayed (centered) image
   graph.change_coordinates((-loc[0], graph_size[1]-loc[1]), (graph_size[0]-loc[0], -loc[1]))
 
-  return (detected_contours, filepath)
+  return (detected_contours, filepath, img.shape[:2])
 
 
 def on_add_contour_event(point, graph, visible_contours, invisible_contours):
@@ -398,7 +398,7 @@ def run_task_01():
   visible_contours = []
   file_counter = 0
   # display the first image
-  invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
+  invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
 
   window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
@@ -431,7 +431,7 @@ def run_task_01():
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
-        invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
 
@@ -451,7 +451,7 @@ def run_task_01():
             [x2, y2],
             [x3, y3],
             [x4, y4],
-          ])
+          ], imgShape[0], imgShape[1])
           # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its points, keypoints and feature vector (histogram, etc.) to the db
 
       if event == "Next image" or event == "Save to database":
@@ -461,7 +461,7 @@ def run_task_01():
 
         visible_contours = []
         file_counter += 1
-        invisible_contours, filepath = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
         if invisible_contours is None:
           break
 
