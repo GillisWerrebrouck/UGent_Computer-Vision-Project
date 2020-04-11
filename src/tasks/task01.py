@@ -116,7 +116,7 @@ def show_next_image(graph, filenames):
   return detected_contours
 
 
-def add_contour_event(point, graph, visible_contours, invisible_contours):
+def on_add_contour_event(point, graph, visible_contours, invisible_contours):
   """
   Function as part of the event loop (while True ...) to add contours by clicking on the image.
 
@@ -136,7 +136,7 @@ def add_contour_event(point, graph, visible_contours, invisible_contours):
     visible_contours.append([contour, id])
 
 
-def remove_contour_event(point, graph, visible_contours, invisible_contours):
+def on_remove_contour_event(point, graph, visible_contours, invisible_contours):
   """
   Function as part of the event loop (while True ...) to remove contours (make invisible) by clicking on the image.
   The contour in which has been clicked is removed.
@@ -159,7 +159,7 @@ def remove_contour_event(point, graph, visible_contours, invisible_contours):
 
 
 # convert rectangle contours to quadrilateral contour objects
-def convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures):
+def on_convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures):
   """
   Function as part of the event loop (while True ...) to convert contours from rectangular contours to quadrilateral objects.
 
@@ -269,7 +269,7 @@ def run_task_01(db_connection):
       if event == "Drag":
         current_action = "drag"
       if event == "Convert":
-        all_quadrilateral_figures = convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures)
+        all_quadrilateral_figures = on_convert_contours_event(graph, visible_contours, invisible_contours, all_quadrilaterals, all_quadrilateral_figures)
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
@@ -312,10 +312,10 @@ def run_task_01(db_connection):
       # the canvas (graph) events
       if event == "graph":
         if current_action == "add":
-          add_contour_event(point, graph, visible_contours, invisible_contours)
+          on_add_contour_event(point, graph, visible_contours, invisible_contours)
         
         if current_action == "remove":
-          remove_contour_event(point, graph, visible_contours, invisible_contours)
+          on_remove_contour_event(point, graph, visible_contours, invisible_contours)
         
         if current_action == "drag":
           if(dragging_contour == False and dragging_quadrilateral == False):
