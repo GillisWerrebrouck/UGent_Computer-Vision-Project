@@ -1,11 +1,13 @@
 import cv2
 import PySimpleGUI as sg
 from glob import glob
+from ntpath import basename
 
 from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
 from core.detection import detect_contours, pop_contour, pop_contour_with_id
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+from data.imageRepo import create_image
 
 logger = get_root_logger()
 
@@ -26,7 +28,8 @@ def image_to_byte_string(image):
   Returns: A byte string of the given image.
   """
 
-  is_success, im_buf_arr = cv2.imencode(".png", image)
+  # Use PPM encoding because PySimpleGUI doesn't support png encoding on macOS
+  is_success, im_buf_arr = cv2.imencode(".ppm", image)
   byte_im = im_buf_arr.tobytes()
   return byte_im
 
@@ -41,7 +44,7 @@ def get_image_resize_factor(image):
 
   Returns: The resize factor for the given image in the canvas.
   """
-  
+
   (height, width) = image.shape[:2]
   (graph_width, graph_height) = graph_size[:2]
 
@@ -60,13 +63,13 @@ def get_image_location_in_graph(image):
 
   Returns: The location (tuple: (x, y)) for the given image to be positioned in the center of the canvas, based on the size of the image and the canvas.
   """
-  
+
   (height, width) = image.shape[:2]
   (graph_width, graph_height) = graph_size[:2]
 
   if height == graph_height:
     return ((graph_width-width)/2, 0)
-  
+
   if width == graph_width:
     return (0, (graph_height-height)/2)
 
@@ -83,10 +86,10 @@ def show_next_image(graph, filenames, file_number):
 
   Returns: The detected contours in the image with its coordinates relative to the current image size.
   """
-  
+
   if len(filenames) <= file_number:
     return None
-  
+
   filepath = filenames[file_number]
 
   logger.info('Loading next image; {}'.format(filepath))
@@ -110,7 +113,7 @@ def show_next_image(graph, filenames, file_number):
   # change the coordinate system of the canvas (graph) to be according to the displayed (centered) image
   graph.change_coordinates((-loc[0], graph_size[1]-loc[1]), (graph_size[0]-loc[0], -loc[1]))
 
-  return detected_contours
+  return (detected_contours, filepath, img.shape[:2])
 
 
 def on_add_contour_event(point, graph, visible_contours, invisible_contours):
@@ -126,7 +129,7 @@ def on_add_contour_event(point, graph, visible_contours, invisible_contours):
   """
 
   logger.info('Add-contour-event triggered')
-  
+
   contour = pop_contour(point, invisible_contours)
   if(contour is not None):
     id = draw_contour(graph, contour, color="red")
@@ -173,10 +176,10 @@ def on_draw_event(point, graph, dragging_contour, current_dragging_contour, curr
   if dragging_contour == False:
     dragging_contour = True
     current_dragging_contour = Rect(point, point)
-  
+
   if current_dragging_contour_id is not None:
     graph.DeleteFigure(current_dragging_contour_id)
-  
+
   current_dragging_contour = Rect(current_dragging_contour.TLPoint, point)
   current_dragging_contour_id = draw_contour(graph, current_dragging_contour, color="red")
 
@@ -232,16 +235,16 @@ def on_drag_event(point, graph, dragging_quadrilateral, dragging_corner_point, a
 
   if(dragging_quadrilateral == False):
     current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point = detect_dragging_quadrilateral(point, all_quadrilaterals, all_quadrilateral_figures)
-    
+
     if current_dragging_quadrilateral is not None:
       dragging_quadrilateral = True
-  
+
   if dragging_quadrilateral == True:
     dragging_corner_point.x = point.x
     dragging_corner_point.y = point.y
     remove_quadrilateral_figures(graph, all_quadrilateral_figures)
     all_quadrilateral_figures = draw_quadrilaterals(graph, all_quadrilaterals, color="red")
-  
+
   return dragging_quadrilateral, all_quadrilaterals, all_quadrilateral_figures, dragging_corner_point
 
 
@@ -264,7 +267,7 @@ def on_drag_done_event(dragging_quadrilateral, current_dragging_quadrilateral, c
     current_dragging_quadrilateral = None
     current_dragging_quadrilateral_figure = None
     dragging_corner_point = None
-  
+
   return dragging_quadrilateral, current_dragging_quadrilateral, current_dragging_quadrilateral_figure, dragging_corner_point
 
 
@@ -295,14 +298,67 @@ def on_convert_contours_event(graph, visible_contours, invisible_contours, all_q
   return draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
 
-def run_task_01(db_connection):
+def set_button_color(window, btn_id, colors):
   """
-  Run task 1.
-  Open a window and display the first image.
+  Set the color of the given button.
 
   Parameters
   ----------
-  - db_connection -- The database connection to use for database queries.
+  - window -- Reference to the window the button lives in.
+  - btnId -- The name of the button to change.
+  - color -- The color to set as the button's fore- and backgroundcolor, e.g. ('white', 'red').
+  """
+
+  if (btn_id is not None):
+    btn = window.FindElement(btn_id)
+
+    if (btn is not None):
+      btn.Update(button_color=colors)
+
+
+def toggle_active_button(window, current_active_btn, new_active_btn):
+  """
+  Change the currently active button.
+
+  Parameters
+  ----------
+  - window -- Reference to the window the button lives in.
+  - current_active_btn -- The name of the currently active button.
+  - new_active_btn -- The name of the button that needs to become active.
+  """
+
+  set_button_color(window, current_active_btn, sg.DEFAULT_BUTTON_COLOR)
+  set_button_color(window, new_active_btn, ('white', 'red'))
+
+
+def convert_corners_to_uniform_format(corners, width, height):
+  """
+  Convert all given corners to a uniform interval [0, 1]. Now the corners
+  represent a percentage of the width/height.
+
+  Parameters
+  ----------
+  - corners -- The corners to convert.
+  - width -- The width of the image containing the corners.
+  - height -- The height of the image containing the corners.
+
+  Returns
+  -------
+  The corners (in same order) but now all in the interval [0, 1].
+  """
+
+  uniform_corners = []
+
+  for c in corners:
+    uniform_corners.append([c[0]/width, c[1]/height])
+
+  return uniform_corners
+
+
+def run_task_01():
+  """
+  Run task 1.
+  Open a window and display the first image.
   """
 
   logger.info('Task 1 started')
@@ -319,26 +375,29 @@ def run_task_01(db_connection):
   dragging_corner_point = None
   all_quadrilaterals = []
   all_quadrilateral_figures = []
-  
+
   # the current selected action
   current_action = "add"
+
+  # the previous event (used for active buttons)
+  previous_event = "Add"
 
   # read all filenames
   filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 
   # the layout of the window
   layout = [
-    [sg.Text('Add, remove and modify contours in the displayed images by using the provided actions.', font=('Helvetica', 12, ''))], 
+    [sg.Text('Add, remove and modify contours in the displayed images by using the provided actions.', font=('Helvetica', 12, ''))],
     [
-      sg.Button('Add', font=('Helvetica', 10, '')), 
-      sg.Button('Remove', font=('Helvetica', 10, '')), 
-      sg.Button('Draw', font=('Helvetica', 10, '')), 
-      sg.Button('Drag', font=('Helvetica', 10, '')), 
-      sg.Button('Convert', font=('Helvetica', 10, '')), 
-      sg.Button('Clear canvas', font=('Helvetica', 10, '')), 
-      sg.Button('Save to database', font=('Helvetica', 10, '')), 
+      sg.Button('Add', font=('Helvetica', 10, '')),
+      sg.Button('Remove', font=('Helvetica', 10, '')),
+      sg.Button('Draw', font=('Helvetica', 10, '')),
+      sg.Button('Drag', font=('Helvetica', 10, '')),
+      sg.Button('Convert', font=('Helvetica', 10, '')),
+      sg.Button('Clear canvas', font=('Helvetica', 10, '')),
+      sg.Button('Save to database', font=('Helvetica', 10, '')),
       sg.Button('Next image', font=('Helvetica', 10, '')),
-      sg.StatusBar('---/---', key='file_counter', font=('Helvetica', 12, '')), 
+      sg.StatusBar('---/---', key='file_counter', font=('Helvetica', 12, '')),
     ],
     [sg.Frame('Image',[[
       sg.Graph(
@@ -363,17 +422,24 @@ def run_task_01(db_connection):
   visible_contours = []
   file_counter = 0
   # display the first image
-  invisible_contours = show_next_image(graph, filenames, file_counter)
+  invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
 
   window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
   logger.info('Starting event loop of task 1')
+
+  # show to the user the active button ('Add' on start)
+  toggle_active_button(window, previous_event, 'Add')
 
   # the event loop
   while True:
       event, values = window.Read()
       if values is not None:
           point = Point(values["graph"][0], values["graph"][1])
+
+      if (event is not None and event in ('Add', 'Remove', 'Draw', 'Drag')):
+        toggle_active_button(window, previous_event, event)
+        previous_event = event
 
       # button click events
       if event == "Add":
@@ -389,10 +455,10 @@ def run_task_01(db_connection):
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
-        invisible_contours = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
-      
+
       if event == "Save to database":
         for quadrilateral in all_quadrilaterals:
           x1 = quadrilateral.TLPoint.x
@@ -404,36 +470,48 @@ def run_task_01(db_connection):
           x4 = quadrilateral.BLPoint.x
           y4 = quadrilateral.BLPoint.y
 
-          print("[SAVE TO DATABASE] P(" + str(x1) + ", " + str(y1) + ") - P(" + str(x2) + ", " + str(y2) + ") - P(" + str(x3) + ", " + str(y3) + ") - P(" + str(x4) + ", " + str(y4) + ")")
-          # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its points, keypoints and feature vector (histogram, etc.) to the db
+          uniform_corners = convert_corners_to_uniform_format([
+            [x1, y1],
+            [x2, y2],
+            [x3, y3],
+            [x4, y4],
+          ])
 
-      if event == "Next image":
+          create_image(basename(filepath), uniform_corners, img_shape[0], img_shape[1])
+          # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its keypoints and feature vector (histogram, etc.) to the db
+
+      if event in ("Next image", "Save to database"):
         if len(filenames) == 0:
           window.close()
           return
-        
+
         visible_contours = []
         file_counter += 1
-        invisible_contours = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
         if invisible_contours is None:
           break
 
         window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
+        # make add again the current action
+        toggle_active_button(window, previous_event, 'Add')
+        previous_event = 'Add'
+        current_action = 'add'
+
         all_quadrilaterals = []
         all_quadrilateral_figures = []
-      
+
       # the canvas (graph) events
       if event == "graph":
         if current_action == "add":
           on_add_contour_event(point, graph, visible_contours, invisible_contours)
-        
+
         if current_action == "remove":
           on_remove_contour_event(point, graph, visible_contours, invisible_contours)
-        
+
         if current_action == "draw":
           dragging_contour, current_dragging_contour, current_dragging_contour_id = on_draw_event(point, graph, dragging_contour, current_dragging_contour, current_dragging_contour_id)
-        
+
         if current_action == "drag":
           dragging_quadrilateral, all_quadrilaterals, all_quadrilateral_figures, dragging_corner_point = on_drag_event(point, graph, dragging_quadrilateral, dragging_corner_point, all_quadrilaterals, all_quadrilateral_figures)
 

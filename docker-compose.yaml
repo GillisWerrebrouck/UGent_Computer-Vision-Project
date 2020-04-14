@@ -5,6 +5,7 @@ services:
     image: mongo:3.6
     volumes:
       - ./.mongodb/:/data/db
+      - ./mongo-scripts:/scripts
     ports:
       - 27017:27017
     environment:
