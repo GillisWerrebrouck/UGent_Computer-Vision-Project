@@ -298,7 +298,7 @@ def on_convert_contours_event(graph, visible_contours, invisible_contours, all_q
   return draw_quadrilaterals(graph, all_quadrilaterals, color="red")
 
 
-def set_button_color(window, btnId, colors):
+def set_button_color(window, btn_id, colors):
   """
   Set the color of the given button.
 
@@ -309,8 +309,8 @@ def set_button_color(window, btnId, colors):
   - color -- The color to set as the button's fore- and backgroundcolor, e.g. ('white', 'red').
   """
 
-  if (btnId is not None):
-    btn = window.FindElement(btnId)
+  if (btn_id is not None):
+    btn = window.FindElement(btn_id)
 
     if (btn is not None):
       btn.Update(button_color=colors)
@@ -329,6 +329,30 @@ def toggle_active_button(window, current_active_btn, new_active_btn):
 
   set_button_color(window, current_active_btn, sg.DEFAULT_BUTTON_COLOR)
   set_button_color(window, new_active_btn, ('white', 'red'))
+
+
+def convert_corners_to_uniform_format(corners, width, height):
+  """
+  Convert all given corners to a uniform interval [0, 1]. Now the corners
+  represent a percentage of the width/height.
+
+  Parameters
+  ----------
+  - corners -- The corners to convert.
+  - width -- The width of the image containing the corners.
+  - height -- The height of the image containing the corners.
+
+  Returns
+  -------
+  The corners (in same order) but now all in the interval [0, 1].
+  """
+
+  uniform_corners = []
+
+  for c in corners:
+    uniform_corners.append([c[0]/width, c[1]/height])
+
+  return uniform_corners
 
 
 def run_task_01():
@@ -398,7 +422,7 @@ def run_task_01():
   visible_contours = []
   file_counter = 0
   # display the first image
-  invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
+  invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
 
   window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
@@ -413,7 +437,7 @@ def run_task_01():
       if values is not None:
           point = Point(values["graph"][0], values["graph"][1])
 
-      if (event is not None and 'graph' not in event):
+      if (event is not None and event in ('Add', 'Remove', 'Draw', 'Drag')):
         toggle_active_button(window, previous_event, event)
         previous_event = event
 
@@ -431,7 +455,7 @@ def run_task_01():
         visible_contours = []
       if event == "Clear canvas":
         graph.erase()
-        invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
 
@@ -446,28 +470,30 @@ def run_task_01():
           x4 = quadrilateral.BLPoint.x
           y4 = quadrilateral.BLPoint.y
 
-          create_image(basename(filepath), [
+          uniform_corners = convert_corners_to_uniform_format([
             [x1, y1],
             [x2, y2],
             [x3, y3],
             [x4, y4],
-          ], imgShape[0], imgShape[1])
-          # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its points, keypoints and feature vector (histogram, etc.) to the db
+          ])
 
-      if event == "Next image" or event == "Save to database":
+          create_image(basename(filepath), uniform_corners, img_shape[0], img_shape[1])
+          # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its keypoints and feature vector (histogram, etc.) to the db
+
+      if event in ("Next image", "Save to database"):
         if len(filenames) == 0:
           window.close()
           return
 
         visible_contours = []
         file_counter += 1
-        invisible_contours, filepath, imgShape = show_next_image(graph, filenames, file_counter)
+        invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
         if invisible_contours is None:
           break
 
         window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
-        # make add againt the current action
+        # make add again the current action
         toggle_active_button(window, previous_event, 'Add')
         previous_event = 'Add'
         current_action = 'add'

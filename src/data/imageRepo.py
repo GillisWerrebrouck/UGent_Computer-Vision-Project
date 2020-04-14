@@ -11,15 +11,15 @@ if (db_connection == None):
                 'running.')
   exit(-1)
 
-def create_image(filename, corners, width, height):
+def create_image(filename, corners):
   """
   Insert a new image in the database. If you have an image with multiple paintings,
   add one image to the database per painting.
 
   Parameters
   ----------
-  - filename -- The filename of the image saving info about
-  - corners -- The corners of a painting in the image
+  - filename -- The filename of the image saving info about.
+  - corners -- The (uniform!) corners of a painting in the image.
   - width -- The width of the image.
   - height -- The height of the image.
 
@@ -32,14 +32,10 @@ def create_image(filename, corners, width, height):
   # then map the values to a uniform percentage of the width or height
   # this way, the image can be of any size
   corners = sorted(corners, key = lambda c: (c[1], c[0]))
-  uniformCorners = []
-
-  for c in corners:
-    uniformCorners.append([c[0]/width, c[1]/height])
 
   image = {
     'filename': filename,
-    'corners': uniformCorners,
+    'corners': corners,
     'createdAt': datetime.now()
   }
 
