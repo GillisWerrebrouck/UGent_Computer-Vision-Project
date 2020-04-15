@@ -350,7 +350,7 @@ def convert_corners_to_uniform_format(corners, width, height):
   uniform_corners = []
 
   for c in corners:
-    uniform_corners.append([c[0]/width, c[1]/height])
+    uniform_corners.append([c[0]/height, c[1]/width])
 
   return uniform_corners
 
@@ -475,9 +475,9 @@ def run_task_01():
             [x2, y2],
             [x3, y3],
             [x4, y4],
-          ])
+          ], img_shape[0], img_shape[1])
 
-          create_image(basename(filepath), uniform_corners, img_shape[0], img_shape[1])
+          create_image(basename(filepath), uniform_corners)
           # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its keypoints and feature vector (histogram, etc.) to the db
 
       if event in ("Next image", "Save to database"):
