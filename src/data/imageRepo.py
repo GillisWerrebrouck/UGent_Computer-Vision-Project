@@ -44,3 +44,20 @@ def create_image(filename, corners):
   # Save the image to the database
   db_connection['images'].insert(image)
 
+
+def update_paintings_of_file(filename, updates):
+  """
+  Parameters
+  ----------
+  - filename -- The filename of the paintings to update.
+  - updates -- The MongoDB update statements (e.g. { $set: ... }).
+
+  Returns
+  -------
+  Nothing
+  """
+  logger.info('Updating image(s) with filename {}'.format(filename))
+
+  result = db_connection['images'].update_many({ 'filename': filename }, updates)
+
+  logger.info('{} image(s) updated'.format(result.modified_count))
