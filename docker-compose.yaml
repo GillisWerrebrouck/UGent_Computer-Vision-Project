@@ -5,7 +5,10 @@ services:
     image: mongo:3.6
     volumes:
       - ./.mongodb/:/data/db
-      - ./mongo-scripts:/scripts
+      - ./scripts:/scripts
+      # the container will execute all .js or .sh files in this folder
+      # so our database dump will be restored each time
+      - ./db-seed:/docker-entrypoint-initdb.d
     ports:
       - 27017:27017
     environment:
