@@ -1,10 +1,6 @@
 import cv2
 import sys
 import PySimpleGUI as sg
-from logger import get_root_logger  # TODO fix back to core.logger
-
-logger = get_root_logger()
-threshHold = 100
 
 
 def is_sharp_image(img, threshHold=100):
