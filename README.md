@@ -11,21 +11,20 @@ This tutorial assumes you have the following dependencies already installed on y
 - OpenCV
 - Numpy
 
-First, install all required Python-packages:
+First, install all required Python-packages.
 
 ```bash
 pip3 install -r requirements.txt
 ```
 
-Thereafter, start MongoDB:
+Thereafter, start MongoDB. To get a clean database, make sure the container is not running (`docker-compose down`) and remove the folder `.mongodb` if existing.
 
 ```bash
 docker-compose up --force-recreate -d mongodb
 ```
 
-Finally, run the project:
+Finally, run the project.
 
-(TODO: add ability to choose between different assignments)
 ```bash
 python src/index.py
 ```
