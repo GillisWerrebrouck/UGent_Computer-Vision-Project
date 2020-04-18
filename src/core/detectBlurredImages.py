@@ -7,26 +7,17 @@ logger = get_root_logger()
 threshHold = 100
 
 
-def get_blurryness(img):
-    return cv2.Laplacian(img, cv2.CV_64F).var()
+def is_sharp_image(img, threshHold=100):
+    """
+    Determin is a given grayscale image is sharp
+    Parameters
+    ----------
+    - img -- grayscale image to be examined
+    - threshHold -- (optional) default is 100. Lower threshHold equals more unsharp images
+    Returns: bool indicating if the image is sharp enough
+    """
 
-
-cap = cv2.VideoCapture(sys.argv[1])
-if (cap.isOpened() == False):
-    logger.warning("Videofile not found")
-
-while (cap.isOpened()):
-
-    success, frame = cap.read()
-
-    if success:
-        grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        blurIndex = get_blurryness(grayFrame)
-
-        if (blurIndex > threshHold):
-            cv2.imshow('dst', grayFrame)
-
-        cv2.waitKey(1)
-
-
-cv2.destroyAllWindows()
+    blurIndex = cv2.Laplacian(img, cv2.CV_64F).var()
+    if (blurIndex > threshHold):
+        return True
+    return False
