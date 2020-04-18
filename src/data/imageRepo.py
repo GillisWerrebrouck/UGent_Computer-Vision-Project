@@ -11,7 +11,7 @@ if (db_connection == None):
                 'running.')
   exit(-1)
 
-def create_image(filename, corners):
+def create_image(filename, corners, room):
   """
   Insert a new image in the database. If you have an image with multiple paintings,
   add one image to the database per painting.
@@ -20,8 +20,7 @@ def create_image(filename, corners):
   ----------
   - filename -- The filename of the image saving info about.
   - corners -- The (uniform!) corners of a painting in the image.
-  - width -- The width of the image.
-  - height -- The height of the image.
+  - room -- The room this painting is located in.
 
   Returns
   -------
@@ -36,10 +35,11 @@ def create_image(filename, corners):
   image = {
     'filename': filename,
     'corners': corners,
+    'room': room,
     'createdAt': datetime.now()
   }
 
-  logger.info('Saving image info for file {} with corners {}'.format(filename, corners))
+  logger.info('Saving image info for file {} in room {} with corners {}'.format(filename, room, corners))
 
   # Save the image to the database
   db_connection['images'].insert(image)

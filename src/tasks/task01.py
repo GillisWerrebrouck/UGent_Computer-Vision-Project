@@ -1,7 +1,7 @@
 import cv2
 import PySimpleGUI as sg
 from glob import glob
-from ntpath import basename
+from os.path import basename, dirname
 
 from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
@@ -355,6 +355,20 @@ def convert_corners_to_uniform_format(corners, width, height):
   return uniform_corners
 
 
+def get_room_from_file(filepath):
+  """
+  Parameters
+  ----------
+  - filepath -- The path to extract the room from.
+
+  Returns
+  -------
+  The room this image is taken.
+  """
+  dirs = dirname(filepath).split('/')
+  room = dirs[-1].split('_')[1]
+  return room
+
 def run_task_01():
   """
   Run task 1.
@@ -423,6 +437,7 @@ def run_task_01():
   file_counter = 0
   # display the first image
   invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
+  room = get_room_from_file(filepath)
 
   window.FindElement("file_counter").Update(value=(str(file_counter+1) + "/" + str(len(filenames))))
 
@@ -456,6 +471,7 @@ def run_task_01():
       if event == "Clear canvas":
         graph.erase()
         invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
+        room = get_room_from_file(filepath)
         all_quadrilaterals = []
         all_quadrilateral_figures = []
 
@@ -477,7 +493,7 @@ def run_task_01():
             [x4, y4],
           ], img_shape[0], img_shape[1])
 
-          create_image(basename(filepath), uniform_corners)
+          create_image(basename(filepath), uniform_corners, room)
           # TODO: call a funcion, preferably a function in the data folder in the connect.py file, to save an image with its keypoints and feature vector (histogram, etc.) to the db
 
       if event in ("Next image", "Save to database"):
@@ -488,6 +504,7 @@ def run_task_01():
         visible_contours = []
         file_counter += 1
         invisible_contours, filepath, img_shape = show_next_image(graph, filenames, file_counter)
+        room = get_room_from_file(filepath)
         if invisible_contours is None:
           break
 
