@@ -1,14 +1,17 @@
 version: '3'
 services:
+  seed:
+    build: db-seed
+    volumes:
+      - ./db-seed:/app
+      - /app/node_modules
   mongodb:
     container_name: mongodb
     image: mongo:3.6
+    depends_on:
+      - seed
     volumes:
-      - ./.mongodb/:/data/db
       - ./scripts:/scripts
-      # the container will execute all .js or .sh files in this folder
-      # so our database dump will be restored each time
-      - ./db-seed:/docker-entrypoint-initdb.d
     ports:
       - 27017:27017
     environment:

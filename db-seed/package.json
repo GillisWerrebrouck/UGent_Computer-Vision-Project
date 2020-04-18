@@ -1,0 +1,14 @@
+{
+  "name": "db-seed",
+  "version": "1.0.0",
+  "description": "This node module is only used to clear and seed the database on setup. We use a Node container because of Windows compatibility issues with line endings in shell scripts used by the Docker container on startup.",
+  "main": "index.js",
+  "author": "Thomas Aelbrecht <thomas.aelbrecht@ugent.be>",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "mongodb": "^3.5.6"
+  }
+}

@@ -17,10 +17,10 @@ First, install all required Python-packages.
 pip3 install -r requirements.txt
 ```
 
-Thereafter, start MongoDB. To get a clean database, make sure the container is not running (`docker-compose down`) and remove the folder `.mongodb` if existing.
+Thereafter, start MongoDB. This command will automatically start a Node container to populate the database. Please make sure this container is shut down before you start any Python scripts after task 1.
 
 ```bash
-docker-compose up --force-recreate -d mongodb
+docker-compose up --force-recreate
 ```
 
 Finally, run the project.
