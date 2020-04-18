@@ -3,7 +3,7 @@ import cv2
 
 def is_sharp_image(img, threshHold=100):
     """
-    Determin if a given grayscale image is sharp
+    Determine if a given grayscale image is sharp
     Parameters
     ----------
     - img -- grayscale image to be examined
