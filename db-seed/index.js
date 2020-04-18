@@ -21,7 +21,6 @@ const imagesToSave = images.map((image) => {
     return [mapToNumber(x), mapToNumber(y)];
   });
 
-
   return {
     ...image,
     _id: new ObjectId(_id['$oid']),
@@ -32,7 +31,7 @@ const imagesToSave = images.map((image) => {
 
 async function main() {
   console.log('Connecting to MongoDB');
-  const client = await MongoClient.connect('mongodb://devuser:devpwd@mongodb:27017/cv-temp?authSource=admin', {
+  const client = await MongoClient.connect('mongodb://devuser:devpwd@mongodb:27017/computervision?authSource=admin', {
     useUnifiedTopology: true,
   });
   console.log('Connected');
