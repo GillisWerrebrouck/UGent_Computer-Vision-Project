@@ -96,28 +96,22 @@ def pop_contour_with_id(point, contours):
       return copy
   return None
 
-def detect_straight_lines(image):
-  gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
+def detect_quadrilaters(image):
+  grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+  grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
+  edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
   
-  edges = cv2.Canny(gray, 50, 150, apertureSize=3) 
-  
-  lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+  closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-  if lines is None:
-    return image
+  contours, hierarhy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  for line in lines:
-    r,theta = line[0]
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a*r
-    y0 = b*r
-    
-    x1 = int(x0 + 1000*(-b))
-    y1 = int(y0 + 1000*(a))
-    x2 = int(x0 - 1000*(-b))
-    y2 = int(y0 - 1000*(a))
+  for contour in contours:
+    if cv2.contourArea(contour) > 100:
+      arc_len = cv2.arcLength(contour, True)
+      approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
 
-    cv2.line(image,(x1,y1), (x2,y2), (0,0,255),2) 
+      if (len(approx) == 4):
+        cv2.drawContours(image, [approx], -1, (0, 0, 255), 2)
 
   return image
