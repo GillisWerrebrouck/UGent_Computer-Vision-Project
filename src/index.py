@@ -4,6 +4,7 @@ from functools import partial
 
 from core.visualize import get_window
 from tasks.task01 import run_task_01
+from tasks.task02 import run_task_02
 
 
 # create a window with all tasks listed and set theme
@@ -18,7 +19,8 @@ layout = [
 window = get_window('Tasks', layout)
 
 switcher = {
-  'Run task 1': run_task_01
+  'Run task 1': run_task_01,
+  'Run task 2': run_task_02,
 }
 
 # event loop of the main window

@@ -95,3 +95,23 @@ def pop_contour_with_id(point, contours):
       contours.remove(c)
       return copy
   return None
+
+def detect_quadrilaters(image):
+  grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+  grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
+  edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
+  
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+  closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+  contours, hierarhy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+  for contour in contours:
+    if cv2.contourArea(contour) > 100:
+      arc_len = cv2.arcLength(contour, True)
+      approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
+
+      if (len(approx) == 4):
+        cv2.drawContours(image, [approx], -1, (0, 0, 255), 2)
+
+  return image
