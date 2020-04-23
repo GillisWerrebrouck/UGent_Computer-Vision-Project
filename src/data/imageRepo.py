@@ -61,3 +61,20 @@ def update_paintings_of_file(filename, updates):
   result = db_connection['images'].update_many({ 'filename': filename }, updates)
 
   logger.info('{} image(s) updated'.format(result.modified_count))
+
+def get_paintings_for_image(filename):
+  """
+  Parameters
+  ----------
+  - filename -- The filename of the paintings to update.
+
+  Returns
+  -------
+  - paintings -- The paintings of the image (being 4 corners)
+  """
+  logger.info('Getting paintings for image with filename {}'.format(filename))
+
+  result = db_connection['images'].find({'filename': filename})
+
+  logger.info('{} painting(s) found'.format(result.count()))
+  return result

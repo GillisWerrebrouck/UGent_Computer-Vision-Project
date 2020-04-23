@@ -105,13 +105,13 @@ def detect_quadrilaters(image):
   closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
   contours, hierarhy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+  quadrilaterals = []
   for contour in contours:
     if cv2.contourArea(contour) > 100:
       arc_len = cv2.arcLength(contour, True)
       approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
 
       if (len(approx) == 4):
-        cv2.drawContours(image, [approx], -1, (0, 0, 255), 2)
+        quadrilaterals.append(approx)
 
-  return image
+  return quadrilaterals
