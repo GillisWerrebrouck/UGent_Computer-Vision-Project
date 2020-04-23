@@ -72,9 +72,9 @@ def get_paintings_for_image(filename):
   -------
   - paintings -- The paintings of the image (being 4 corners)
   """
-  logger.info('Getting paintings for image with filename {}'.format(filename))
+  # logger.info('Getting paintings for image with filename {}'.format(filename))
 
   result = db_connection['images'].find({'filename': filename})
 
-  logger.info('{} painting(s) found'.format(result.count()))
+  # logger.info('{} painting(s) found'.format(result.count()))
   return result
