@@ -81,7 +81,7 @@ def pop_contour_with_id(point, contours):
   """
   Detect the contour in which the point exists, if a contour around this point exists.
   If found, the contour is removed from the list and returned.
-  
+
   Parameters
   ----------
   - point --  The coordinate of a point.
@@ -101,12 +101,19 @@ def detect_quadrilaters(image):
   grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
   grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
   edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
-  
+
   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
   closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-  contours, hierarhy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+  closed = cv2.erode(closed, kernel)
+
+  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
+  closed = cv2.dilate(closed, kernel)
+
+  contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
   quadrilaterals = []
+
   for contour in contours:
     if cv2.contourArea(contour) > 100:
       arc_len = cv2.arcLength(contour, True)
