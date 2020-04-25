@@ -12,7 +12,6 @@ def run_task_02():
   filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 
   for f in filenames:
-    print(f)
     image = cv2.imread(f, 1)
     image = resize_image(image, 0.2)
     quadrilaterals = detect_quadrilaters(image)
@@ -50,4 +49,4 @@ def run_task_02():
     print("false positives: ", false_positives)
     print("average bounding box accuracy: ", average_accuracy)
     
-    show_image("SMEH", image)
+    show_image("DOBRA DOBRA", image)

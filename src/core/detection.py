@@ -114,14 +114,17 @@ def detect_quadrilaters(image):
   contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
   quadrilaterals = []
 
-  for contour in contours:
-    if cv2.contourArea(contour) > 100:
-      arc_len = cv2.arcLength(contour, True)
-      approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
+  (height, width) = image.shape[:2]
+  polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
 
-      if (len(approx) == 4):
-        polygon = Polygon(np.reshape(approx, (4, 2)))
-        if(polygon.is_valid):
-          quadrilaterals.append(approx)
+  for contour in contours:
+    arc_len = cv2.arcLength(contour, True)
+    approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
+
+    if (len(approx) == 4):
+      polygon = Polygon(np.reshape(approx, (4, 2)))
+      print(polygon.area/polygonImage.area)
+      if(polygon.is_valid and polygon.area/polygonImage.area > 0.1):
+        quadrilaterals.append(approx)
 
   return quadrilaterals
