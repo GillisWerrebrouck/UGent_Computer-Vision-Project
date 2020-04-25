@@ -62,6 +62,6 @@ def run():
             #     cx, cy = i.ravel()
             #     cv2.circle(img, (cx, cy), 10, 255, -1)
 
-        cv2.imshow('image', crop_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('image', crop_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
