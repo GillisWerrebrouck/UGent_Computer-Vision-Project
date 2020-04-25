@@ -1,9 +1,9 @@
 import cv2
-from glob import glob
 import numpy as np
+from glob import glob
+from os.path import basename
 
-from data.imageRepo import get_paintings_for_image
-
+from data.imageRepo import get_paintings_for_image, update_by_id
 
 def __reformatPoints(points, width, height):
     newPoints = []
@@ -24,15 +24,16 @@ def __calculate_points_for_rect(x, y, w, h):
 def run():
 
     filenames = glob(
-        './src/data/datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
+        './datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 
-    for filename in filenames:
-        img = cv2.imread(filename)
+    for path in filenames:
+        img = cv2.imread(path)
         width, height = img.shape[:2]
         print(width, height)
-        paintings_in_image = get_paintings_for_image(filename.split('/')[-1])
+        filename = basename(path)
+        paintings_in_image = get_paintings_for_image(filename)
         for painting in paintings_in_image:
-            print(filename)
+            print(path)
             points = np.array(painting.get('corners'), np.float32)
             points = __reformatPoints(points, width, height)
             points.reshape((-1, 1, 2))
@@ -56,6 +57,12 @@ def run():
                                 (0, 255, 255), thickness=5)
             img = cv2.polylines(img, [rectPoints], True,
                                 (255, 0, 255), thickness=5)
+
+            update_by_id(painting.get('_id'), {
+              '$set': {
+                'keypoints': corners.tolist()
+              }
+            })
 
         cv2.imshow('image', crop_img)
         cv2.waitKey(0)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from bson.objectid import ObjectId
 
 from data.connect import connect_mongodb_database
 from core.logger import get_root_logger
@@ -59,6 +60,24 @@ def update_paintings_of_file(filename, updates):
   logger.info('Updating image(s) with filename {}'.format(filename))
 
   result = db_connection['images'].update_many({ 'filename': filename }, updates)
+
+  logger.info('{} image(s) updated'.format(result.modified_count))
+
+
+def update_by_id(id, updates):
+  """
+  Parameters
+  ----------
+  - id -- The id of the painting to update.
+  - updates -- The MongoDB update statements (e.g. { $set: ... }).
+
+  Returns
+  -------
+  Nothing
+  """
+  logger.info('Updating image(s) with id {}'.format(id))
+
+  result = db_connection['images'].update_one({ '_id': ObjectId(id) }, updates)
 
   logger.info('{} image(s) updated'.format(result.modified_count))
 
