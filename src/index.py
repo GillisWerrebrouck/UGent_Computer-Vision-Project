@@ -6,7 +6,6 @@ from core.visualize import get_window
 from tasks.task01 import run_task_01
 from tasks.task02 import run_task_02
 
-
 # create a window with all tasks listed and set theme
 sg.theme('DefaultNoMoreNagging')
 layout = [
