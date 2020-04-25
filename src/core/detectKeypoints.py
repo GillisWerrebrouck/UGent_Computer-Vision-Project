@@ -46,16 +46,21 @@ def run():
             crop_img = img[y:y + h, x:x + w]
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            corners = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
-            corners = np.int0(corners)
-            for i in corners:
-                cx, cy = i.ravel()
-                cv2.circle(img, (cx, cy), 10, 255, -1)
 
-            img = cv2.polylines(img, [points], True,
-                                (0, 255, 255), thickness=5)
-            img = cv2.polylines(img, [rectPoints], True,
-                                (255, 0, 255), thickness=5)
+            orb = cv2.ORB_create()
+            keypoints = orb.detect(gray, None)
+            keypoints, des = orb.compute(gray, keypoints)
+
+            # TODO upload keypoint and description?
+
+            crop_img = cv2.drawKeypoints(
+                crop_img, keypoints, None, color=(0, 255, 0), flags=0)
+
+            # keypoints = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
+            # keypoints = np.int0(corners)
+            # for i in keypoints:
+            #     cx, cy = i.ravel()
+            #     cv2.circle(img, (cx, cy), 10, 255, -1)
 
         cv2.imshow('image', crop_img)
         cv2.waitKey(0)
