@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from shapely.geometry import Polygon
 
 from core.logger import get_root_logger
 from core.visualize import show_image, resize_image
@@ -112,6 +113,8 @@ def detect_quadrilaters(image):
       approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
 
       if (len(approx) == 4):
-        quadrilaterals.append(approx)
+        polygon = Polygon(np.reshape(approx, (4, 2)))
+        if(polygon.is_valid):
+          quadrilaterals.append(approx)
 
   return quadrilaterals

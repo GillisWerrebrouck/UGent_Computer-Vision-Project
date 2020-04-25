@@ -7,8 +7,6 @@ from shapely.geometry import Polygon
 # print(x)
 
 def calculate_bounding_box_accuracy(pointList1, pointList2):
-    print("pointlist1: ", pointList1)
-    print("pointlist2: ", pointList2)
     polygon = Polygon(pointList1)
     polygon2 = Polygon(pointList2)
     intersect = polygon.intersection(polygon2)
