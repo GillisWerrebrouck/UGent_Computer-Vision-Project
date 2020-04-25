@@ -5,7 +5,7 @@ import numpy as np
 from core.detection import detect_quadrilaters
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
-from core.accuracyHelperFunctions import calculate_intersection
+from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
 
 
 def run_task_02():
@@ -19,17 +19,34 @@ def run_task_02():
     result = get_paintings_for_image(f.split('/')[-1])
     print('found: ' , str(len(quadrilaterals)) , ' - from: ' , str(result.count()))
     (height, width) = image.shape[:2]
-    print(height, width)
+    false_positives = 0
+    false_negatives = 0
+    paintings_found = 0
+    average_accuracy = 0
     for q1 in result:
+      area = 0
       for q2 in quadrilaterals: 
-        print('q2 original: ', q2)
-        q2 = np.reshape(q2, (2, 3))
-        print('q2 flatted: ', q2)
-        # for point in q2:
-        #   point[0] = float(point[0])/width
-        #   point[1] = float(point[1])/height
-        print('q2 calculated: ', q2)
-        intersection = calculate_intersection(q1.get('corners'), q2)
-        
-    # break
+        q2 = np.reshape(q2, (4, 2)).astype(np.float32)
+        for point in q2:
+          point[0] = point[0]/width
+          point[1] = point[1]/height
+        accuracy = calculate_bounding_box_accuracy(q1.get('corners'), q2)
+        if(area < accuracy):
+          area = accuracy
+      if(area <= 0.001):  # geen gevonden -> false positive
+        false_negatives += 1
+      else: # wel een gevonden, average accuracy verhogen
+        paintings_found += 1
+        average_accuracy += area
+
+    # average accuracy delen door aantal gevonden + aantal false negatives uitrekenen
+    # delen door 1 is nutteloos
+    if(paintings_found > 1):
+      average_accuracy /= paintings_found
+    false_positives = len(quadrilaterals) - paintings_found
+
+    print("false negatives: ", false_negatives)
+    print("false positives: ", false_positives)
+    print("average bounding box accuracy: ", average_accuracy)
+    
     show_image("SMEH", image)
