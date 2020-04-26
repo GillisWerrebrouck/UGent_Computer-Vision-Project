@@ -147,18 +147,17 @@ def __plot_NxN_histogram(histograms):
     plt.show()
 
 def run():
-
     filenames = glob(
-        './datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
+        './datasets/images/dataset_pictures_msk/zaal_14/*.jpg')
 
     for path in filenames:
         img = cv2.imread(path)
         width, height = img.shape[:2]
-        print(width, height)
+
         filename = basename(path)
         paintings_in_image = get_paintings_for_image(filename)
+
         for painting in paintings_in_image:
-            print(path)
             points = np.array(painting.get('corners'), np.float32)
             points = __reformatPoints(points, width, height)
             points.reshape((-1, 1, 2))
@@ -178,7 +177,7 @@ def run():
             keypoints, des = orb.compute(gray, keypoints)
 
             serialized_keypoints = serialize_keypoints(keypoints, des)
-            print(serialized_keypoints)
+
             update_by_id(painting.get('_id'), {
               '$set': {
                 'keypoints': serialized_keypoints
@@ -187,32 +186,14 @@ def run():
 
             # crop_img = cv2.drawKeypoints(crop_img, keypoints, None, color=(0, 255, 0), flags=0)
 
-            # histograms = __get_histogram(crop_img)
-            # __plot_histogram(histograms)
-            # histograms =__get_NxN_histograms(crop_img)
-            # __plot_NxN_histogram(histograms)
-            # histograms =__get_NxN_histograms(gray)
-            # __plot_NxN_histogram(histograms)
-
-            # orb = cv2.ORB_create()
-            # keypoints = orb.detect(gray, None)
-            # keypoints, des = orb.compute(gray, keypoints)
-
-            # # TODO upload keypoint and description?
-
-            # crop_img = cv2.drawKeypoints(
-            #     crop_img, keypoints, None, color=(0, 255, 0), flags=0)
-
-            # keypoints = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
-            # keypoints = np.int0(corners)
-            # for i in keypoints:
-            #     cx, cy = i.ravel()
-            #     cv2.circle(img, (cx, cy), 10, 255, -1)
-
-            # TODO upload keypoint and description?
+            cv2.imshow('image', crop_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            histograms = __get_histogram(crop_img)
+            __plot_histogram(histograms)
+            histograms =__get_NxN_histograms(crop_img)
+            __plot_NxN_histogram(histograms)
+            histograms =__get_NxN_histograms(gray)
+            __plot_NxN_histogram(histograms)
 
 
-
-        # cv2.imshow('image', crop_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
