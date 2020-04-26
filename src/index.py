@@ -5,18 +5,9 @@ from functools import partial
 from core.visualize import get_window
 from tasks.task01 import run_task_01
 from tasks.task02 import run_task_02
-from core.detectKeypoints import run
-from data.imageRepo import get_image_by_id
-from data.serializeKeypoints import deserialize_keypoints
+from tasks.saveFeatures import save_features
 
-run()
-
-image = get_image_by_id('5e970960b5527c95502fd0e5')
-
-tmp = image.get('keypoints')[0]
-print(deserialize_keypoints(tmp))
-
-# run()
+save_features()
 
 # create a window with all tasks listed and set theme
 # sg.theme('DefaultNoMoreNagging')

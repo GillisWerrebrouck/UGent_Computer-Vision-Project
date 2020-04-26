@@ -1,13 +1,11 @@
 import cv2
 import sys
 import numpy as np
-from glob import glob
-from os.path import basename
 from matplotlib import pyplot as plt
 
-from core.visualize import show_image, resize_image
-from data.serializeKeypoints import serialize_keypoints
+from data.serializer import serialize_keypoints, pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
+
 
 def __reformatPoints(points, width, height):
     newPoints = []
@@ -146,54 +144,108 @@ def __plot_NxN_histogram(histograms):
 
     plt.show()
 
-def run():
-    filenames = glob(
-        './datasets/images/dataset_pictures_msk/zaal_14/*.jpg')
 
-    for path in filenames:
-        img = cv2.imread(path)
-        width, height = img.shape[:2]
+def __cut_painting(image, corners):
+  """
+  Cut the painting from the given image.
 
-        filename = basename(path)
-        paintings_in_image = get_paintings_for_image(filename)
+  Parameters
+  ----------
+  - image -- A full color image to extract the painting from.
+  - corners -- The corners of the painting.
 
-        for painting in paintings_in_image:
-            points = np.array(painting.get('corners'), np.float32)
-            points = __reformatPoints(points, width, height)
-            points.reshape((-1, 1, 2))
-            x, y, w, h = cv2.boundingRect(points)
-            rectPoints = __calculate_points_for_rect(x, y, w, h)
+  Returns
+  -------
+  The cut painting.
+  """
+  width, height = image.shape[:2]
+  points = np.array(corners, np.float32)
+  points = __reformatPoints(points, width, height)
+  points.reshape((-1, 1, 2))
+  x, y, w, h = cv2.boundingRect(points)
+  rectPoints = __calculate_points_for_rect(x, y, w, h)
 
-            transformMatrix = cv2.getPerspectiveTransform(
-                np.float32(points), np.float32(rectPoints))
+  transformMatrix = cv2.getPerspectiveTransform(
+      np.float32(points), np.float32(rectPoints))
 
-            img = cv2.warpPerspective(img, transformMatrix, (height, width))
-            crop_img = img[y:y + h, x:x + w]
-
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-            orb = cv2.ORB_create()
-            keypoints = orb.detect(gray, None)
-            keypoints, des = orb.compute(gray, keypoints)
-
-            serialized_keypoints = serialize_keypoints(keypoints, des)
-
-            update_by_id(painting.get('_id'), {
-              '$set': {
-                'keypoints': serialized_keypoints
-              }
-            })
-
-            # crop_img = cv2.drawKeypoints(crop_img, keypoints, None, color=(0, 255, 0), flags=0)
-
-            cv2.imshow('image', crop_img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-            histograms = __get_histogram(crop_img)
-            __plot_histogram(histograms)
-            histograms =__get_NxN_histograms(crop_img)
-            __plot_NxN_histogram(histograms)
-            histograms =__get_NxN_histograms(gray)
-            __plot_NxN_histogram(histograms)
+  img_warped = cv2.warpPerspective(image, transformMatrix, (height, width))
+  return img_warped[y:y + h, x:x + w]
 
 
+def __extract_orb(gray):
+  """
+  Extract ORB features from the given image.
+
+  Parameters
+  ----------
+  - gray -- A grayscale image to extract ORB features from.
+
+  Returns
+  -------
+  The ORB keypoints and descriptors.
+  """
+  orb = cv2.ORB_create()
+  keypoints = orb.detect(gray, None)
+  keypoints, des = orb.compute(gray, keypoints)
+
+  return tuple([keypoints, des])
+
+
+def __extract_sobel(gray):
+  """
+  Extract sobel features from the given image.
+
+  Parameters
+  ----------
+  - gray -- A grayscale image to extract sobel features from.
+
+  Returns
+  -------
+  The sobel feature.
+  """
+  sobelX = cv2.Sobel(gray, cv2.CV_64F, 1, 0, 5)
+  sobelY = cv2.Sobel(gray, cv2.CV_64F, 0, 1, 5)
+
+  sobelX = cv2.convertScaleAbs(sobelX)
+  sobelY = cv2.convertScaleAbs(sobelY)
+  return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
+
+
+def extract_features(path, dbPainting):
+  """
+  Extract fancy features from the given image.
+
+  Parameters
+  ----------
+  - path -- The path to the image to extract features from.
+  - dbPainting -- The painting in our database.
+
+  Returns
+  -------
+  Object containing our very usefull features.
+  """
+  image = cv2.imread(path)
+  painting = __cut_painting(image, dbPainting.get('corners'))
+  painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
+
+  # Features with color image
+  full_histogram = __get_histogram(painting)
+  block_histogram =__get_NxN_histograms(painting)
+
+  # Features with gray image
+  keypoints, descriptors = __extract_orb(painting_gray)
+  good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
+  sobel = __extract_sobel(painting_gray)
+
+  return {
+    'orb': {
+      'keypoints': keypoints,
+      'descriptors': descriptors
+    },
+    'histograms': {
+      'full_histogram': full_histogram,
+      'block_histogram': block_histogram
+    },
+    'good_features': good_features,
+    'sobel': sobel
+  }

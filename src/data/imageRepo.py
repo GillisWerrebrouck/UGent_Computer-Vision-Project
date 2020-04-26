@@ -2,6 +2,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 
 from data.connect import connect_mongodb_database
+from data.serializer import deserialize_keypoints, deserialize_histograms, pickle_deserialize
 from core.logger import get_root_logger
 
 logger = get_root_logger()
@@ -57,7 +58,7 @@ def get_image_by_id(id):
   The image.
   """
 
-  return db_connection['images'].find_one({ '_id': ObjectId(id) })
+  return __deserialize_features(db_connection['images'].find_one({ '_id': ObjectId(id) }))
 
 
 def update_paintings_of_file(filename, updates):
@@ -110,4 +111,24 @@ def get_paintings_for_image(filename):
   result = db_connection['images'].find({'filename': filename})
   logger.info('{} painting(s) found'.format(result.count()))
 
-  return result
+  # deserialize the features if present
+  deserialized = []
+
+  for image in result:
+    deserialized.append(__deserialize_features(image))
+
+  return deserialized
+
+
+def __deserialize_features(image):
+  if (image is None):
+    return image
+
+  if ('histograms' in image):
+    image['histograms']['full_histogram'] = pickle_deserialize(image.get('histograms')['full_histogram'])
+    image['histograms']['block_histogram'] = pickle_deserialize(image.get('histograms')['block_histogram'])
+
+  if ('keypoints' in image):
+    image['keypoints'] = deserialize_keypoints(image.get('keypoints'))
+
+  return image

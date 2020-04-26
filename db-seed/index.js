@@ -11,15 +11,37 @@ function mapToNumber(value) {
   return value;
 }
 
+/**
+ * Sometimes the corners are sorted in the wrong order, so fix this.
+ */
+function fixCorners(corners) {
+  let tmp;
+  let [A, B, C, D] = corners;
+
+  if (A[0] > B[0]) {
+      tmp = B;
+      B = A;
+      A = tmp;
+  }
+
+  if (C[0] < D[0]) {
+      tmp = C;
+      C = D;
+      D = tmp;
+  }
+
+  return [A, B, C, D];
+}
+
 console.log('Mapping images');
 // map the weird output of MongoDB
 // (we do not save the mapped output to be compatible with future dumps)
 const imagesToSave = images.map((image) => {
   const { _id, createdAt, corners } = image;
-  const formattedCorners = corners.map((corner) => {
+  const formattedCorners = fixCorners(corners.map((corner) => {
     const [x, y] = corner;
     return [mapToNumber(x), mapToNumber(y)];
-  });
+  }));
 
   return {
     ...image,
