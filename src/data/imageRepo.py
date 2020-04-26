@@ -46,6 +46,20 @@ def create_image(filename, corners, room):
   db_connection['images'].insert(image)
 
 
+def get_image_by_id(id):
+  """
+  Parameters
+  ----------
+  - id -- The id of the image to get.
+
+  Returns
+  -------
+  The image.
+  """
+
+  return db_connection['images'].find_one({ '_id': ObjectId(id) })
+
+
 def update_paintings_of_file(filename, updates):
   """
   Parameters
@@ -80,6 +94,7 @@ def update_by_id(id, updates):
   result = db_connection['images'].update_one({ '_id': ObjectId(id) }, updates)
 
   logger.info('{} image(s) updated'.format(result.modified_count))
+
 
 def get_paintings_for_image(filename):
   """

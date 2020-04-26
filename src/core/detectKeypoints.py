@@ -1,11 +1,19 @@
 import cv2
+<<<<<<< Updated upstream
 import sys
+=======
+import pickle
+>>>>>>> Stashed changes
 import numpy as np
 from glob import glob
 from os.path import basename
 from matplotlib import pyplot as plt
 
+<<<<<<< Updated upstream
 from core.visualize import show_image, resize_image
+=======
+from data.serializeKeypoints import serialize_keypoints
+>>>>>>> Stashed changes
 from data.imageRepo import get_paintings_for_image, update_by_id
 
 def __reformatPoints(points, width, height):
@@ -171,22 +179,20 @@ def run():
             crop_img = img[y:y + h, x:x + w]
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            corners = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
-            corners = np.int0(corners)
-            for i in corners:
-                cx, cy = i.ravel()
-                cv2.circle(img, (cx, cy), 10, 255, -1)
 
-            img = cv2.polylines(img, [points], True,
-                                (0, 255, 255), thickness=5)
-            img = cv2.polylines(img, [rectPoints], True,
-                                (255, 0, 255), thickness=5)
+            orb = cv2.ORB_create()
+            keypoints = orb.detect(gray, None)
+            keypoints, des = orb.compute(gray, keypoints)
 
+            serialized_keypoints = serialize_keypoints(keypoints, des)
+            print(serialized_keypoints)
             update_by_id(painting.get('_id'), {
               '$set': {
-                'keypoints': corners.tolist()
+                'keypoints': serialized_keypoints
               }
             })
+
+            # crop_img = cv2.drawKeypoints(crop_img, keypoints, None, color=(0, 255, 0), flags=0)
 
             # histograms = __get_histogram(crop_img)
             # __plot_histogram(histograms)
@@ -209,6 +215,10 @@ def run():
             # for i in keypoints:
             #     cx, cy = i.ravel()
             #     cv2.circle(img, (cx, cy), 10, 255, -1)
+
+            # TODO upload keypoint and description?
+
+
 
         # cv2.imshow('image', crop_img)
         # cv2.waitKey(0)
