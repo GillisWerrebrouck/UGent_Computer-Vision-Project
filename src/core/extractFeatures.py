@@ -85,7 +85,6 @@ def __get_NxN_histograms(image, N=4):
     - histograms -- Array with NxN histograms.
     - N -- NxN blocks to use to divide the image.
     """
-
     block_height = int(image.shape[0]/N)
     block_width = int(image.shape[1]/N)
 

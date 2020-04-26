@@ -67,6 +67,9 @@ async function main() {
   console.log('Populating database');
   await imagesCollection.insertMany(imagesToSave);
 
+  console.log('Creating an index on the image filename');
+  await imagesCollection.createIndex({ filename: 1 });
+
   await client.close();
 }
 
