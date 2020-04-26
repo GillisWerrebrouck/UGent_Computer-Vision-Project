@@ -110,9 +110,4 @@ def get_paintings_for_image(filename):
   result = db_connection['images'].find({'filename': filename})
   logger.info('{} painting(s) found'.format(result.count()))
 
-<<<<<<< HEAD
-  # logger.info('{} painting(s) found'.format(result.count()))
   return result
-=======
-  return result
->>>>>>> a0ad128c666fd3527f74c62d3ba7d93b6f4a9668
