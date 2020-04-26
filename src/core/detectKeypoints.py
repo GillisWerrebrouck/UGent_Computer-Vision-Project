@@ -1,19 +1,12 @@
 import cv2
-<<<<<<< Updated upstream
 import sys
-=======
-import pickle
->>>>>>> Stashed changes
 import numpy as np
 from glob import glob
 from os.path import basename
 from matplotlib import pyplot as plt
 
-<<<<<<< Updated upstream
 from core.visualize import show_image, resize_image
-=======
 from data.serializeKeypoints import serialize_keypoints
->>>>>>> Stashed changes
 from data.imageRepo import get_paintings_for_image, update_by_id
 
 def __reformatPoints(points, width, height):
