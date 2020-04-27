@@ -210,21 +210,21 @@ def extract_sobel(gray):
   return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
 
 
-def extract_features(path, dbPainting):
+def extract_features(path, corners):
   """
   Extract fancy features from the given image.
 
   Parameters
   ----------
   - path -- The path to the image to extract features from.
-  - dbPainting -- The painting in our database.
+  - corners -- The corners of the painting in our database.
 
   Returns
   -------
   Object containing our very usefull features.
   """
   image = cv2.imread(path)
-  painting = __cut_painting(image, dbPainting.get('corners'))
+  painting = __cut_painting(image, corners)
   painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
 
   # Features with color image

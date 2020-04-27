@@ -19,7 +19,7 @@ def save_features():
         for painting in paintings_in_image:
             logger.info('Extracting features of image with id {}'.format(
                 painting.get('_id')))
-            features = extract_features(path, painting)
+            features = extract_features(path, painting.get('corners'))
 
             update_by_id(painting.get('_id'), {
                 '$set': {
