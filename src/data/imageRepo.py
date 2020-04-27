@@ -131,4 +131,10 @@ def __deserialize_features(image):
   if ('keypoints' in image):
     image['keypoints'] = deserialize_keypoints(image.get('keypoints'))
 
+  if ('sobel' in image):
+    image['sobel'] = pickle_deserialize(image.get('sobel'))
+
+  if ('good_features' in image):
+    image['good_features'] = pickle_deserialize(image.get('good_features'))
+
   return image
