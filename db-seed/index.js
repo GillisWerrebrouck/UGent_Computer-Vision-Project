@@ -69,8 +69,8 @@ async function main() {
 
   console.log('Creating a couple of indices (filename and room)');
   await imagesCollection.createIndexes([
-    { key: 'filename', background: true },
-    { key: 'room', background: true },
+    { key: { filename: 1 }, background: true },
+    { key: { room: 1 }, background: true },
   ]);
 
   await client.close();
