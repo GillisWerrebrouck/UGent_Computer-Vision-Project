@@ -23,6 +23,12 @@ Thereafter, start MongoDB. This command will automatically start a Node containe
 docker-compose up --force-recreate
 ```
 
+If you want to check if the Node container is done with seeding, use the following command. If this commands exits, the seeding is done.
+
+```bash
+docker logs -f seed
+```
+
 Finally, run the project:
 
 ```bash

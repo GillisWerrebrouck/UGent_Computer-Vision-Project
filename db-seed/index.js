@@ -4,6 +4,13 @@ const {
 } = require('mongodb');
 const fs = require('fs');
 
+const MONGO_USER = 'devuser';
+const MONGO_PWD = 'devpwd';
+const MONGO_HOST = 'mongodb';
+const MONGO_PORT = 27017;
+const MONGO_DATABASE = 'computervision';
+const MONGO_COLLECTION = 'images';
+
 /**
  * Make the given images ready to save in the database.
  *
@@ -52,13 +59,13 @@ function getParsedFileContent(file) {
 // all fs actions are sync to save memory!
 async function main() {
     console.log('Connecting to MongoDB');
-    const client = await MongoClient.connect('mongodb://devuser:devpwd@localhost:27017/cv-temp?authSource=admin', {
+    const client = await MongoClient.connect(`mongodb://${MONGO_USER}:${MONGO_PWD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin`, {
         useUnifiedTopology: true,
     });
     console.log('Connected');
 
     const db = client.db();
-    const imagesCollection = db.collection('img');
+    const imagesCollection = db.collection(MONGO_COLLECTION);
 
     console.log('Deleting possible existing images');
     await imagesCollection.deleteMany();
