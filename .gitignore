@@ -11,6 +11,5 @@ mongo-dump/
 # Dataset
 /src/datasets
 
-# Db seeder node modules and temporary dump files
+# Db seeder node modules
 db-seed/node_modules
-db-seed/dump
