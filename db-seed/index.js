@@ -1,79 +1,95 @@
 const {
-  MongoClient,
-  ObjectId
+    MongoClient,
+    ObjectId
 } = require('mongodb');
-const images = require('./images.json');
-
-function mapToNumber(value) {
-  if (isNaN(value)) {
-    return Number(value['$numberDouble']);
-  }
-  return value;
-}
+const fs = require('fs');
 
 /**
- * Sometimes the corners are sorted in the wrong order, so fix this.
+ * Make the given images ready to save in the database.
+ *
+ * @param {object[]} images - Images to save.
  */
-function fixCorners(corners) {
-  let tmp;
-  let [A, B, C, D] = corners;
+function formatImages(images) {
+    console.log(`Mapping ${images.length} images`);
 
-  if (A[0] > B[0]) {
-      tmp = B;
-      B = A;
-      A = tmp;
-  }
+    return images.map((image) => {
+        const {
+            _id,
+            createdAt,
+            histograms: {
+                full_histogram,
+                block_histogram,
+            },
+            good_features,
+        } = image;
 
-  if (C[0] < D[0]) {
-      tmp = C;
-      C = D;
-      D = tmp;
-  }
-
-  return [A, B, C, D];
+        return {
+            ...image,
+            _id: new ObjectId(_id),
+            createdAt: new Date(createdAt),
+            good_features: Buffer.from(good_features, 'base64'),
+            histograms: {
+                full_histogram: Buffer.from(full_histogram, 'base64'),
+                block_histogram: Buffer.from(block_histogram, 'base64'),
+            }
+        };
+    });
 }
 
-console.log('Mapping images');
-// map the weird output of MongoDB
-// (we do not save the mapped output to be compatible with future dumps)
-const imagesToSave = images.map((image) => {
-  const { _id, createdAt, corners } = image;
-  const formattedCorners = fixCorners(corners.map((corner) => {
-    const [x, y] = corner;
-    return [mapToNumber(x), mapToNumber(y)];
-  }));
+function getAllJSONDumpFiles() {
+    const dir = 'dump';
+    const files = fs.readdirSync(dir);
+    return files.filter((filename) => filename.endsWith('.json'))
+        .map((filename) => `${dir}/${filename}`);
+}
 
-  return {
-    ...image,
-    _id: new ObjectId(_id['$oid']),
-    createdAt: new Date(createdAt['$date']),
-    corners: formattedCorners,
-  };
-});
+function getParsedFileContent(file) {
+    const buffer = fs.readFileSync(file);
+    const images = JSON.parse(buffer.toString());
+    return formatImages(images);
+}
 
+// all fs actions are sync to save memory!
 async function main() {
-  console.log('Connecting to MongoDB');
-  const client = await MongoClient.connect('mongodb://devuser:devpwd@mongodb:27017/computervision?authSource=admin', {
-    useUnifiedTopology: true,
-  });
-  console.log('Connected');
+    console.log('Connecting to MongoDB');
+    const client = await MongoClient.connect('mongodb://devuser:devpwd@localhost:27017/cv-temp?authSource=admin', {
+        useUnifiedTopology: true,
+    });
+    console.log('Connected');
 
-  const db = client.db();
-  const imagesCollection = db.collection('images');
+    const db = client.db();
+    const imagesCollection = db.collection('img');
 
-  console.log('Deleting possible existing images');
-  await imagesCollection.deleteMany();
+    console.log('Deleting possible existing images');
+    await imagesCollection.deleteMany();
 
-  console.log('Populating database');
-  await imagesCollection.insertMany(imagesToSave);
+    const files = getAllJSONDumpFiles();
 
-  console.log('Creating a couple of indices (filename and room)');
-  await imagesCollection.createIndexes([
-    { key: { filename: 1 }, background: true },
-    { key: { room: 1 }, background: true },
-  ]);
+    console.log('Populating database');
+    for (let i = 0; i < files.length; i++) {
+        const filename = files[i];
+        console.log(`${filename} started`);
+        const images = getParsedFileContent(filename);
+        await imagesCollection.insertMany(images);
+        console.log(`${filename} done`);
+    }
 
-  await client.close();
+    console.log('Creating a couple of indices (filename and room)');
+    await imagesCollection.createIndexes([{
+            key: {
+                filename: 1,
+            },
+            background: true
+        },
+        {
+            key: {
+                room: 1
+            },
+            background: true
+        },
+    ]);
+
+    await client.close();
 }
 
 (async () => await main())();

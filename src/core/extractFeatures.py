@@ -190,7 +190,7 @@ def __extract_orb(gray):
   return tuple([keypoints, des])
 
 
-def __extract_sobel(gray):
+def extract_sobel(gray):
   """
   Extract sobel features from the given image.
 
@@ -234,7 +234,6 @@ def extract_features(path, dbPainting):
   # Features with gray image
   keypoints, descriptors = __extract_orb(painting_gray)
   good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
-  sobel = __extract_sobel(painting_gray)
 
   return {
     'orb': {
@@ -245,6 +244,5 @@ def extract_features(path, dbPainting):
       'full_histogram': full_histogram,
       'block_histogram': block_histogram
     },
-    'good_features': good_features,
-    'sobel': sobel
+    'good_features': good_features
   }
