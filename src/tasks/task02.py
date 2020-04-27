@@ -1,6 +1,7 @@
 import cv2
-from glob import glob
 import numpy as np
+from glob import glob
+from os.path import basename
 
 from core.detection import detect_quadrilaters
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
@@ -16,8 +17,8 @@ def run_task_02():
     image = resize_image(image, 0.2)
     quadrilaterals = detect_quadrilaters(image)
     image = draw_quadrilaterals_opencv(image, quadrilaterals)
-    result = get_paintings_for_image(f.split('/')[-1])
-    print('found: ' , str(len(quadrilaterals)) , ' - from: ' , str(result.count()))
+    result = get_paintings_for_image(basename(f))
+    print('found: ' , str(len(quadrilaterals)) , ' - from: ' , str(len(result)))
     (height, width) = image.shape[:2]
     false_positives = 0
     false_negatives = 0
@@ -25,7 +26,7 @@ def run_task_02():
     average_accuracy = 0
     for q1 in result:
       area = 0
-      for q2 in quadrilaterals: 
+      for q2 in quadrilaterals:
         q2 = np.reshape(q2, (4, 2)).astype(np.float32)
         for point in q2:
           point[0] = point[0]/width
@@ -48,5 +49,5 @@ def run_task_02():
     print("false negatives: ", false_negatives)
     print("false positives: ", false_positives)
     print("average bounding box accuracy: ", average_accuracy)
-    
+
     show_image("DOBRA DOBRA", image)
