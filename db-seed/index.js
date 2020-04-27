@@ -2,7 +2,14 @@ const {
   MongoClient,
   ObjectId
 } = require('mongodb');
-const fs = require('fs');
+const images = require('./images.json');
+
+function mapToNumber(value) {
+  if (isNaN(value)) {
+    return Number(value['$numberDouble']);
+  }
+  return value;
+}
 
 /**
  * Sometimes the corners are sorted in the wrong order, so fix this.
@@ -12,100 +19,58 @@ function fixCorners(corners) {
   let [A, B, C, D] = corners;
 
   if (A[0] > B[0]) {
-    tmp = B;
-    B = A;
-    A = tmp;
+      tmp = B;
+      B = A;
+      A = tmp;
   }
 
   if (C[0] < D[0]) {
-    tmp = C;
-    C = D;
-    D = tmp;
+      tmp = C;
+      C = D;
+      D = tmp;
   }
 
   return [A, B, C, D];
 }
 
-/**
- * Make the given images ready to save in the database.
- *
- * @param {object[]} images - Images to save.
- */
-function formatImages(images) {
-  console.log(`Mapping ${images.length} images`);
+console.log('Mapping images');
+// map the weird output of MongoDB
+// (we do not save the mapped output to be compatible with future dumps)
+const imagesToSave = images.map((image) => {
+  const { _id, createdAt, corners } = image;
+  const formattedCorners = fixCorners(corners.map((corner) => {
+    const [x, y] = corner;
+    return [mapToNumber(x), mapToNumber(y)];
+  }));
 
-  return images.map((image) => {
-    const {
-      _id,
-      createdAt,
-      corners,
-      sobel,
-      histograms: {
-        full_histogram,
-        block_histogram,
-      },
-      good_features,
-    } = image;
-    const fixedCorners = fixCorners(corners);
+  return {
+    ...image,
+    _id: new ObjectId(_id['$oid']),
+    createdAt: new Date(createdAt['$date']),
+    corners: formattedCorners,
+  };
+});
 
-    return {
-      ...image,
-      _id: new ObjectId(_id),
-      createdAt: new Date(createdAt),
-      corners: fixedCorners,
-      sobel: Buffer.from(sobel, 'base64'),
-      good_features: Buffer.from(good_features, 'base64'),
-      histograms: {
-        full_histogram: Buffer.from(full_histogram, 'base64'),
-        block_histogram: Buffer.from(block_histogram, 'base64'),
-      }
-    };
-  });
-}
-
-function getAllJSONDumpFiles() {
-  const dir = 'dump';
-  const files = fs.readdirSync(dir);
-  return files.filter((filename) => filename.endsWith('.json'))
-    .map((filename) => `${dir}/${filename}`);
-}
-
-function getParsedFileContent(file) {
-  const buffer = fs.readFileSync(file);
-  const images = JSON.parse(buffer.toString());
-  return formatImages(images);
-}
-
-// all fs actions are sync to save memory!
 async function main() {
   console.log('Connecting to MongoDB');
-  const client = await MongoClient.connect('mongodb://devuser:devpwd@localhost:27017/cv-temp?authSource=admin', {
+  const client = await MongoClient.connect('mongodb://devuser:devpwd@mongodb:27017/computervision?authSource=admin', {
     useUnifiedTopology: true,
   });
   console.log('Connected');
 
   const db = client.db();
-  const imagesCollection = db.collection('img');
+  const imagesCollection = db.collection('images');
 
   console.log('Deleting possible existing images');
   await imagesCollection.deleteMany();
 
-  const files = getAllJSONDumpFiles();
-  console.log(files);
-
   console.log('Populating database');
-  for (let i = 0; i < files.length; i++) {
-    const filename = files[i];
-    console.log(`${filename} started`);
-    const images = getParsedFileContent(filename);
-    await imagesCollection.insertMany(images);
-    console.log(`${filename} done`);
-  }
+  await imagesCollection.insertMany(imagesToSave);
 
   console.log('Creating a couple of indices (filename and room)');
   await imagesCollection.createIndexes([
-    { key: { filename: 1, }, background: true },
-    { key: { room: 1 }, background: true },
+    { key: 'filename', background: true },
+    { key: 'room', background: true },
   ]);
 
   await client.close();
