@@ -1,0 +1,121 @@
+\documentclass[12pt,a4paper,oneside]{book}
+\usepackage{a4wide}                     % Allow more text on one page
+\usepackage[english]{babel}             % Support for English word splitting
+
+\usepackage{url}                        % Support for url processing
+\usepackage{graphicx}                   % Support for images
+\graphicspath{{images/}}
+\usepackage{caption}
+\usepackage{float}                      % Support for new float environments, also option H!
+\usepackage{flafter}                    % To ensure order of floats
+\usepackage[numbers]{natbib}            % Bibliography: use numeric citations
+\usepackage[nottoc]{tocbibind}          % Bibliography in table of contents
+\usepackage{pdfpages}                   % Support for importing pdf pages
+\usepackage{titling}                    % support for \thetitle en \theauthor
+\usepackage[plainpages=false]{hyperref} % Support for hyperrefs in the pdf
+\usepackage{quotchap}                   % Support for fancy chapter titles (with optional fancy quotes)
+
+% TODO: remove next line before submission
+\usepackage{todonotes}                  % Support for fancy todos
+
+%
+% Support for correct word splitting in English
+%
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+
+%
+% Glossary
+%
+\usepackage[acronym, toc]{glossaries}
+
+\setlength{\marginparwidth}{2cm}
+
+% Set IEEE bibliography
+\bibliographystyle{IEEEtran}
+
+%
+% The title and the authors
+%
+\title{%
+  Computer vision: project assignment\\
+  \large Group 10}
+\author{
+    Thomas \textsc{Aelbrecht}\\
+    Andreas \textsc{De Witte}\\
+    Jochen \textsc{Laroy}\\
+    Pieter-Jan \textsc{Philips}\\
+    Gillis \textsc{Werrebrouck}
+}
+
+% Set a better title for the ToC
+\addto\captionsenglish{
+  \renewcommand{\contentsname}{Table of Contents}
+}
+
+%
+% Extra commands for references
+%
+\newcommand{\appendixref}[1]{Appendix~\ref{#1}}
+\newcommand{\figureref}[1]{Figure~\ref{#1}}
+\newcommand{\sectionref}[1]{Section~\ref{#1}}
+\newcommand{\subsectionref}[1]{Subsection~\ref{#1}}
+\newcommand{\chapterref}[1]{Chapter~\ref{#1}}
+\newcommand{\tableref}[1]{Table~\ref{#1}}
+
+\setlength{\parindent}{0cm}             % indent of the first sentence of a paragraph
+\setlength{\parskip}{1em}               % space between paragraphs
+\renewcommand{\baselinestretch}{1.2} 	  % space between lines
+
+%
+% Make glossary
+%
+\input{chapters/Glossary}
+
+\begin{document}
+\selectlanguage{english}
+
+% show all references when no citations
+% TODO: remove next line before submission
+\nocite{*}
+
+\frontmatter
+
+%
+% Cover
+%
+\input{Cover}
+
+\addcontentsline{toc}{chapter}{\contentsname}
+\tableofcontents
+
+\printglossaries
+
+% TODO: remove next line before submission
+\listoftodos
+
+%
+% Add chapters here
+%
+\mainmatter
+\include{chapters/Introduction}
+
+%
+% Appendcies
+%
+\appendix
+\include{chapters/Appendices}
+
+%
+% The bibliography
+%
+\bibliography{references}
+
+%
+% List of figures and tables
+%
+\backmatter
+\listoffigures
+\listoftables
+
+\end{document}
