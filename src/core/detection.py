@@ -123,7 +123,6 @@ def detect_quadrilaters(image):
 
     if (len(approx) == 4):
       polygon = Polygon(np.reshape(approx, (4, 2)))
-      print(polygon.area/polygonImage.area)
       if(polygon.is_valid and polygon.area/polygonImage.area > 0.1):
         quadrilaterals.append(approx)
 
