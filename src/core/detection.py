@@ -5,126 +5,132 @@ from shapely.geometry import Polygon
 from core.logger import get_root_logger
 from core.visualize import show_image, resize_image
 from core.shape import Point, Rect
+from core.cornerHelpers import sort_corners
 
 logger = get_root_logger()
 
 
 def detect_contours(image):
-  """
-  Detect (in a naive way) contours of images in an image.
+    """
+    Detect (in a naive way) contours of images in an image.
 
-  Parameters
-  ----------
-  - image --  The image to detect contours in.
+    Parameters
+    ----------
+    - image --  The image to detect contours in.
 
-  Returns: The detected contours.
-  """
+    Returns: The detected contours.
+    """
 
-  logger.info('Starting naive contour detection')
+    logger.info('Starting naive contour detection')
 
-  (height, width) = image.shape[:2]
-  max_allowed_ratio = 10
+    (height, width) = image.shape[:2]
+    max_allowed_ratio = 10
 
-  image = resize_image(image, 0.2)
-  image = resize_image(image, 1/0.2)
+    image = resize_image(image, 0.2)
+    image = resize_image(image, 1/0.2)
 
-  imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))
-  imgray = cv2.dilate(imgray, kernel)
-  imgray = cv2.erode(imgray, kernel)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))
+    imgray = cv2.dilate(imgray, kernel)
+    imgray = cv2.erode(imgray, kernel)
 
-  imgray = cv2.medianBlur(imgray, 21)
+    imgray = cv2.medianBlur(imgray, 21)
 
-  canny = cv2.Canny(imgray, threshold1=50, threshold2=80, apertureSize=3)
+    canny = cv2.Canny(imgray, threshold1=50, threshold2=80, apertureSize=3)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
-  canny = cv2.dilate(canny, kernel)
-  contours, hierarchy = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
+    canny = cv2.dilate(canny, kernel)
+    contours, hierarchy = cv2.findContours(
+        canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-  logger.info('Detected {} contour(s)'.format(len(contours)))
+    logger.info('Detected {} contour(s)'.format(len(contours)))
 
-  filtered_contours = []
-  for contour in contours:
-    x, y, w, h = cv2.boundingRect(contour)
-    if max(w/h, h/w) <= max_allowed_ratio:
-      rectangle = Rect(Point(x, y), Point(x+w, y+h))
-      filtered_contours.append(rectangle)
+    filtered_contours = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if max(w/h, h/w) <= max_allowed_ratio:
+            rectangle = Rect(Point(x, y), Point(x+w, y+h))
+            filtered_contours.append(rectangle)
 
-  logger.info('Detected {} contour(s) after filtering out contours with abnormal ratio'.format(len(filtered_contours)))
+    logger.info('Detected {} contour(s) after filtering out contours with abnormal ratio'.format(
+        len(filtered_contours)))
 
-  return filtered_contours
+    return filtered_contours
 
 
 def pop_contour(point, contours):
-  """
-  Detect the contour in which the point exists, if a contour around this point exists.
-  If found, the contour is removed from the list and returned.
+    """
+    Detect the contour in which the point exists, if a contour around this point exists.
+    If found, the contour is removed from the list and returned.
 
-  Parameters
-  ----------
-  - point --  The coordinate of a point.
-  - contours --  All contours from which to find a surrounding contour.
+    Parameters
+    ----------
+    - point --  The coordinate of a point.
+    - contours --  All contours from which to find a surrounding contour.
 
-  Returns: The detected contour, if one exists.
-  """
+    Returns: The detected contour, if one exists.
+    """
 
-  for c in contours:
-    if(c.has_point(point)):
-      copy = c
-      contours.remove(c)
-      return copy
-  return None
+    for c in contours:
+        if(c.has_point(point)):
+            copy = c
+            contours.remove(c)
+            return copy
+    return None
 
 
 def pop_contour_with_id(point, contours):
-  """
-  Detect the contour in which the point exists, if a contour around this point exists.
-  If found, the contour is removed from the list and returned.
+    """
+    Detect the contour in which the point exists, if a contour around this point exists.
+    If found, the contour is removed from the list and returned.
 
-  Parameters
-  ----------
-  - point --  The coordinate of a point.
-  - contours --  All contours from which to find a surrounding contour. The contours are tupples; (Rect contour, figure id).
+    Parameters
+    ----------
+    - point --  The coordinate of a point.
+    - contours --  All contours from which to find a surrounding contour. The contours are tupples; (Rect contour, figure id).
 
-  Returns: The detected contour, if one exists.
-  """
+    Returns: The detected contour, if one exists.
+    """
 
-  for c in contours:
-    if(c[0].has_point(point)):
-      copy = c
-      contours.remove(c)
-      return copy
-  return None
+    for c in contours:
+        if(c[0].has_point(point)):
+            copy = c
+            contours.remove(c)
+            return copy
+    return None
+
 
 def detect_quadrilaters(image):
-  grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-  grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
-  edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
+    grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
+    edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-  closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-  closed = cv2.erode(closed, kernel)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # closed = cv2.erode(closed, kernel)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
-  closed = cv2.dilate(closed, kernel)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
+    # closed = cv2.dilate(closed, kernel)
 
-  contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-  quadrilaterals = []
+    contours, hierarchy = cv2.findContours(
+        closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    quadrilaterals = []
 
-  (height, width) = image.shape[:2]
-  polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
+    (height, width) = image.shape[:2]
+    polygonImage = Polygon(
+        [(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
 
-  for contour in contours:
-    arc_len = cv2.arcLength(contour, True)
-    approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
+    for contour in contours:
+        arc_len = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
 
-    if (len(approx) == 4):
-      polygon = Polygon(np.reshape(approx, (4, 2)))
-      print(polygon.area/polygonImage.area)
-      if(polygon.is_valid and polygon.area/polygonImage.area > 0.1):
-        quadrilaterals.append(approx)
+        if (len(approx) == 4):
+            approx = sort_corners(np.reshape(approx, (4, 2)))
+            polygon = Polygon(approx)
+            if(polygon.is_valid and polygon.area/polygonImage.area > 0.1):
+                quadrilaterals.append(approx)
 
-  return quadrilaterals
+    return quadrilaterals

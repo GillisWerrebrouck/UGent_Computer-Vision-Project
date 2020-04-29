@@ -7,22 +7,7 @@ from data.serializer import serialize_keypoints, pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
 
 
-def __reformatPoints(points, width, height):
-    newPoints = []
-    for point in points:
-        newPoints.append([int(point[0] * height), int(point[1] * width)])
-    return np.array(newPoints, np.int32)
-
-
-def __calculate_points_for_rect(x, y, w, h):
-    points = []
-    points.append([x, y])
-    points.append([x + w, y])
-    points.append([x + w, y + h])
-    points.append([x, y+h])
-    return np.array(points, np.int32)
-
-def __get_histogram(image):
+def get_histogram(image):
     """
     Get histogram values from an image. Grayscale images will result in only one histogram array,
     color images will result in 3 histogram arrays.
@@ -74,7 +59,7 @@ def __get_histogram(image):
 
 def __get_NxN_histograms(image, N=4):
     """
-    Get NxN histograms from an image divided in NxN blocks. This function uses __get_histogram.
+    Get NxN histograms from an image divided in NxN blocks. This function uses get_histogram.
 
     Parameters
     ----------
@@ -96,13 +81,13 @@ def __get_NxN_histograms(image, N=4):
 
             row_num = int(row/block_height)
             col_num = int(col/block_width)
-            histograms[row_num][col_num] = __get_histogram(block)
+            histograms[row_num][col_num] = get_histogram(block)
 
     return histograms
 
 def __plot_histogram(histograms):
     """
-    Plot one histogram generated from __get_histogram.
+    Plot one histogram generated from get_histogram.
 
     Parameters
     ----------
@@ -118,7 +103,7 @@ def __plot_histogram(histograms):
 
 def __plot_NxN_histogram(histograms):
     """
-    Plot one histogram generated from __get_histogram.
+    Plot one histogram generated from get_histogram.
 
     Parameters
     ----------
@@ -143,32 +128,6 @@ def __plot_NxN_histogram(histograms):
 
     plt.show()
 
-
-def __cut_painting(image, corners):
-  """
-  Cut the painting from the given image.
-
-  Parameters
-  ----------
-  - image -- A full color image to extract the painting from.
-  - corners -- The corners of the painting.
-
-  Returns
-  -------
-  The cut painting.
-  """
-  width, height = image.shape[:2]
-  points = np.array(corners, np.float32)
-  points = __reformatPoints(points, width, height)
-  points.reshape((-1, 1, 2))
-  x, y, w, h = cv2.boundingRect(points)
-  rectPoints = __calculate_points_for_rect(x, y, w, h)
-
-  transformMatrix = cv2.getPerspectiveTransform(
-      np.float32(points), np.float32(rectPoints))
-
-  img_warped = cv2.warpPerspective(image, transformMatrix, (height, width))
-  return img_warped[y:y + h, x:x + w]
 
 
 def __extract_orb(gray):
@@ -224,11 +183,11 @@ def extract_features(path, corners):
   Object containing our very usefull features.
   """
   image = cv2.imread(path)
-  painting = __cut_painting(image, corners)
+  painting = cut_painting(image, corners)
   painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
 
   # Features with color image
-  full_histogram = __get_histogram(painting)
+  full_histogram = get_histogram(painting)
   block_histogram =__get_NxN_histograms(painting)
 
   # Features with gray image
