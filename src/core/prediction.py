@@ -34,7 +34,6 @@ def __fetch_images(force=False):
             'room': 1
         })
 
-        # images = imagesFromDB
         images = []
 
         for image in imagesFromDB:
