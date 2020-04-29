@@ -1,6 +1,7 @@
 version: '3'
 services:
   seed:
+    container_name: seed
     build: db-seed
     volumes:
       - ./db-seed:/app

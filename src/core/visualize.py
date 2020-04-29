@@ -143,3 +143,8 @@ def show_dog(dog):
   copy /= (maxVal * 2)
   copy += 0.5
   show_image('DoG', copy)
+
+def draw_quadrilaterals_opencv(image, quadrilaterals):
+  for q in quadrilaterals:
+    cv2.drawContours(image, [q], -1, (0, 0, 255), 2)
+  return image
