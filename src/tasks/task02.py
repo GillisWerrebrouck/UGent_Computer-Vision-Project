@@ -11,7 +11,7 @@ from core.prediction import predict_room
 
 
 def run_task_02():
-  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_A/*.jpg')
+  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 
   for f in filenames:
     original_image = cv2.imread(f, 1)

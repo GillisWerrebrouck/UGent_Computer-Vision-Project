@@ -59,7 +59,7 @@ def get_histogram(image):
     return histograms
 
 
-def __get_NxN_histograms(image, N=4):
+def get_NxN_histograms(image, N=4):
     """
     Get NxN histograms from an image divided in NxN blocks. This function uses get_histogram.
 
@@ -191,7 +191,7 @@ def extract_features(path, corners):
 
   # Features with color image
   full_histogram = get_histogram(painting)
-  block_histogram =__get_NxN_histograms(painting)
+  block_histogram = get_NxN_histograms(painting)
 
   # Features with gray image
   keypoints, descriptors = extract_orb(painting_gray)
