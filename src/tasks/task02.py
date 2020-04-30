@@ -17,7 +17,8 @@ def run_task_02():
     image = resize_image(image, 0.2)
     quadrilaterals = detect_quadrilaters(image)
     image = draw_quadrilaterals_opencv(image, quadrilaterals)
-    result = get_paintings_for_image(basename(f))
+    result = get_paintings_for_image(basename(f)) 
+    # todo: misschien enkel de corners ophalen
     (height, width) = image.shape[:2]
     false_positives = 0
     false_negatives = 0
@@ -36,6 +37,7 @@ def run_task_02():
       if(area <= 0.001):  # none found -> false positive
         false_negatives += 1
       else: # one found, increase average accuracy
+        # TODO: check on duplicates, remove from result?
         paintings_found += 1
         average_accuracy += area
 

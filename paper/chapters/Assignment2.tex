@@ -1,0 +1,45 @@
+\chapter{Assignment 2}
+\section{Unsupervised painting detection}
+\label{sec:unsupervised_painting_detection}
+The algorithm in assignment 2 drastically differs from the algorithm in assignment 1 (see \sectionref{sec:contour_detection}), it was designed from scratch with the weaknesses of the previous algorithm in mind. However the basic idea of the algorithm is still the same: removing as many details as possible before detecting edges or straight lines.
+
+\todo[inline]{Auteur van de referentie uitvissen}
+
+This algorithm starts with grayscaling the image, for the same reason as in assignment 1 (see \sectionref{sec:contour_detection}).
+
+The next step of the algorithm is a bilateral filter. This filter is used to remove noise from an image with preservation of the edges. It uses a small neighborhood of a pixel to calculate the new value. \cite{BilateralFilter}
+
+Thereafter the Canny algorithm is used to detect edges in the image. The resulting images is morphologically transformed using a rectangular kernel, this makes sure rectangular shapes are being closed when there is a lot of noise at their border (e.g. missing pieces). This operation basicly means that the image is first dilated and then eroded.
+
+Then the contours are being detected using OpenCV's algorithm, this is again the same as in assignment 1. Then every contour is being transformed into a polygon so the algorithm can throw away contours that do not meet the following requirements:
+
+\begin{itemize}
+  \item it has four corners;
+  \item it is a valid polygon (e.g. it may not be self-intersecting);
+  \item it has an area bigger than 10\% of the image size.
+\end{itemize}
+
+
+\subsection{Strengths and weaknesses}
+
+\todo[inline]{Aanvullen}
+
+
+\section{Quantitative comparison}
+In order to make a quantitative comparison, two things are needed. First of all, the quadrilaterals have to be found fully automatical (as described in \sectionref{sec:unsupervised_painting_detection}). The second thing is the solution created in assignment 1 (see \chapterref{chap:assignment1}), which is the presumably perfect paintings. The first part for finding these presumably perfect painting, is retrieving these from the database. 
+
+The next part is already building the solution. For this solution, it's required to measure the amount of false negatives (= paintings that are not found at all), the amount of false positives (= program thinks he finds a painting, but it is not a painting) and the bounding box accuracy (= average intersection divided by union).
+
+For the creation of the solution for this problem, a new problem occurs: how to find the intersection of these two things? The solution to this problem is made by using ``Shapely''. To do so, the quadrilaterals have to be transformed into a polygon. The moment this is done, ``Shapely'' can find the intersection immediately. It has been tested whether this gives correct intersections if they are not intersecting, or when they are sharing only a line. Also some more general intersections have been tested. Once the intersection is made, it's easy to find the area of the polygon (= solution), using ``Shapely'' once again. 
+
+For each of the presumably perfect paintings, all of the found quadrilaterals are checked. The intersection is made and when the `intersection divided by union' is bigger than the previous maximum, than a new best match is found. In the end, when all found quadrilaterals are tried, a check is done whether the area of the intersection is existing. If this is the case, this value is added to the average intersection divided by union parameter and the amount of found paintings is incremented. If this was not the case, than a painting that needs to be found was not found and the amount of false negatives is incremented. After all of the paintings from the database are checked, the average intersection divided by union parameter is divided by the amount of paintings found. Also, the amount of false positives is calculated by subtracting the amount of paintings found from the amount of quadrilaterals.
+
+\subsection{Problems}
+There are two problems with this solution, and both of these problems have the same cause. When quadrilateral is matched with one of the presumably perfect paintings, it's not removed from the list. This means that the quantitative comparison presumes that the algorithm in \sectionref{sec:unsupervised_painting_detection} is working correctly. The problem is that when a found quadrilateral from \sectionref{sec:unsupervised_painting_detection} is overlapping with more than one painting or when a painting is found twice, this gives more ``found paintings'' than there actually are. Sometimes resulting in a hidden falsely solution, but sometimes in non hidden falsely solutions aswell, meaning the amount of false positives is sometimes incorrect. This can even mean a negative amount of false positives.
+
+
+
+\section{Qualitative evaluation}
+
+\todo[inline]{aanvullen als dit gedaan is}
+
