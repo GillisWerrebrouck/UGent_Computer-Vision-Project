@@ -1,0 +1,65 @@
+\chapter{Assignment 1}
+\label{chap:assignment1}
+\section{General}
+for the execution of unsupervised painting detection, a series of actions are executed. The way this works is as following. When the image gets loaded in, all the contours are being tracked. however, these contours are not being shown yet. Next we made a graphical user interface, where it's possible to chose which action you want to execute. Each of these actions work in it's own way. The actions are the following: 
+\begin{enumerate}
+    \item Add
+    \item Remove
+    \item Draw
+    \item Drag
+    \item Convert
+    \item Clear canvas
+    \item Save to database
+    \item Next image
+\end{enumerate}
+
+\subsubsection{Add action}
+The ``Add'' action allows the user to click onto the image. The idea is that the user actually click in the painting he wants to ``detect''. For this action, the contours that were found at the beginning are being used. These contours are used to get an approach but creating rectangles out of them. The code will use the coordinates of the point in the contour and use the width en height of the contour to check if the click was inside of it. Like this, all contours that are clicked inside will be made visible.
+
+\subsubsection{Remove action}
+The ``Remove'' action allows the user to click into visible contours and remove these again. This is needed because the algorithm sometimes finds more contours than it should, so these can be removed.
+
+\subsubsection{Draw action}
+The ``Draw'' action is here in case the program can not recognize a painting. It needs to be possible to draw a contour by ourselves. This works by selecting the top left and the bottom right corners.
+
+\subsubsection{Drag action}
+The ``Drag'' action makes it possible to drag the individual corners. This makes it possible to perfectly position the individual corners. The contours need to be converted before the ``Drag'' action can work.
+
+\subsubsection{Convert action}
+The ``Convert'' action will convert the contours from rectangles into draggable quadrilaterals. This action needs to be done before the dragging can begin.
+
+
+\subsubsection{Clear canvas action}
+The ``Clear canvas'' action will remove all the visible contours. This is perfect to reset the image to the original state.
+
+\subsubsection{Save to database action}
+The ``Save to database'' action will save all the quadrilaterals that are visible to the datebase. This action will also go to the next image.
+
+\subsubsection{Next image action}
+The ``Next image'' action will make the program go to the next image.
+
+\section{Contour detection}
+\label{sec:contour_detection}
+The contour detection is the actual logic part. This is the part that decides what contours are in the image and it works as described below.
+
+Before any contour detection can be done, as many details as possible have to be removed. OpenCV has several options to solve this problem, for example erode, dilate, blurring (median, Gaussian\dots) or downscaling. The image needs to get rid of as many details as possible to prevent detection of contours inside the paintings or on the wall. Although this won't be perfect, the removal of details will decrease the number of incorrectly detected contours.
+
+So the first step of the algorithm is to remove details by resizing the image. Our implementation scales the image down and back up with a factor 5. To scale the image back up, pixel values are calculated using the pixel area. The scale up was mostly done to be able to show the original image, but it's also a possibility to use the algorithm with the downscaled image. This will result in a faster algorithm because the image it's working with is smaller.
+
+For the next steps, the painting needs to be grayscaled. This is done to make it easier to differentiate certain parts. This grayscaled image is then dilated and eroded to remove even more noise at the borders of the painting or on the walls. The last step of removing noise is to do a median blur over it. The idea of these steps is to smeare as many details as possible, in other words to make bigger blots with the same color. This makes it easier to detect the borders and remove noise in the background.
+
+The next step is to detect edges with Canny. The result of the Canny function will then be dilated once again to make the found edges stronger. After this the contours can be detected using OpenCV's algorithm. This algorithm will make sure only the most outer contours are returned when a hierarchical structure of contours is found. A small final detail to prevent unlogical solutions is the following: any contour with a width or height 10 times bigger than the other dimension will be removed. This prevents very small contours around noisy parts of the image given to the Canny algorithm.
+
+\subsection{Performance}
+
+\todo[inline]{Measure performance}
+
+\subsection{Strengths and weaknesses}
+
+This biggest strength of this algorithm is that it will give an output in almost every image. An example of an image where no painting will be detected is an image where the framework of the painting is not visible, meaning the image only contains the painting itself, no wall and no framework. With this kind of paintings, the desired sulution is a contour containing the entire painting, while this is not possible because the painting has no border at all.
+
+However, the biggest weakness of this algorithm is that almost every found contour is not precise enough, so almost every solution needs a slight adjustment. For some solutions, the algorithm puts the contour further than just the painting (so it includes a part of the background), while for other paintings, it doesn't even include the border of the painting.
+
+Another weakness of the algorithm is that paintings sometimes have overexposure or shadows, which makes it harder to detect it's contours. Some paintings even have a small paper with a description next to the painting, even this small paper is detected as being a painting. This is a logical decision, since there's such a big contrast in colors and since the paper has a clear contour, but this is not a desired solution.
+
+\todo[inline]{misschien minimale afmeting (of minimaal in \%) voor correcte contouren opstellen om dit resultaat tegen te gaan en dan deze zin verwijderen.}

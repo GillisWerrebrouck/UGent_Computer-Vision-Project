@@ -13,3 +13,39 @@ mongo-dump/
 
 # Db seeder node modules
 db-seed/node_modules
+
+# LaTeX build files
+paper/**/*.log
+paper/**/.aux
+paper/**/*.aux
+paper/**/*.bbl
+paper/**/*.blg
+paper/**/*.idx
+paper/**/*.ind
+paper/**/*.lof
+paper/**/*.lot
+paper/**/*.out
+paper/**/*.toc
+paper/**/*.acn
+paper/**/*.acr
+paper/**/*.alg
+paper/**/*.glg
+paper/**/*.glo
+paper/**/*.gls
+paper/**/*.fls
+paper/**/*.fdb_latexmk
+paper/**/*.snm
+paper/**/*.synctex
+paper/**/*.synctex.gz
+paper/**/*.nav
+paper/**/*.lol
+paper/**/*.log
+paper/**/*.tdo
+paper/**/*.dvi
+paper/**/*.ist
+paper/**/*.glsdefs
+paper/_minted-main
+
+# JabRef rubbish
+paper/*.bib.bak
+paper/*.bib.sav
