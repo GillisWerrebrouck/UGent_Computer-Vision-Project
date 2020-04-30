@@ -4,7 +4,7 @@ import numpy as np
 from data.imageRepo import get_all_images
 from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaters
-from core.extractFeatures import get_histogram
+from core.extractFeatures import get_histogram, extract_orb
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 
 images = None
@@ -30,8 +30,10 @@ def __fetch_images(force=False):
     if force or images is None:
         imagesFromDB = get_all_images({
             'histograms.full_histogram': 1,
+            'keypoints': 1,
             'filename': 1,
-            'room': 1
+            'room': 1,
+            'corners': 1
         })
 
         images = []
@@ -61,13 +63,14 @@ def __convert_to_three_dims(histogram):
     return np.array(result)
 
 
-def predict_room(image):
+def predict_room(original_image, quadrilaterals):
     """
     Predict the room of the given (full color!) image.
 
     Parameters
     ----------
-    - image -- The image to predict.
+    - original_image -- The image to predict.
+    - quadrilaterals -- The detected paintings in the image.
 
     Returns
     -------
@@ -77,17 +80,20 @@ def predict_room(image):
     global images
     __fetch_images()
 
-    quadriliterals = detect_quadrilaters(image)
-
-    if not len(quadriliterals):
+    if not len(quadrilaterals):
         return None
 
-    width, height = image.shape[:2]
-    for quad in quadriliterals:
+    width, height = original_image.shape[:2]
+    for quad in quadrilaterals:
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
-        painting = cut_painting(image, quad)
 
+        painting = cut_painting(original_image, quad)
         src_histogram = __convert_to_three_dims(get_histogram(painting))
+        
+        grayscale_painting = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
+        src_keypoints = extract_orb(grayscale_painting)
+        src_descriptors = np.array(src_keypoints[1]).astype(np.uint8)
+        src_keypoints = src_keypoints[0]
 
         scores = []
         for image in images:
@@ -96,6 +102,36 @@ def predict_room(image):
             score = cv2.compareHist(src_histogram, compare_to, cv2.HISTCMP_CORREL)
             scores.append(tuple([score, image['filename'], image['room']]))
 
+        # get the highest matching score
+        max_score = max(scores, key=lambda t: t[0])
+        print('Probably image: ', max_score[1])
+        print('Probably room: ', max_score[2])
+
+        scores = []
+        for image in images:
+            compare_keypoints = image['keypoints']
+            compare_descriptors = np.array(compare_keypoints['descriptors']).astype(np.uint8)
+            compare_keypoints = compare_keypoints['keypoints']
+
+            bf = cv2.BFMatcher(cv2.NORM_HAMMING2)#, crossCheck=True)
+            matches = bf.knnMatch(src_descriptors, compare_descriptors, k=2)
+            
+            ratio = 0.75
+            good_points = []
+
+            try:
+                for m, n in matches:
+                    if m.distance < ratio*n.distance:
+                        good_points.append(m)
+                        if len(good_points) > 20:
+                            print("similar image")
+            except ValueError:
+                pass
+        
+            number_keypoints = max(len(src_keypoints), len(compare_keypoints))
+            score = len(good_points) / number_keypoints * 100
+            scores.append(tuple([score, image['filename'], image['room']]))
+        
         # get the highest matching score
         max_score = max(scores, key=lambda t: t[0])
         print('Probably image: ', max_score[1])

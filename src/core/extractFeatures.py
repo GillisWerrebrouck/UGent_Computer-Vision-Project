@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 
 from data.serializer import serialize_keypoints, pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
+from core.cornerHelpers import cut_painting
 
 
 def get_histogram(image):
@@ -57,6 +58,7 @@ def get_histogram(image):
 
     return histograms
 
+
 def __get_NxN_histograms(image, N=4):
     """
     Get NxN histograms from an image divided in NxN blocks. This function uses get_histogram.
@@ -85,6 +87,7 @@ def __get_NxN_histograms(image, N=4):
 
     return histograms
 
+
 def __plot_histogram(histograms):
     """
     Plot one histogram generated from get_histogram.
@@ -100,6 +103,7 @@ def __plot_histogram(histograms):
         plt.plot(histogram[1], color=histogram[0])
         plt.xlim([0,256])
     plt.show()
+
 
 def __plot_NxN_histogram(histograms):
     """
@@ -129,8 +133,7 @@ def __plot_NxN_histogram(histograms):
     plt.show()
 
 
-
-def __extract_orb(gray):
+def extract_orb(gray):
   """
   Extract ORB features from the given image.
 
@@ -191,7 +194,7 @@ def extract_features(path, corners):
   block_histogram =__get_NxN_histograms(painting)
 
   # Features with gray image
-  keypoints, descriptors = __extract_orb(painting_gray)
+  keypoints, descriptors = extract_orb(painting_gray)
   good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
 
   return {

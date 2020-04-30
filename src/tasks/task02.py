@@ -7,16 +7,17 @@ from core.detection import detect_quadrilaters
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
 from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
+from core.prediction import predict_room
 
 
 def run_task_02():
-  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
+  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_A/*.jpg')
 
   for f in filenames:
-    image = cv2.imread(f, 1)
-    image = resize_image(image, 0.2)
-    quadrilaterals = detect_quadrilaters(image)
-    image = draw_quadrilaterals_opencv(image, quadrilaterals)
+    original_image = cv2.imread(f, 1)
+    original_image = resize_image(original_image, 0.2)
+    quadrilaterals = detect_quadrilaters(original_image)
+    image = draw_quadrilaterals_opencv(original_image, quadrilaterals)
     result = get_paintings_for_image(basename(f))
     print('found: ' , str(len(quadrilaterals)) , ' - from: ' , str(len(result)))
     (height, width) = image.shape[:2]
@@ -50,4 +51,6 @@ def run_task_02():
     print("false positives: ", false_positives)
     print("average bounding box accuracy: ", average_accuracy)
 
-    show_image("DOBRA DOBRA", image)
+    show_image(f, image)
+
+    predict_room(original_image, quadrilaterals)

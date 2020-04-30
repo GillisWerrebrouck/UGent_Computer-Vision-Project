@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def convert_corners_to_uniform_format(corners, width, height):
     """
     Convert all given corners to a uniform interval [0, 1]. Now the corners
@@ -57,7 +58,7 @@ def __reformatPoints(points, width, height):
     return np.array(newPoints, np.int32)
 
 
-def cut_painting(image, corners):
+def cut_painting(original_image, corners):
   """
   Cut the painting from the given image.
 
@@ -71,6 +72,7 @@ def cut_painting(image, corners):
   -------
   The cut painting.
   """
+  image = original_image.copy()
   width, height = image.shape[:2]
   points = np.array(corners, np.float32)
   points = __reformatPoints(points, width, height)
