@@ -2,3 +2,4 @@ coloredlogs==14.0
 pymongo==3.10.1
 scikit-learn==0.22.2.post1
 pysimplegui==4.18.0
+Shapely==1.7.0

@@ -1,51 +1,102 @@
 const {
-  MongoClient,
-  ObjectId
+    MongoClient,
+    ObjectId
 } = require('mongodb');
-const images = require('./images.json');
+const fs = require('fs');
 
-function mapToNumber(value) {
-  if (isNaN(value)) {
-    return Number(value['$numberDouble']);
-  }
-  return value;
+const MONGO_USER = 'devuser';
+const MONGO_PWD = 'devpwd';
+const MONGO_HOST = 'mongodb';
+const MONGO_PORT = 27017;
+const MONGO_DATABASE = 'computervision';
+const MONGO_COLLECTION = 'images';
+
+/**
+ * Make the given images ready to save in the database.
+ *
+ * @param {object[]} images - Images to save.
+ */
+function formatImages(images) {
+    console.log(`Mapping ${images.length} images`);
+
+    return images.map((image) => {
+        const {
+            _id,
+            createdAt,
+            histograms: {
+                full_histogram,
+                block_histogram,
+            },
+            good_features,
+        } = image;
+
+        return {
+            ...image,
+            _id: new ObjectId(_id),
+            createdAt: new Date(createdAt),
+            good_features: Buffer.from(good_features, 'base64'),
+            histograms: {
+                full_histogram: Buffer.from(full_histogram, 'base64'),
+                block_histogram: Buffer.from(block_histogram, 'base64'),
+            }
+        };
+    });
 }
 
-console.log('Mapping images');
-// map the weird output of MongoDB
-// (we do not save the mapped output to be compatible with future dumps)
-const imagesToSave = images.map((image) => {
-  const { _id, createdAt, corners } = image;
-  const formattedCorners = corners.map((corner) => {
-    const [x, y] = corner;
-    return [mapToNumber(x), mapToNumber(y)];
-  });
+function getAllJSONDumpFiles() {
+    const dir = 'dump';
+    const files = fs.readdirSync(dir);
+    return files.filter((filename) => filename.endsWith('.json'))
+        .map((filename) => `${dir}/${filename}`);
+}
 
-  return {
-    ...image,
-    _id: new ObjectId(_id['$oid']),
-    createdAt: new Date(createdAt['$date']),
-    corners: formattedCorners,
-  };
-});
+function getParsedFileContent(file) {
+    const buffer = fs.readFileSync(file);
+    const images = JSON.parse(buffer.toString());
+    return formatImages(images);
+}
 
+// all fs actions are sync to save memory!
 async function main() {
-  console.log('Connecting to MongoDB');
-  const client = await MongoClient.connect('mongodb://devuser:devpwd@mongodb:27017/computervision?authSource=admin', {
-    useUnifiedTopology: true,
-  });
-  console.log('Connected');
+    console.log('Connecting to MongoDB');
+    const client = await MongoClient.connect(`mongodb://${MONGO_USER}:${MONGO_PWD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin`, {
+        useUnifiedTopology: true,
+    });
+    console.log('Connected');
 
-  const db = client.db();
-  const imagesCollection = db.collection('images');
+    const db = client.db();
+    const imagesCollection = db.collection(MONGO_COLLECTION);
 
-  console.log('Deleting possible existing images');
-  await imagesCollection.deleteMany();
+    console.log('Deleting possible existing images');
+    await imagesCollection.deleteMany();
 
-  console.log('Populating database');
-  await imagesCollection.insertMany(imagesToSave);
+    const files = getAllJSONDumpFiles();
 
-  await client.close();
+    console.log('Populating database');
+    for (let i = 0; i < files.length; i++) {
+        const filename = files[i];
+        console.log(`${filename} started`);
+        const images = getParsedFileContent(filename);
+        await imagesCollection.insertMany(images);
+        console.log(`${filename} done`);
+    }
+
+    console.log('Creating a couple of indices (filename and room)');
+    await imagesCollection.createIndexes([{
+            key: {
+                filename: 1,
+            },
+            background: true
+        },
+        {
+            key: {
+                room: 1
+            },
+            background: true
+        },
+    ]);
+
+    await client.close();
 }
 
 (async () => await main())();

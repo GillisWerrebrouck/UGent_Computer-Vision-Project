@@ -11,7 +11,7 @@ This tutorial assumes you have the following dependencies already installed on y
 - OpenCV
 - Numpy
 
-First, install all required Python-packages.
+First, install all required Python-packages:
 
 ```bash
 pip3 install -r requirements.txt
@@ -23,7 +23,13 @@ Thereafter, start MongoDB. This command will automatically start a Node containe
 docker-compose up --force-recreate
 ```
 
-Finally, run the project.
+If you want to check if the Node container is done with seeding, use the following command. If this commands exits, the seeding is done.
+
+```bash
+docker logs -f seed
+```
+
+Finally, run the project:
 
 ```bash
 python src/index.py
