@@ -13,11 +13,9 @@ filenames = sorted(glob('./datasets/images/dataset_pictures_msk/zaal_1/*.jpg'))
 
 
 def detect1(img):
-    img = cv2.imread(file)
-
     height, width = img.shape[:2]
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV);
-    hsv[:,:,2] = 255;
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv[:,:,2] = 255
 
     ORANGE_MIN = np.array([5, 50, 50],np.uint8)
     ORANGE_MAX = np.array([15, 255, 255],np.uint8)
@@ -59,13 +57,73 @@ def detect1(img):
     cv2.imwrite('out/' + basename(file), result)
     # cv2.imwrite('out/' + basename(file), img)
 
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
 
 
+def remove_max(img):
+    range_width = int(255/5)
+    hist = cv2.calcHist([img], [0], None, [5], [0, 256])
+    hist = np.reshape(hist, (hist.shape[0]))
+    max_index = 0
+    max_value = hist[0]
 
+    for i in range(1, len(hist)):
+        if (hist[i] > max_value):
+            max_value = hist[i]
+            max_index = i
+
+    min_color = max_index * range_width
+    max_color = (max_index + 1) * range_width
+
+    img[ (img >= min_color) * (img <= max_color) ] = 255
+    return img
+
+
+def detect2(img):
+    orig = img
+    # hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # h, s, v = cv2.split(hsv)
+
+    # s = cv2.equalizeHist(s)
+    # hsv = cv2.merge([h, s, v])
+
+    # rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = clahe.apply(gray)
+
+    # gray = remove_max(gray)
+    # avg = int(np.average(gray))
+    # avg = int(np.median(gray))
+    avg = 127
+    _, thresh = cv2.threshold(gray, avg, 255, cv2.THRESH_BINARY)
+
+    # remove noise
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    thresh = cv2.erode(thresh, kernel, borderType=cv2.BORDER_CONSTANT, borderValue=0)
+    _, thresh = cv2.floodFill(thresh, None, (0, 0), 0)[:2]
+
+    # edges = cv2.Canny(thresh, 150, 200, apertureSize=3)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    # edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+    # contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # # img = cv2.drawContours(img, contours, -1, (0, 255, 0), 5)
+
+    # height, width = img.shape[:2]
+    # minArea = width * height * 0.001
+    # # minArea = 1000
+
+    # for contour in contours:
+    #     x, y, w, h = cv2.boundingRect(contour)
+    #     if (w * h >= minArea):
+    #         orig = cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 10)
+
+    cv2.imwrite('out/' + basename(file), np.hstack((gray, thresh)))
+    # cv2.imwrite('out/' + basename(file), orig)
 
 for file in filenames:
     img = cv2.imread(file)
-    detect1(img)
+    detect2(img)
 
     # img = cv2.bilateralFilter(img, 5, 150, 150)
     # img = cv2.medianBlur(img, (11, 11))
