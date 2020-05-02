@@ -1,57 +1,16 @@
-\documentclass[12pt,a4paper,oneside]{book}
-\usepackage{a4wide}                     % Allow more text on one page
-\usepackage[english]{babel}             % Support for English word splitting
-
-\usepackage{url}                        % Support for url processing
-\usepackage{graphicx}                   % Support for images
-\graphicspath{{images/}}
-\usepackage{caption}
-\usepackage{float}                      % Support for new float environments, also option H!
-\usepackage{flafter}                    % To ensure order of floats
-\usepackage[numbers]{natbib}            % Bibliography: use numeric citations
-\usepackage[nottoc]{tocbibind}          % Bibliography in table of contents
-\usepackage{pdfpages}                   % Support for importing pdf pages
-\usepackage{titling}                    % support for \thetitle en \theauthor
-\usepackage[plainpages=false]{hyperref} % Support for hyperrefs in the pdf
-\usepackage{quotchap}                   % Support for fancy chapter titles (with optional fancy quotes)
-
-% TODO: remove next line before submission
-\usepackage{todonotes}                  % Support for fancy todos
-
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
 %
-% Support for correct word splitting in English
+\documentclass[runningheads]{llncs}
 %
-\usepackage{polyglossia}
-\setdefaultlanguage{english}
-
+\usepackage{graphicx}
+\usepackage{todonotes}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
 %
-% Glossary
-%
-\usepackage[acronym, toc]{glossaries}
-
-\setlength{\marginparwidth}{2cm}
-
-% Set IEEE bibliography
-\bibliographystyle{IEEEtran}
-
-%
-% The title and the authors
-%
-\title{%
-  Computer vision: project assignment\\
-  \large Group 10}
-\author{
-    Thomas \textsc{Aelbrecht}\\
-    Andreas \textsc{De Witte}\\
-    Jochen \textsc{Laroy}\\
-    Pieter-Jan \textsc{Philips}\\
-    Gillis \textsc{Werrebrouck}
-}
-
-% Set a better title for the ToC
-\addto\captionsenglish{
-  \renewcommand{\contentsname}{Table of Contents}
-}
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
 
 %
 % Extra commands for references
@@ -63,62 +22,53 @@
 \newcommand{\chapterref}[1]{Chapter~\ref{#1}}
 \newcommand{\tableref}[1]{Table~\ref{#1}}
 
-\setlength{\parindent}{0cm}             % indent of the first sentence of a paragraph
-\setlength{\parskip}{1em}               % space between paragraphs
-\renewcommand{\baselinestretch}{1.2} 	  % space between lines
-
-%
-% Make glossary
-%
-\input{chapters/Glossary}
-
 \begin{document}
-\selectlanguage{english}
 
-% show all references when no citations
-% TODO: remove next line before submission
-\nocite{*}
+% TODO: set correct title
+\title{Computer vision: project assignment}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{
+    Thomas Aelbrecht\inst{1} \and
+    Andreas De Witte\inst{1} \and
+    Jochen Laroy\inst{1} \and
+    Pieter-Jan Philips\inst{1} \and
+    Gillis Werrebrouck\inst{1}
+}
 
-\frontmatter
+% TODO: is this really necessary?
+\authorrunning{T. Aelbrecht et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{Ghent University, Valentin Vaerwyckweg 1, 9000 Ghent, Belgium}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+The abstract should briefly summarize the contents of the paper in
+150--250 words.
+
+\keywords{First keyword  \and Second keyword \and Another keyword.}
+\end{abstract}
+%
+
+% TODO: content here
+\input{chapters/Introduction}
+\input{chapters/Assignment1}
+\input{chapters/Assignment2}
 
 %
-% Cover
+% ---- Bibliography ----
 %
-\input{Cover}
-
-\addcontentsline{toc}{chapter}{\contentsname}
-\tableofcontents
-
-\printglossaries
-
-% TODO: remove next line before submission
-\listoftodos
-
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
 %
-% Add chapters here
-%
-\mainmatter
-\todo[inline]{overal foto's tussen zwieren met tussentijdse resultaten enzo (consistent, dus één mooie voorbeeld foto en deze overal herbruiken)}
-\include{chapters/Introduction}
-\include{chapters/Assignment1}
-\include{chapters/Assignment2}
-
-%
-% Appendcies
-%
-\appendix
-\include{chapters/Appendices}
-
-%
-% The bibliography
-%
+% TODO: is the style really necessary?
+\bibliographystyle{splncs04}
 \bibliography{references}
-
-%
-% List of figures and tables
-%
-\backmatter
-\listoffigures
-\listoftables
 
 \end{document}
