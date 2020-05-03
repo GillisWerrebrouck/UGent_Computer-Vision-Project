@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from shapely.geometry import Polygon
+import queue
+from threading import Thread
 
 from core.logger import get_root_logger
 from core.visualize import show_image, resize_image
@@ -97,8 +99,6 @@ def pop_contour_with_id(point, contours):
       return copy
   return None
 
-import queue
-from threading import Thread
 
 def __flooding_thread(image, mask, step, y, queue):
   floodFlags = 4
