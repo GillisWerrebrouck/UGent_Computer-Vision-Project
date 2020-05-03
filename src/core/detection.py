@@ -105,6 +105,9 @@ def __flooding_thread(image, mask, step, y, queue):
   floodFlags |= cv2.FLOODFILL_MASK_ONLY
   floodFlags |= (255 << 8)
 
+  (img_h, img_w, channels) = image.shape
+  img_area = img_h * img_w
+
   largest_segment_size = 0
   largest_mask = None
   for x in range(0, image.shape[1], step):
@@ -114,6 +117,8 @@ def __flooding_thread(image, mask, step, y, queue):
     if largest_segment_size < current_size:
       largest_segment_size = current_size
       largest_mask = mask
+    if largest_segment_size == img_area:
+      break
   
   queue.put((largest_mask, largest_segment_size))
 
