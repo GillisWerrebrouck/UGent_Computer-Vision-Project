@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from shapely.geometry import Polygon
+import time
 import queue
 from threading import Thread
 
@@ -134,6 +135,8 @@ def detect_quadrilaters(original_image):
   Returns: The detected paintings as polygons.
   """
 
+  t1 = time.time()
+
   image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
   (h, w, channels) = image.shape
   mask = np.zeros((h+2, w+2), np.uint8)
@@ -194,5 +197,8 @@ def detect_quadrilaters(original_image):
       polygon = Polygon(np.reshape(approx, (4, 2)))
       if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
         paintings.append(approx)
+  
+  t2 = time.time()
+  logger.info("painting detection time: {}".format(t2-t1))
 
   return paintings
