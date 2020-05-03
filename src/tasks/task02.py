@@ -8,6 +8,7 @@ from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
 from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
 
+
 def run_task_02():
   filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
 

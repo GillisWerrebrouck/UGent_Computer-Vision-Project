@@ -97,8 +97,38 @@ def pop_contour_with_id(point, contours):
       return copy
   return None
 
+import queue
+from threading import Thread
+
+def __flooding_thread(image, mask, step, y, queue):
+  floodFlags = 4
+  floodFlags |= cv2.FLOODFILL_MASK_ONLY
+  floodFlags |= (255 << 8)
+
+  largest_segment_size = 0
+  largest_mask = None
+  for x in range(0, image.shape[1], step):
+    num, im, mask, rect = cv2.floodFill(image, mask, (x, y), (255,0,0), (8,)*3, (8,)*3, floodFlags)
+    x, y, w, h = rect
+    current_size = w*h
+    if largest_segment_size < current_size:
+      largest_segment_size = current_size
+      largest_mask = mask
+  
+  queue.put((largest_mask, largest_segment_size))
+
 
 def detect_quadrilaters(original_image):
+  """
+  Detect painings in an image.
+
+  Parameters
+  ----------
+  - original_image -- The image to detect paintings in.
+
+  Returns: The detected paintings as polygons.
+  """
+
   image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
   (h, w, channels) = image.shape
   mask = np.zeros((h+2, w+2), np.uint8)
@@ -109,36 +139,44 @@ def detect_quadrilaters(original_image):
 
   # use flooding to find mask
   largest_segment_size = 0
-  largest_mask = mask
-  step = 25
+  largest_mask = None
+  step = 50
+  threads_list = list()
+  mask_queue = queue.Queue()
   for y in range(0, image.shape[0], step):
-    for x in range(0, image.shape[1], step):
-      num, im, mask, rect = cv2.floodFill(image, mask, (x, y), (255,0,0), (8,)*3, (8,)*3, floodFlags)
-      x, y, w, h = rect
-      current_size = w*h
-      if largest_segment_size < current_size:
-        largest_segment_size = current_size
-        largest_mask = mask
+    thread = Thread(target=__flooding_thread, args=(image, mask, step, y, mask_queue))
+    thread.start()
+    threads_list.append(thread)
 
+  for thread in threads_list:
+    thread.join()
+
+  while not mask_queue.empty():
+    mask, size = mask_queue.get()
+    if largest_segment_size < size:
+      largest_segment_size = size
+      largest_mask = mask
+    if size == h*w:
+      break
+
+  mask = largest_mask
+  
   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
   mask = cv2.bitwise_not(mask)
   mask = cv2.erode(mask, kernel, 1)
   mask = cv2.medianBlur(mask, 9)
-  # cv2.imshow('mask', mask)
 
   # Calculate OTSU threshold to use as threshold for Canny detection
   grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
   ret, threshold = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)
   edges = cv2.Canny(mask, ret/2, ret, apertureSize=3)
-  # cv2.imshow('canny', edges)
 
   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
   closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-  # cv2.imshow('morphologyEx', closed)
 
   # find contours in mask
   contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-  quadrilaterals = []
+  paintings = []
 
   (height, width) = image.shape[:2]
   polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
@@ -150,38 +188,6 @@ def detect_quadrilaters(original_image):
     if (len(approx) == 4):
       polygon = Polygon(np.reshape(approx, (4, 2)))
       if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
-        quadrilaterals.append(approx)
+        paintings.append(approx)
 
-  return quadrilaterals
-
-
-# def detect_quadrilaters(image):
-#   grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-#   grayscale = cv2.bilateralFilter(grayscale, 1, 10, 120)
-#   edges = cv2.Canny(grayscale, 10, 250, apertureSize=3)
-
-#   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-#   closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-
-#   # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-#   # closed = cv2.erode(closed, kernel)
-
-#   # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
-#   # closed = cv2.dilate(closed, kernel)
-
-#   contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-#   quadrilaterals = []
-
-#   (height, width) = image.shape[:2]
-#   polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
-
-#   for contour in contours:
-#     arc_len = cv2.arcLength(contour, True)
-#     approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
-
-#     if (len(approx) == 4):
-#       polygon = Polygon(np.reshape(approx, (4, 2)))
-#       if(polygon.is_valid and polygon.area/polygonImage.area > 0.1):
-#         quadrilaterals.append(approx)
-
-#   return quadrilaterals
+  return paintings
