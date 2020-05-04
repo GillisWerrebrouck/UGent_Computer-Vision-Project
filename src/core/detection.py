@@ -102,9 +102,9 @@ def pop_contour_with_id(point, contours):
 
 
 def __flooding_thread(image, mask, step, y, queue):
-  floodFlags = 4
-  floodFlags |= cv2.FLOODFILL_MASK_ONLY
-  floodFlags |= (255 << 8)
+  floodFlags = 4 # consider 4 nearest neighbours (those that share an edge)
+  floodFlags |= cv2.FLOODFILL_MASK_ONLY # do not change the image
+  floodFlags |= (255 << 8) # fill the mask with color 255
 
   (img_h, img_w, channels) = image.shape
   img_area = img_h * img_w
