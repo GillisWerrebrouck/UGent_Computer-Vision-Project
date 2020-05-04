@@ -141,10 +141,6 @@ def detect_quadrilaters(original_image):
   (h, w, channels) = image.shape
   mask = np.zeros((h+2, w+2), np.uint8)
 
-  floodFlags = 4 # consider 4 nearest neighbours (those that share an edge)
-  floodFlags |= cv2.FLOODFILL_MASK_ONLY # do not change the image
-  floodFlags |= (255 << 8) # fill the mask with color 255
-
   # use flooding to find mask
   largest_segment_size = 0
   largest_mask = None
