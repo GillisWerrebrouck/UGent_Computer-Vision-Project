@@ -120,7 +120,7 @@ def __flooding_thread(image, mask, step, y, queue):
       largest_mask = mask
     if largest_segment_size == img_area:
       break
-  
+
   queue.put((largest_mask, largest_segment_size))
 
 
@@ -141,9 +141,9 @@ def detect_quadrilaters(original_image):
   (h, w, channels) = image.shape
   mask = np.zeros((h+2, w+2), np.uint8)
 
-  floodFlags = 4
-  floodFlags |= cv2.FLOODFILL_MASK_ONLY
-  floodFlags |= (255 << 8)
+  floodFlags = 4 # consider 4 nearest neighbours (those that share an edge)
+  floodFlags |= cv2.FLOODFILL_MASK_ONLY # do not change the image
+  floodFlags |= (255 << 8) # fill the mask with color 255
 
   # use flooding to find mask
   largest_segment_size = 0
@@ -168,7 +168,7 @@ def detect_quadrilaters(original_image):
       break
 
   mask = largest_mask
-  
+
   kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
   mask = cv2.bitwise_not(mask)
   mask = cv2.erode(mask, kernel, 1)
@@ -197,7 +197,7 @@ def detect_quadrilaters(original_image):
       polygon = Polygon(np.reshape(approx, (4, 2)))
       if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
         paintings.append(approx)
-  
+
   t2 = time.time()
   logger.info("painting detection time: {}".format(t2-t1))
 
