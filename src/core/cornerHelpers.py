@@ -21,7 +21,6 @@ def convert_corners_to_uniform_format(corners, width, height):
     uniform_corners = []
 
     for c in corners:
-        c = c[0]
         uniform_corners.append([c[0]/height, c[1]/width])
 
     return uniform_corners

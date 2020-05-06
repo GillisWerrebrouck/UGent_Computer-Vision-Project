@@ -107,6 +107,7 @@ def predict_room(original_image, quadrilaterals):
 
     width, height = original_image.shape[:2]
     for quad in quadrilaterals:
+        quad = quad.reshape(4,2)
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
         painting = cut_painting(original_image, quad)
