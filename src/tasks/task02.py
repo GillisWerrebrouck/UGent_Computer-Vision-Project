@@ -72,7 +72,17 @@ def run_task_02():
     average_accuracy_sum += average_accuracy
     count += 1
 
-    predict_room(original_image, quadrilaterals)
+    probabilities = predict_room(original_image, quadrilaterals)
+    
+    for painting_probabilities in probabilities:
+      # ignore if no probabilities for a detected painting (possibly no match above given threshold)
+      if 0 == len(painting_probabilities): continue
+
+      max_probability = painting_probabilities[0]
+      print('Probability:', max_probability[0])
+      print('Probably image:', max_probability[1])
+      print('Probably room:', max_probability[2])
+
     detection_image = draw_quadrilaterals_opencv(image, quadrilaterals)
     show_image(f, detection_image)
   

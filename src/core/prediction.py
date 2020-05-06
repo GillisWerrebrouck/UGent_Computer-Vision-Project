@@ -19,10 +19,6 @@ def __fetch_images(force=False):
     Parameters
     ----------
     - force -- Force a database query.
-
-    Returns
-    -------
-    Nothing
     """
     # Yes Python, we're using the global variable
     global images
@@ -54,9 +50,7 @@ def __convert_to_three_dims(histogram):
     ----------
     - histogram -- The histogram to convert.
 
-    Returns
-    -------
-    The converted histogram.
+    Returns: The converted histogram.
     """
     result = []
 
@@ -74,9 +68,7 @@ def __convert_NxN_to_three_dims(histogram):
     ----------
     - histogram -- The NxN block histograms to convert.
 
-    Returns
-    -------
-    The converted histograms.
+    Returns: The converted histograms.
     """
     for row in range(0, len(histogram)):
         for col in range(0, len(histogram[row])):
@@ -85,7 +77,7 @@ def __convert_NxN_to_three_dims(histogram):
     return histogram
 
 
-def predict_room(original_image, quadrilaterals):
+def predict_room(original_image, quadrilaterals, threshold=0.5):
     """
     Predict the room of the given (full color!) image.
 
@@ -93,17 +85,25 @@ def predict_room(original_image, quadrilaterals):
     ----------
     - original_image -- The image to predict.
     - quadrilaterals -- The detected paintings in the image.
+    - threshold -- The probability threshold to reach before concidering it a valid match, matches with a probability below the threshold are ignored.
 
-    Returns
-    -------
-    The room of this image.
+    Returns:
+    --------
+    An array of sorted arrays of probabilities in descending probability order, 
+    each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
     # Yes Python, we're using the global variable
     global images
     __fetch_images()
 
     if not len(quadrilaterals):
-        return None
+        return []
+
+    full_histogram_weight = 1
+    block_histogram_weight = 8
+    total_weight = full_histogram_weight + block_histogram_weight
+
+    all_scores = []
 
     width, height = original_image.shape[:2]
     for quad in quadrilaterals:
@@ -111,41 +111,30 @@ def predict_room(original_image, quadrilaterals):
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
         painting = cut_painting(original_image, quad)
-        show_image('test', painting)
-        src_histogram = __convert_to_three_dims(get_histogram(painting))
+        src_full_histogram = __convert_to_three_dims(get_histogram(painting))
         src_block_histogram = get_NxN_histograms(painting)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
 
-        scores = []
+        quad_scores = []
+
         for image in images:
-            compare_to = image['histograms']['full_histogram']
-
-            score = cv2.compareHist(src_histogram, compare_to, cv2.HISTCMP_CORREL)
-            scores.append(tuple([score, image['filename'], image['room']]))
-
-        # get the highest matching score
-        max_score = max(scores, key=lambda t: t[0])
-        probability = max_score[0] * 100
-        print('Probability: ', probability, '%')
-        print('Probably image: ', max_score[1])
-        print('Probably room: ', max_score[2])
-
-
-
-        scores = []
-        for image in images:
+            compare_full_histogram = image['histograms']['full_histogram']
             compare_block_histogram = image['histograms']['block_histogram']
 
-            score = 0
+            full_histogram_score = cv2.compareHist(src_full_histogram, compare_full_histogram, cv2.HISTCMP_CORREL)
+
+            block_histogram_score = 0
             for row in range(0, len(src_block_histogram)):
                 for col in range(0, len(src_block_histogram[row])):
-                    score += cv2.compareHist(src_block_histogram[row][col], compare_block_histogram[row][col], cv2.HISTCMP_CORREL)
+                    block_histogram_score += cv2.compareHist(src_block_histogram[row][col], compare_block_histogram[row][col], cv2.HISTCMP_CORREL)
+            block_histogram_score /= len(src_block_histogram)*len(src_block_histogram)
             
-            scores.append(tuple([score, image['filename'], image['room']]))
+            combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight) / total_weight        
+            if(threshold <= combined_score):   
+                quad_scores.append(tuple([combined_score, image['filename'], image['room']]))
 
-        # get the highest matching score
-        max_score = max(scores, key=lambda t: t[0])
-        probability = max_score[0] / (len(src_block_histogram)*len(src_block_histogram)) * 100
-        print('Probability: ', probability, '%')
-        print('Probably image: ', max_score[1])
-        print('Probably room: ', max_score[2])
+        # sort the array of probabilities in descending probability order
+        quad_scores = sorted(quad_scores, key=lambda x: x[0], reverse=True)
+        all_scores.append(quad_scores)
+    
+    return all_scores
