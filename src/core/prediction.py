@@ -110,14 +110,10 @@ def predict_room(original_image, quadrilaterals):
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
         painting = cut_painting(original_image, quad)
+        show_image('test', painting)
         src_histogram = __convert_to_three_dims(get_histogram(painting))
         src_block_histogram = get_NxN_histograms(painting)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
-
-        grayscale_painting = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
-        src_keypoints = extract_orb(grayscale_painting)
-        src_descriptors = np.array(src_keypoints[1]).astype(np.uint8)
-        src_keypoints = src_keypoints[0]
 
         scores = []
         for image in images:
@@ -152,36 +148,3 @@ def predict_room(original_image, quadrilaterals):
         print('Probability: ', probability, '%')
         print('Probably image: ', max_score[1])
         print('Probably room: ', max_score[2])
-
-
-        # ORB feature matching (doesn't match correctly)
-        # scores = []
-        # for image in images:
-        #     compare_keypoints = image['keypoints']
-        #     compare_descriptors = np.array(compare_keypoints['descriptors']).astype(np.uint8)
-        #     compare_keypoints = compare_keypoints['keypoints']
-
-        #     bf = cv2.BFMatcher(cv2.NORM_HAMMING2)#, crossCheck=True)
-        #     matches = bf.knnMatch(src_descriptors, compare_descriptors, k=2)
-            
-        #     ratio = 0.75
-        #     good_points = []
-
-        #     try:
-        #         for m, n in matches:
-        #             if m.distance < ratio*n.distance:
-        #                 good_points.append(m)
-        #                 if len(good_points) > 20:
-        #                     print("similar image")
-        #     except ValueError:
-        #         pass
-        
-        #     number_keypoints = max(len(src_keypoints), len(compare_keypoints))
-        #     score = len(good_points) / number_keypoints * 100
-        #     scores.append(tuple([score, image['filename'], image['room']]))
-        
-        # # get the highest matching score
-        # max_score = max(scores, key=lambda t: t[0])
-        # print('Probably image: ', max_score[1])
-        # print('Probably room: ', max_score[2])
-

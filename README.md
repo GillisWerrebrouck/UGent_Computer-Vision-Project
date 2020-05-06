@@ -2,6 +2,9 @@
 
 Welcome on the repository of group 10's assignment for the course Computer Vision. In the sections below you can find instructions on how to setup and run the different assignments in this project.
 
+## Paper
+The paper can be found in the directory `paper`. A built version can be found in `main.pdf`.
+
 ## Setup
 
 #### Prerequisites
