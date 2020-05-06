@@ -26,7 +26,6 @@ def run_task_02():
     quadrilaterals = detect_quadrilaters(image)
     result = get_paintings_for_image(basename(f))
 
-    # todo: maybe just fetch the corners
     (height, width) = image.shape[:2]
     false_positives = 0
     false_negatives = 0
@@ -35,11 +34,12 @@ def run_task_02():
     for q1 in result:
       q1_corners = q1.get('corners')
       area = 0
+      for point in q1_corners:
+        point[0] = point[0]*width
+        point[1] = point[1]*height
+      
       for q2 in quadrilaterals:
         q2 = np.reshape(q2, (4, 2)).astype(np.float32)
-        for point in q1_corners:
-          point[0] = point[0]*width
-          point[1] = point[1]*height
 
         # draw ground truth quadrilaterals on image
         image = draw_quadrilaterals_opencv(image, [np.asarray(q1_corners).astype(np.int32)], (255, 0, 0))
@@ -52,8 +52,6 @@ def run_task_02():
         # TODO: check on duplicates, remove from result?
         paintings_found += 1
         average_accuracy += area
-        if area == 0:
-          false_positives += 1
 
     # average accuracy dividing by amount found + calculating the amount of false nefatives 
     # division by 1 is not needed
