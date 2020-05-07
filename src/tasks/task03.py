@@ -6,6 +6,7 @@ import re
 import os
 
 from core.logger import get_root_logger
+from data.imageRepo import get_all_images
 from core.fileIO import createFolders, createFile, appendFile
 from core.detection import detect_quadrilaters
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
@@ -99,6 +100,76 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
       appendFile(filename, log + '\n')
 
   log = "total # of correct room predictions: {}/{}".format(correct_room_predictions, total_predictions)
+  logger.info(log)
+  if save:
+    appendFile(filename, log)
+
+
+def run_task_03_uniqueness(show=True, save=True):
+  imagesFromDB = get_all_images({
+    'filename': 1,
+    'room': 1,
+    'corners': 1
+  })
+
+  correct_matchings = 0
+  total_matchings = 0
+  average_probability = 0
+
+  if save:
+    filename = createFile('./results/task3/dataset_pictures_msk_uniqueness')
+  
+  dataset_folder = './datasets/images/dataset_pictures_msk'
+
+  for imageFromDB in imagesFromDB:
+    path = dataset_folder + '/zaal_' + imageFromDB['room'] + '/' + imageFromDB['filename']
+    original_image = cv2.imread(path, 1)
+    original_image = resize_image(original_image, 0.2)
+    (height, width) = original_image.shape[:2]
+
+    corners = imageFromDB.get('corners')
+    for point in corners:
+      point[0] = point[0]*width
+      point[1] = point[1]*height
+
+    detected_paintings = [np.asarray(corners).astype(np.int32)]
+
+    if show:
+      detected_image = draw_quadrilaterals_opencv(original_image, detected_paintings)
+      show_image(imageFromDB['filename'], detected_image)
+
+    probabilities = predict_room(original_image, detected_paintings, 0)
+
+    total_matchings += 1
+    if 0 == len(probabilities): continue
+
+    max_probability = probabilities[0]
+    
+    if max_probability[0] is not None and max_probability[0][1] == imageFromDB['filename']:
+      correct_matchings += 1
+      average_probability += max_probability[0][0]
+
+      log = "image: {}".format(imageFromDB['filename'])
+      logger.info(log)
+      if save:
+        appendFile(filename, log + '\n')
+
+      log = "probability: {}".format(max_probability[0][0])
+      logger.info(log)
+      if save:
+        appendFile(filename, log + '\n\n')
+
+  log = "SUMMARY"
+  logger.info(log)
+  if save:
+    appendFile(filename, log + '\n')
+
+  log = "total # of correct painting matchings: {}/{}".format(correct_matchings, total_matchings)
+  logger.info(log)
+  if save:
+    appendFile(filename, log + '\n')
+
+  log = "average probability: {}".format(average_probability/total_matchings)
   logger.info(log)
   if save:
     appendFile(filename, log)
