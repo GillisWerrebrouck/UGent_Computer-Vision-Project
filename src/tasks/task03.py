@@ -8,7 +8,7 @@ import os
 from core.logger import get_root_logger
 from data.imageRepo import get_all_images
 from core.fileIO import createFolders, createFile, appendFile
-from core.detection import detect_quadrilaters
+from core.detection import detect_quadrilaterals
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from core.prediction import predict_room
 
@@ -30,7 +30,7 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
     original_image = cv2.imread(f, 1)
     original_image = resize_image(original_image, 0.2)
     image = original_image.copy()
-    detected_paintings = detect_quadrilaters(image)
+    detected_paintings = detect_quadrilaterals(image)
 
     probabilities = predict_room(original_image, detected_paintings)
 

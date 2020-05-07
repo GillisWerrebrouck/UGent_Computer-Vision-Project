@@ -5,7 +5,7 @@ from os.path import basename
 
 from core.logger import get_root_logger
 from core.fileIO import createFolders, createFile, appendFile
-from core.detection import detect_quadrilaters, calculate_accuracy_metrics
+from core.detection import detect_quadrilaterals, calculate_accuracy_metrics
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
 from core.prediction import predict_room
@@ -30,7 +30,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
     original_image = resize_image(original_image, 0.2)
     image = original_image.copy()
     ground_truth_paintings = get_paintings_for_image(basename(f))
-    detected_paintings = detect_quadrilaters(image)
+    detected_paintings = detect_quadrilaterals(image)
 
     (image, paintings_found, false_negatives, false_positives, average_accuracy) = calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings)
 
