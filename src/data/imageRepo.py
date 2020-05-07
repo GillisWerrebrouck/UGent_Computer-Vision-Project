@@ -43,6 +43,27 @@ def create_image(image):
     db_connection['images'].insert(image)
 
 
+def get_all_images(projection = None):
+    """
+    Get all images in the database.
+    Please use the project parameter for rapid image fetching and deserialization. For example,
+    it's not necessary to fetch the ORB keypoints when you only need the histograms.
+    So be smart!
+
+    Parameters
+    ----------
+    - projection -- Optional selection of image fields to fetch.
+
+    Returns
+    -------
+    Nothing
+    """
+    logger.info('Fetching all images')
+    images = db_connection['images'].find({}, projection)
+    logger.info('Fetched {} images'.format(images.count()))
+    return __deserialize_images(images)
+
+
 def get_image_by_id(id):
     """
     Parameters
@@ -109,31 +130,65 @@ def get_paintings_for_image(filename):
     logger.info('{} painting(s) found'.format(result.count()))
 
     # deserialize the features if present
+    return __deserialize_images(result)
+
+
+def __deserialize_images(images):
+    """
+    Deserialize a cursor of images.
+
+    Parameters
+    ----------
+    - images -- Images to deserialize. (Cursor from PyMongo)
+
+    Returns
+    -------
+    The deserialized images.
+    """
+    if images is None:
+        raise Exception('No images given to deserialize!')
+
+    logger.info('Deserializing {} images'.format(images.count()))
     deserialized = []
 
-    for image in result:
+    for image in images:
         deserialized.append(__deserialize_features(image))
 
+    logger.info('Done deserializing')
     return deserialized
 
 
 def __deserialize_features(image):
-    if (image is None):
+    """
+    Deserialize the features of the given image.
+
+    Parameters
+    ----------
+    - image -- Image to deserialize features of.
+
+    Returns
+    -------
+    The image with deserialized features.
+    """
+    if image is None:
         return image
 
-    if ('histograms' in image):
-        image['histograms']['full_histogram'] = pickle_deserialize(
-            image.get('histograms')['full_histogram'])
-        image['histograms']['block_histogram'] = pickle_deserialize(
-            image.get('histograms')['block_histogram'])
+    if 'histograms' in image:
+        if 'full_histogram' in image['histograms']:
+            image['histograms']['full_histogram'] = pickle_deserialize(
+                image.get('histograms')['full_histogram'])
 
-    if ('keypoints' in image):
+        if 'block_histogram' in image['histograms']:
+            image['histograms']['block_histogram'] = pickle_deserialize(
+                image.get('histograms')['block_histogram'])
+
+    if 'keypoints' in image:
         image['keypoints'] = deserialize_keypoints(image.get('keypoints'))
 
-    if ('sobel' in image):
+    if 'sobel' in image:
         image['sobel'] = pickle_deserialize(image.get('sobel'))
 
-    if ('good_features' in image):
+    if 'good_features' in image:
         image['good_features'] = pickle_deserialize(image.get('good_features'))
 
     return image

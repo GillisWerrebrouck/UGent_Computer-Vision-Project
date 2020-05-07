@@ -8,6 +8,7 @@ from core.visualize import get_window, resize_image, draw_contour, draw_quadrila
 from core.detection import detect_contours, pop_contour, pop_contour_with_id
 from core.extractFeatures import extract_features
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format
 from data.imageRepo import create_image
 from data.serializer import serialize_keypoints, pickle_serialize
 
@@ -340,30 +341,6 @@ def toggle_active_button(window, current_active_btn, new_active_btn):
     set_button_color(window, new_active_btn, ('white', 'red'))
 
 
-def convert_corners_to_uniform_format(corners, width, height):
-    """
-    Convert all given corners to a uniform interval [0, 1]. Now the corners
-    represent a percentage of the width/height.
-
-    Parameters
-    ----------
-    - corners -- The corners to convert.
-    - width -- The width of the image containing the corners.
-    - height -- The height of the image containing the corners.
-
-    Returns
-    -------
-    The corners (in same order) but now all in the interval [0, 1].
-    """
-
-    uniform_corners = []
-
-    for c in corners:
-        uniform_corners.append([c[0]/height, c[1]/width])
-
-    return uniform_corners
-
-
 def get_room_from_file(filepath):
     """
     Parameters
@@ -378,21 +355,6 @@ def get_room_from_file(filepath):
     room = dirs[-1].split('_')[1]
     return room
 
-
-def sort_corners(corners):
-    A, B, C, D = corners
-
-    if A[0] > B[0]:
-        tmp = B
-        B = A
-        A = tmp
-
-    if C[0] < D[0]:
-        tmp = C
-        C = D
-        D = tmp
-
-    return [A, B, C, D]
 
 
 def run_task_01():
