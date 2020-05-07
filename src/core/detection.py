@@ -128,7 +128,7 @@ def __flooding_thread(image, mask, step, y, queue):
   queue.put((largest_mask, largest_segment_size))
 
 
-def detect_quadrilaters(original_image):
+def detect_quadrilaterals(original_image):
   """
   Detect painings in an image.
 
