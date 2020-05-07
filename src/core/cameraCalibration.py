@@ -2,8 +2,8 @@ import cv2
 import sys
 import os
 import numpy as np
-from logger import get_root_logger
 import re
+from core.logger import get_root_logger
 
 logger = get_root_logger()
 
@@ -45,7 +45,7 @@ def __delete_file(filename):
     Delete a given file
     Parameters
     ----------
-    - filename -- file to be deleted 
+    - filename -- file to be deleted
     Returns: void
     """
     logger.debug("Removing file: {}".format(fn))
@@ -136,7 +136,7 @@ def undistort_frame(frame, **kwargs):
     Parameters
     ----------
     - frame -- the frame to be processed
-    -params -- the matrix and dist tuple 
+    -params -- the matrix and dist tuple
     Returns: the undistorted image
     """
 
@@ -205,22 +205,4 @@ def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, ski
     return __output_tuple_from_files(matrixFilename, distortionFilename)
 
 
-params = get_calibration_matrix(
-    "/Users/pieter-janphilips/Desktop/telin.ugent.be/dvhamme/computervisie_2020/videos/gopro/calibration_M.mp4", fov='M')
 
-cap = cv2.VideoCapture(
-    "/Users/pieter-janphilips/Desktop/telin.ugent.be/dvhamme/computervisie_2020/videos/gopro/MSK_12.mp4")
-if (cap.isOpened() == False):
-    logger.warning("Videofile not found")
-
-while (cap.isOpened()):
-
-    success, frame = cap.read()
-
-    if success:
-        dst = undistort_frame(frame, params=params)
-        cv2.imshow('dst', dst)
-        cv2.waitKey(1)
-
-
-cv2.destroyAllWindows()

@@ -1,13 +1,12 @@
 import cv2
 
-
-def is_sharp_image(img, threshHold=100):
+def is_sharp_image(img, threshHold):
     """
     Determine if a given grayscale image is sharp
     Parameters
     ----------
     - img -- grayscale image to be examined
-    - threshHold -- (optional) default is 100. Lower threshHold equals more unsharp images
+    - threshHold -- Lower threshHold equals more unsharp images
     Returns: bool indicating if the image is sharp enough
     """
 

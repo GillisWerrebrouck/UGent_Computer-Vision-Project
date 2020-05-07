@@ -4,7 +4,7 @@ from glob import glob
 from os.path import basename
 
 from core.logger import get_root_logger
-from core.detection import detect_quadrilaters
+from core.detection import detect_quadrilaterals
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
 from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
@@ -23,7 +23,7 @@ def run_task_02():
   for f in filenames:
     image = cv2.imread(f, 1)
     image = resize_image(image, 0.2)
-    quadrilaterals = detect_quadrilaters(image)
+    quadrilaterals = detect_quadrilaterals(image)
     result = get_paintings_for_image(basename(f))
 
     (height, width) = image.shape[:2]
@@ -53,7 +53,7 @@ def run_task_02():
         paintings_found += 1
         average_accuracy += area
 
-    # average accuracy dividing by amount found + calculating the amount of false nefatives 
+    # average accuracy dividing by amount found + calculating the amount of false nefatives
     # division by 1 is not needed
     if paintings_found > 1:
       average_accuracy /= paintings_found
