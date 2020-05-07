@@ -87,4 +87,4 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
     log = "average bounding box accuracy: {}".format(average_accuracy_sum/count)
     logger.info(log)
     if save:
-      appendFile(filename, log + '\n')
+      appendFile(filename, log)
