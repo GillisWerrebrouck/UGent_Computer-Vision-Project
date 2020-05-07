@@ -28,11 +28,11 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
 
   for f in filenames:
     original_image = cv2.imread(f, 1)
-    original_image = resize_image(original_image, 0.2)
-    image = original_image.copy()
+    resized_image = resize_image(original_image, 0.2)
+    image = resized_image.copy()
     detected_paintings = detect_quadrilaterals(image)
 
-    probabilities = predict_room(original_image, detected_paintings)
+    probabilities = predict_room(resized_image, detected_paintings)
 
     match = re.search('(z|Z)aal_(.+)$', os.path.dirname(f))
     room = match.group(2)
@@ -124,8 +124,8 @@ def run_task_03_uniqueness(show=True, save=True):
   for imageFromDB in imagesFromDB:
     path = dataset_folder + '/zaal_' + imageFromDB['room'] + '/' + imageFromDB['filename']
     original_image = cv2.imread(path, 1)
-    original_image = resize_image(original_image, 0.2)
-    (height, width) = original_image.shape[:2]
+    resized_image = resize_image(original_image, 0.2)
+    (height, width) = resized_image.shape[:2]
 
     corners = imageFromDB.get('corners')
     for point in corners:
@@ -135,10 +135,10 @@ def run_task_03_uniqueness(show=True, save=True):
     detected_paintings = [np.asarray(corners).astype(np.int32)]
 
     if show:
-      detected_image = draw_quadrilaterals_opencv(original_image, detected_paintings)
+      detected_image = draw_quadrilaterals_opencv(resized_image, detected_paintings)
       show_image(imageFromDB['filename'], detected_image)
 
-    probabilities = predict_room(original_image, detected_paintings, 0)
+    probabilities = predict_room(resized_image, detected_paintings, 0)
 
     total_matchings += 1
     if 0 == len(probabilities): continue
