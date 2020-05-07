@@ -32,9 +32,9 @@ switcher = {
 param_switcher = {
   'Run task 2 (dataset pictures)': ('dataset_pictures_msk', True, True),
   'Run task 2 (test pictures)': ('test_pictures_msk', True, True),
-  'Run task 3 (uniqueness)': (True, False),
-  'Run task 3 (dataset pictures)': ('dataset_pictures_msk', True, False),
-  'Run task 3 (test pictures)': ('test_pictures_msk', True, False),
+  'Run task 3 (uniqueness)': (True, True),
+  'Run task 3 (dataset pictures)': ('dataset_pictures_msk', True, True),
+  'Run task 3 (test pictures)': ('test_pictures_msk', True, True),
 }
 
 # event loop of the main window
