@@ -144,7 +144,9 @@ def show_dog(dog):
   copy += 0.5
   show_image('DoG', copy)
 
-def draw_quadrilaterals_opencv(image, quadrilaterals):
+def draw_quadrilaterals_opencv(original_image, quadrilaterals, color=(0, 0, 255)):
+  image = original_image.copy()
   for q in quadrilaterals:
-    cv2.drawContours(image, [q], -1, (0, 0, 255), 2)
+    q = np.asarray(q)
+    cv2.drawContours(image, [q], -1, color, 2)
   return image

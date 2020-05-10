@@ -3,53 +3,88 @@ import numpy as np
 from glob import glob
 from os.path import basename
 
-from core.detection import detect_quadrilaters
+from core.logger import get_root_logger
+from core.fileIO import createFolders, createFile, appendFile
+from core.detection import detect_quadrilaterals, calculate_accuracy_metrics
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
-from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
+from core.prediction import predict_room
+
+logger = get_root_logger()
 
 
-def run_task_02():
-  filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
+# TODO: add possibility to run detection on video frames
+def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
+  if dataset_folder == 'dataset_pictures_msk' and save:
+    filename = createFile('./results/task2/dataset_pictures_msk_detection')
+
+  filenames = glob('./datasets/images/' + dataset_folder + '/zaal_Q/*.jpg')
+
+  false_negatives_sum = 0
+  false_positives_sum = 0
+  average_accuracy_sum = 0
+  count = 0
 
   for f in filenames:
-    image = cv2.imread(f, 1)
-    image = resize_image(image, 0.2)
-    quadrilaterals = detect_quadrilaters(image)
-    image = draw_quadrilaterals_opencv(image, quadrilaterals)
-    result = get_paintings_for_image(basename(f)) 
-    # todo: misschien enkel de corners ophalen
-    (height, width) = image.shape[:2]
-    false_positives = 0
-    false_negatives = 0
-    paintings_found = 0
-    average_accuracy = 0
-    for q1 in result:
-      area = 0
-      for q2 in quadrilaterals:
-        q2 = np.reshape(q2, (4, 2)).astype(np.float32)
-        for point in q2:
-          point[0] = point[0]/width
-          point[1] = point[1]/height
-        accuracy = calculate_bounding_box_accuracy(q1.get('corners'), q2)
-        if(area < accuracy):
-          area = accuracy
-      if(area <= 0.001):  # none found -> false positive
-        false_negatives += 1
-      else: # one found, increase average accuracy
-        # TODO: check on duplicates, remove from result?
-        paintings_found += 1
-        average_accuracy += area
+    original_image = cv2.imread(f, 1)
+    original_image = resize_image(original_image, 0.2)
+    image = original_image.copy()
+    ground_truth_paintings = get_paintings_for_image(basename(f))
+    detected_paintings = detect_quadrilaterals(image)
 
-    # average accuracy dividing by amount found + calculating the amount of false nefatives 
-    # division by 1 is not needed
-    if(paintings_found > 1):
-      average_accuracy /= paintings_found
-    false_positives = len(quadrilaterals) - paintings_found
+    (image, paintings_found, false_negatives, false_positives, average_accuracy) = calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings)
 
-    # might give non correct result if a quadrilateral contains more than 1 painting!
-    print("false negatives: ", false_negatives)
-    print("false positives: ", false_positives)
-    print("average bounding box accuracy: ", average_accuracy)
+    if dataset_folder == 'dataset_pictures_msk':
+      if save:
+        appendFile(filename, f + '\n')
 
-    show_image("DOBRA DOBRA", image)
+      log = "# of false negatives: {}".format(false_negatives)
+      logger.info(log)
+      if save:
+        appendFile(filename, log + '\n')
+    
+      log = "# of false positives: {}".format(false_positives)
+      logger.info(log)
+      if save:
+        appendFile(filename, log + '\n')
+    
+      log = "average bounding box accuracy: {}".format(average_accuracy)
+      logger.info(log)
+      if save:
+        appendFile(filename, log + '\n\n')
+
+      false_negatives_sum += false_negatives
+      false_positives_sum += false_positives
+      average_accuracy_sum += average_accuracy
+      count += 1
+
+    detection_image = draw_quadrilaterals_opencv(image, detected_paintings)
+
+    if show:
+      show_image(f, detection_image)
+
+    if save:
+      path = './results/task2/' + dataset_folder + '/' + basename(f)
+      createFolders(path)
+      cv2.imwrite(path, detection_image)
+
+  if dataset_folder == 'dataset_pictures_msk':
+    log = "SUMMARY"
+    logger.info(log)
+    if save:
+      appendFile(filename, log + '\n')
+
+    log = "total # of false negatives: {}".format(false_negatives_sum)
+    logger.info(log)
+    if save:
+      appendFile(filename, log + '\n')
+
+    log = "total # of false positives: {}".format(false_positives_sum)
+    logger.info(log)
+    if save:
+      appendFile(filename, log + '\n')
+
+    log = "average bounding box accuracy: {}".format(average_accuracy_sum/count)
+    logger.info(log)
+    if save:
+      appendFile(filename, log)
