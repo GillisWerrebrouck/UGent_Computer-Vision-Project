@@ -18,7 +18,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
   if dataset_folder == 'dataset_pictures_msk' and save:
     filename = createFile('./results/task2/dataset_pictures_msk_detection')
 
-  filenames = glob('./datasets/images/' + dataset_folder + '/zaal_Q/*.jpg')
+  filenames = glob('./datasets/images/' + dataset_folder + '/zaal_*/*.jpg')
 
   false_negatives_sum = 0
   false_positives_sum = 0
