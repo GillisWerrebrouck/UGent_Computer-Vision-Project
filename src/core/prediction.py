@@ -8,6 +8,7 @@ from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaterals
 from core.extractFeatures import get_histogram, get_NxN_histograms, extract_orb
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
+from core.transitions import transitions
 
 logger = get_root_logger()
 images = None
@@ -77,11 +78,11 @@ def __convert_NxN_to_three_dims(histogram):
     for row in range(0, len(histogram)):
         for col in range(0, len(histogram[row])):
             histogram[row][col] = __convert_to_three_dims(histogram[row][col])
-    
+
     return histogram
 
 
-def predict_room(original_image, quadrilaterals, threshold=0.5):
+def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=transitions['INKOM']):
     """
     Predict the room of the given (full color!) image.
 
@@ -90,10 +91,11 @@ def predict_room(original_image, quadrilaterals, threshold=0.5):
     - original_image -- The image to predict.
     - quadrilaterals -- The detected paintings in the image.
     - threshold -- The probability threshold to reach before concidering it a valid match, matches with a probability below the threshold are ignored.
+    - possible_rooms -- The rooms that are possible at this stage of the prediction.
 
     Returns:
     --------
-    An array of sorted arrays of probabilities in descending probability order, 
+    An array of sorted arrays of probabilities in descending probability order,
     each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
 
@@ -125,6 +127,10 @@ def predict_room(original_image, quadrilaterals, threshold=0.5):
         quad_scores = []
 
         for image in images:
+            # skip images that are not possible!
+            if image['room'] not in possible_rooms:
+                continue
+
             compare_full_histogram = image['histograms']['full_histogram']
             compare_block_histogram = image['histograms']['block_histogram']
 
@@ -135,15 +141,15 @@ def predict_room(original_image, quadrilaterals, threshold=0.5):
                 for col in range(0, len(src_block_histogram[row])):
                     block_histogram_score += cv2.compareHist(src_block_histogram[row][col], compare_block_histogram[row][col], cv2.HISTCMP_CORREL)
             block_histogram_score /= len(src_block_histogram)*len(src_block_histogram)
-            
-            combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight) / total_weight        
-            if(threshold <= combined_score):   
+
+            combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight) / total_weight
+            if(threshold <= combined_score):
                 quad_scores.append(tuple([combined_score, image['filename'], image['room']]))
 
         # sort the array of probabilities in descending probability order
         quad_scores = sorted(quad_scores, key=lambda x: x[0], reverse=True)
         all_scores.append(quad_scores)
-    
+
     t2 = time.time()
     logger.info("room prediction time: {}".format(t2-t1))
 

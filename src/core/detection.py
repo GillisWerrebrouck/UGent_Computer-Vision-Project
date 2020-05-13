@@ -218,7 +218,7 @@ def calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings
     for point in q1_corners:
       point[0] = point[0]*width
       point[1] = point[1]*height
-    
+
     for q2 in detected_paintings:
       q2 = np.reshape(q2, (4, 2)).astype(np.float32)
 
@@ -234,7 +234,7 @@ def calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings
       paintings_found += 1
       average_accuracy += area
 
-  # average accuracy dividing by amount found + calculating the amount of false nefatives 
+  # average accuracy dividing by amount found + calculating the amount of false nefatives
   # division by 1 is not needed
   if paintings_found > 1:
     average_accuracy /= paintings_found

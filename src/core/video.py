@@ -47,8 +47,9 @@ def loop_through_video(
         if needsCalibration:
             frame = undistort_frame(frame, params=calibration_matrix)
 
-        if not is_sharp_image(frame, blur_threshold):
-            continue
+        # TODO: terug aanzetten
+        # if not is_sharp_image(frame, blur_threshold):
+        #     continue
 
         # TODO: search a fancy way to determine if it's worth to show the frame
         # if previousFrame is not None:

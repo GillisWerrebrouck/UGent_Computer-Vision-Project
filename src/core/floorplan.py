@@ -33,11 +33,21 @@ class Floorplan:
         head = etree.SubElement(self.html, "head")
         title = etree.SubElement(head, "title")
         title.text = 'MSK floorplan'
+        style = etree.SubElement(head, "style")
+        style.text = "#content { display: flex; flex-direction: column; justify-content: space-around; align-items: center; } #content img { width: 50%; }"
         body = etree.SubElement(self.html, "body")
 
-        svg = etree.parse(floorplan_svg_path, parser=etree.HTMLParser())
-        body.append(svg.getroot())
+        content = etree.SubElement(body, 'div')
+        content.set('id', 'content')
 
+        svg = etree.parse(floorplan_svg_path, parser=etree.HTMLParser())
+        content.append(svg.getroot())
+
+        img = etree.SubElement(content, "img")
+        img.set('alt', 'Video frame processed will come here...')
+
+
+        self._img_preview = img
         self.html_tree = etree.ElementTree(self.html)
 
 
@@ -79,6 +89,10 @@ class Floorplan:
                 probability.text = f'{round(chance * 100, 2)} %'
 
 
+    def __update_image(self, image):
+        self._img_preview.set('src', f'data:image/jpeg;base64,{image}')
+
+
     def update_current_video(self, video):
         """
         Update the video that's currently being processed.
@@ -92,7 +106,7 @@ class Floorplan:
         self.__content_updated()
 
 
-    def update_rooms(self, all_room_chances, current_room):
+    def update_rooms(self, all_room_chances, current_room, image):
         """
         Update the chances for all rooms.
 
@@ -104,4 +118,5 @@ class Floorplan:
         for room, chance in all_room_chances.items():
             self.__update_room(room, chance, room == current_room)
 
+        self.__update_image(image)
         self.__content_updated()
