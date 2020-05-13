@@ -171,6 +171,7 @@ def extract_sobel(gray):
   sobelY = cv2.convertScaleAbs(sobelY)
   return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
 
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
 
 def extract_features(path, corners):
   """
@@ -188,6 +189,7 @@ def extract_features(path, corners):
   image = cv2.imread(path)
   painting = cut_painting(image, corners)
   painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
+  painting_gray = clahe.apply(painting_gray)
 
   # Features with color image
   full_histogram = get_histogram(painting)
@@ -198,13 +200,13 @@ def extract_features(path, corners):
   good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
 
   return {
-    'orb': {
-      'keypoints': keypoints,
-      'descriptors': descriptors
-    },
+    # 'orb': {
+    #   'keypoints': keypoints,
+    #   'descriptors': descriptors
+    # },
     'histograms': {
       'full_histogram': full_histogram,
       'block_histogram': block_histogram
     },
-    'good_features': good_features
+    # 'good_features': good_features
   }

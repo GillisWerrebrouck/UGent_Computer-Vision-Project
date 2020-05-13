@@ -115,18 +115,19 @@ def update_by_id(id, updates):
     logger.info('{} image(s) updated'.format(result.modified_count))
 
 
-def get_paintings_for_image(filename):
+def get_paintings_for_image(filename, projection=None):
     """
     Parameters
     ----------
     - filename -- The filename of the paintings to update.
+    - projection -- Fields to fetch.
 
     Returns
     -------
     - paintings -- The paintings of the image (being 4 corners)
     """
     logger.info('Getting paintings for image with filename {}'.format(filename))
-    result = db_connection['images'].find({'filename': filename})
+    result = db_connection['images'].find({'filename': filename}, projection)
     logger.info('{} painting(s) found'.format(result.count()))
 
     # deserialize the features if present

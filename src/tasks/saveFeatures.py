@@ -7,7 +7,7 @@ from core.extractFeatures import extract_features
 from data.imageRepo import get_paintings_for_image, update_by_id
 from data.serializer import serialize_keypoints, pickle_serialize
 
-
+# TODO: uncomment the keypoints here and in extract_features if you want them
 def save_features():
     logger = get_root_logger()
     filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
@@ -23,11 +23,11 @@ def save_features():
 
             update_by_id(painting.get('_id'), {
                 '$set': {
-                    'keypoints': serialize_keypoints(features['orb']['keypoints'], features['orb']['descriptors']),
+                    # 'keypoints': serialize_keypoints(features['orb']['keypoints'], features['orb']['descriptors']),
                     'histograms': {
                         'full_histogram': pickle_serialize(features['histograms']['full_histogram']),
                         'block_histogram': pickle_serialize(features['histograms']['block_histogram'])
                     },
-                    'good_features': pickle_serialize(features['good_features'])
+                    # 'good_features': pickle_serialize(features['good_features'])
                 }
             })
