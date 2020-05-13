@@ -46,7 +46,8 @@ indices = {
     'Q': 34,
     'R': 35,
     'S': 36,
-    'V': 37
+    'V': 37,
+    'INKOM': 38
 }
 
 transitions = {
@@ -93,11 +94,11 @@ transitions = {
 
 class HiddenMarkov:
 
-    def __init__(self, min_start_count=20, min_observations=5):
-        self._counters = np.zeros(len(indices))
+    def __init__(self, min_start_count=20, min_observations=5, weight_non_possible_rooms=0.5):
         self._start_prob_count = 0
         self._min_start_count = min_start_count
         self._currentRoom = 'INKOM'
+        self._weight_non_possible_rooms = weight_non_possible_rooms
         self.__init_counters()
 
         # we're going to keep the last `min_observations` in a circular array
@@ -111,26 +112,16 @@ class HiddenMarkov:
         self._counters = {}
 
         for room, _ in indices.items():
-            self._counters[room] = 0 # every room is likely
+            self._counters[room] = 1
 
-
-    def __pick_start_room(self):
-        maxCount = 0
-        maxRoom = None
-
-        for room, count in self._counters.items():
-            if count > maxCount:
-                maxRoom = room
-                maxCount = count
-
-        self._currentRoom = maxRoom
-        self._counters = None
+        self._counters['INKOM'] = 1
 
 
     def predict(self, quadriliteral_chances):
-        # observation = self.__get_most_common_room(quadriliteral_chances)
-        self.__play_the_odds(quadriliteral_chances)
-        observation = self.__get_max_chance_room(quadriliteral_chances)
+        if not len(quadriliteral_chances):
+            return (self._counters, self._currentRoom)
+
+        observation = self.__play_the_odds(quadriliteral_chances)
 
         logger.info('Observed room {}'.format(observation))
 
@@ -140,7 +131,8 @@ class HiddenMarkov:
         if observation in possible_rooms:
             self._circular_buffer[self._circular_index] = observation
         else:
-             self._circular_buffer[self._circular_index] = self._currentRoom
+            self._circular_buffer[self._circular_index] = self._currentRoom
+
         self._circular_index = (self._circular_index + 1) % self._min_observations
 
         try:
@@ -150,15 +142,64 @@ class HiddenMarkov:
             # we have two modi, skip the prediction here
             pass
 
-        return self._currentRoom
+        return (self._counters, self._currentRoom)
+
+
+    def get_possible_transitions():
+        return transitions[self._currentRoom]
 
 
     def __play_the_odds(self, quadriliterals):
-        for quad in quadriliterals:
-            if len(quad):
-                chance = quad[0][0]
-                room = quad[0][2]
-                self._counters[room] += chance
+        if len(quadriliterals) == 0:
+            return self._currentRoom
+
+        possible_rooms = transitions[self._currentRoom]
+
+        flattened = functools.reduce(operator.iconcat, quadriliterals, [])
+
+        # keep a list that tracks which rooms we've already seen
+        freq_list = np.zeros(len(indices))
+
+        # keep a list of chances that we're in this room
+        chances_here = np.zeros(len(indices))
+
+        # keep a list of chances that we're not in this room
+        chances_not_here = np.zeros(len(indices))
+
+        for prediction in flattened:
+            chance, _, room = prediction
+            index = indices[room]
+            weight = 1 if room in possible_rooms else self._weight_non_possible_rooms
+            chance *= weight
+
+            if freq_list[index] == 0:
+                # we've not had this room before, set the chance to 1, this is easier for the maths
+                chances_here[index] = 1
+                chances_not_here[index] = 1
+                freq_list[index] = 1
+
+            chances_here[index] *= chance
+            chances_not_here[index] *= (1 - chance)
+
+        max_chance = 0
+        max_room = None
+
+        for room, chance in self._counters.items():
+            index = indices[room]
+            chances_here[index] *= chance if chance != 0 else 1
+            chances_not_here[index] *= (1 - chance) if chance != 1 else 1
+
+            nominator = chances_here[index]
+            denominator = chances_here[index] + chances_not_here[index]
+            new_chance = nominator / denominator if denominator > 0 else 0
+            self._counters[room] = new_chance
+
+            if new_chance > max_chance:
+                max_room = room
+                max_chance = new_chance
+
+        return max_room
+
 
 
     def __get_max_chance_room(self, quadriliterals):
