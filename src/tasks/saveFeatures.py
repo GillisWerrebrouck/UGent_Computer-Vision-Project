@@ -11,9 +11,12 @@ from data.serializer import serialize_keypoints, pickle_serialize
 def save_features():
     logger = get_root_logger()
     filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
+    total = len(filenames)
+    count = 0
 
     for path in filenames:
         filename = basename(path)
+        count += 1
         paintings_in_image = get_paintings_for_image(filename)
 
         for painting in paintings_in_image:
@@ -31,3 +34,5 @@ def save_features():
                     # 'good_features': pickle_serialize(features['good_features'])
                 }
             })
+
+        logger.info(f'{count}/{total} images processed')
