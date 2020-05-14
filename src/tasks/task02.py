@@ -4,12 +4,8 @@ from glob import glob
 from os.path import basename
 
 from core.logger import get_root_logger
-<<<<<<< HEAD
-from core.detection import detect_quadrilaterals
-=======
 from core.fileIO import createFolders, createFile, appendFile
 from core.detection import detect_quadrilaterals, calculate_accuracy_metrics
->>>>>>> master
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from data.imageRepo import get_paintings_for_image
 from core.prediction import predict_room
