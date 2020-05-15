@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 from shapely.geometry import Polygon
 import time
-import queue
-from threading import Thread
+from queue import Queue
 
 from core.logger import get_root_logger
 from core.visualize import show_image, resize_image, draw_quadrilaterals_opencv
@@ -12,7 +11,6 @@ from core.cornerHelpers import sort_corners
 from core.accuracyHelperFunctions import calculate_bounding_box_accuracy
 
 logger = get_root_logger()
-
 
 def detect_contours(image):
     """
@@ -105,103 +103,114 @@ def pop_contour_with_id(point, contours):
     return None
 
 
-def __flooding_thread(image, mask, step, y, queue):
-  floodFlags = 4 # consider 4 nearest neighbours (those that share an edge)
-  floodFlags |= cv2.FLOODFILL_MASK_ONLY # do not change the image
-  floodFlags |= (255 << 8) # fill the mask with color 255
+cdef __flooding(image, mask, step, y):
+    # consider 4 nearest neighbours (those that share an edge)
+    cdef int floodFlags = 4
+    floodFlags |= cv2.FLOODFILL_MASK_ONLY  # do not change the image
+    floodFlags |= (255 << 8)  # fill the mask with color 255
 
-  (img_h, img_w, channels) = image.shape
-  img_area = img_h * img_w
+    cdef int img_h = image.shape[0]
+    cdef int img_w = image.shape[1]
+    cdef int channels = image.shape[2]
+    cdef float img_area = img_h * img_w
 
-  largest_segment_size = 0
-  largest_mask = None
-  for x in range(0, image.shape[1], step):
-    num, im, mask, rect = cv2.floodFill(image, mask, (x, y), (255,0,0), (8,)*3, (8,)*3, floodFlags)
-    x, y, w, h = rect
-    current_size = w*h
-    if largest_segment_size < current_size:
-      largest_segment_size = current_size
-      largest_mask = mask
-    if largest_segment_size == img_area:
-      break
+    cdef int largest_segment_size = 0
+    cdef object largest_mask = None
 
-  queue.put((largest_mask, largest_segment_size))
+    for x in range(0, image.shape[1], step):
+        num, im, mask, rect = cv2.floodFill(
+            image, mask, (x, y), (255, 0, 0), (8,)*3, (8,)*3, floodFlags)
+        x, y, w, h = rect
+        current_size = w*h
+
+        if current_size > largest_segment_size:
+            largest_segment_size = current_size
+            largest_mask = mask
+        if largest_segment_size == img_area:
+            break
+
+    return (largest_mask, largest_segment_size)
 
 
-def detect_quadrilaterals(original_image):
-  """
-  Detect painings in an image.
+cpdef detect_quadrilaterals(original_image):
+    """
+    Detect painings in an image.
 
-  Parameters
-  ----------
-  - original_image -- The image to detect paintings in.
+    Parameters
+    ----------
+    - original_image -- The image to detect paintings in.
 
-  Returns: The detected paintings as polygons.
-  """
+    Returns: The detected paintings as polygons.
+    """
 
-  t1 = time.time()
+    cdef float t1 = time.time()
 
-  image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
-  (h, w, channels) = image.shape
-  mask = np.zeros((h+2, w+2), np.uint8)
+    cdef object image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
+    cdef int h = image.shape[0]
+    cdef int w = image.shape[1]
+    cdef int channels = image.shape[2]
 
-  # use flooding to find mask
-  largest_segment_size = 0
-  largest_mask = None
-  step = 50
-  threads_list = list()
-  mask_queue = queue.Queue()
-  for y in range(0, image.shape[0], step):
-    thread = Thread(target=__flooding_thread, args=(image, mask, step, y, mask_queue))
-    thread.start()
-    threads_list.append(thread)
+    # use flooding to find mask
+    cdef int largest_segment_size = 0
+    cdef object largest_mask = None
+    cdef int step = 100
 
-  for thread in threads_list:
-    thread.join()
+    cdef object flooding_result = None
+    cdef object mask = np.zeros((h+2, w+2), np.uint8)
+    cdef int size = 0
 
-  while not mask_queue.empty():
-    mask, size = mask_queue.get()
-    if largest_segment_size < size:
-      largest_segment_size = size
-      largest_mask = mask
-    if size == h*w:
-      break
+    for y in range(0, image.shape[0], step):
+        mask, size = __flooding(image, mask, step, y)
 
-  mask = largest_mask
+        if largest_segment_size < size:
+            largest_segment_size = size
+            largest_mask = mask
+        if size == h*w:
+            break
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-  mask = cv2.bitwise_not(mask)
-  mask = cv2.erode(mask, kernel, 1)
-  mask = cv2.medianBlur(mask, 9)
+    mask = largest_mask
 
-  # Calculate OTSU threshold to use as threshold for Canny detection
-  grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-  ret, threshold = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)
-  edges = cv2.Canny(mask, ret/2, ret, apertureSize=3)
+    cdef object kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    mask = cv2.bitwise_not(mask)
+    mask = cv2.erode(mask, kernel, 1)
+    mask = cv2.medianBlur(mask, 9)
 
-  kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-  closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+    # Calculate OTSU threshold to use as threshold for Canny detection
+    cdef int ret = 0
+    cdef object threshold = None, edge = None, closed = None
+    cdef object contours = None, hierarchy = None
 
-  # find contours in mask
-  contours, hierarchy = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-  quadrilaterals = []
+    cdef object grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, threshold = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)
+    edges = cv2.Canny(mask, ret/2, ret, apertureSize=3)
 
-  (height, width) = image.shape[:2]
-  polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-  for contour in contours:
-    arc_len = cv2.arcLength(contour, True)
-    approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
+    # find contours in mask
+    contours, hierarchy = cv2.findContours(
+        closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cdef list quadrilaterals = []
 
-    if (len(approx) == 4):
-      polygon = Polygon(np.reshape(approx, (4, 2)))
-      if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
-        quadrilaterals.append(approx)
+    cdef int height = image.shape[0]
+    cdef int width = image.shape[1]
+    cdef object polygonImage = Polygon([(0, 0), (width, 0), (width, height), (0, height), (0, 0)])
 
-  t2 = time.time()
-  logger.info("painting detection time: {}".format(t2-t1))
+    cdef int arc_len = 0
+    cdef object approx = None, polygon = None
+    for contour in contours:
+        arc_len = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.1 * arc_len, True)
 
-  return quadrilaterals
+        if (len(approx) == 4):
+            polygon = Polygon(np.reshape(approx, (4, 2)))
+            if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
+                quadrilaterals.append(approx)
+
+    cdef float t2 = time.time()
+    logger.info("painting detection time: {}".format(t2-t1))
+
+    return quadrilaterals
 
 
 def calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings):

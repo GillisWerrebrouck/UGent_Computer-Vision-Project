@@ -1,3 +1,6 @@
+import pyximport
+pyximport.install(language_level='3')
+
 import cv2
 import PySimpleGUI as sg
 from glob import glob

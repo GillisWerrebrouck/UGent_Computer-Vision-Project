@@ -8,7 +8,15 @@ from core.transitions import indices, transitions
 
 logger = get_root_logger()
 
-class HiddenMarkov:
+cdef class HiddenMarkov:
+
+    cdef int _start_prob_count, _min_start_count, _min_observations
+    cdef int _circular_index, _nr_of_samples
+    cdef str _current_room
+    cdef float _weight_non_possible_rooms
+    cdef dict _counters
+    cdef list _circular_buffer
+
 
     def __init__(self, min_start_count=20, min_observations=5, weight_non_possible_rooms=0.5):
         self._start_prob_count = 0
@@ -24,7 +32,7 @@ class HiddenMarkov:
         self._nr_of_samples = 0
 
 
-    def __init_counters(self):
+    cpdef __init_counters(self):
         self._counters = {}
 
         for room, _ in indices.items():
@@ -33,7 +41,7 @@ class HiddenMarkov:
         self._counters['INKOM'] = 1
 
 
-    def predict(self, quadriliteral_chances):
+    cpdef predict(self, quadriliteral_chances):
         print(quadriliteral_chances)
         if not len(quadriliteral_chances):
             return (self._counters, self._current_room, transitions[self._current_room])
@@ -62,11 +70,11 @@ class HiddenMarkov:
         return (self._counters, self._current_room, transitions[self._current_room])
 
 
-    def get_possible_transitions(self):
+    cpdef get_possible_transitions(self):
         return transitions[self._current_room]
 
 
-    def __play_the_odds(self, quadriliterals):
+    cdef __play_the_odds(self, quadriliterals):
         possible_rooms = transitions[self._current_room]
 
         flattened = functools.reduce(operator.iconcat, quadriliterals, [])
@@ -118,7 +126,7 @@ class HiddenMarkov:
         return max_room
 
 
-    def __get_max_chance_room(self, quadriliterals):
+    cdef __get_max_chance_room(self, quadriliterals):
         maxChance = 0
         maxRoom = None
 
@@ -136,7 +144,7 @@ class HiddenMarkov:
         return maxRoom
 
 
-    def __get_most_common_room(self, quadriliterals):
+    cdef __get_most_common_room(self, quadriliterals):
         flattened = functools.reduce(operator.iconcat, quadriliterals, [])
         length = len(flattened)
 

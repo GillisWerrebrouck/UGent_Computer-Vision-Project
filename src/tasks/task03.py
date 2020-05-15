@@ -1,3 +1,6 @@
+import pyximport
+pyximport.install(language_level='3')
+
 import cv2
 import numpy as np
 from glob import glob
@@ -87,7 +90,7 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
 
     if show:
       show_image(f, detection_image)
-  
+
   log = "SUMMARY"
   logger.info(log)
   if save:
@@ -118,7 +121,7 @@ def run_task_03_uniqueness(show=True, save=True):
 
   if save:
     filename = createFile('./results/task3/dataset_pictures_msk_uniqueness')
-  
+
   dataset_folder = './datasets/images/dataset_pictures_msk'
 
   for imageFromDB in imagesFromDB:
@@ -144,7 +147,7 @@ def run_task_03_uniqueness(show=True, save=True):
     if 0 == len(probabilities): continue
 
     max_probability = probabilities[0]
-    
+
     if max_probability[0] is not None and max_probability[0][1] == imageFromDB['filename']:
       correct_matchings += 1
       average_probability += max_probability[0][0]

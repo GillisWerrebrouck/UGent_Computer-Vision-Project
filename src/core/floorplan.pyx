@@ -2,7 +2,11 @@ from lxml import etree
 from lxml.cssselect import CSSSelector
 
 
-class Floorplan:
+cdef class Floorplan:
+
+    cdef object _output_pipe
+    cdef str _room_color
+    cdef object _html, _img_preview, _html_tree
 
     def __init__(self, output_pipe, floorplan_svg_path, video_file_processing, room_color='#69c7e5'):
         """
@@ -21,7 +25,7 @@ class Floorplan:
         self.update_current_video(video_file_processing)
 
 
-    def __init_html_tree(self, floorplan_svg_path):
+    cpdef __init_html_tree(self, floorplan_svg_path):
         """
         Construct the HTML tree for the given SVG.
 
@@ -29,13 +33,13 @@ class Floorplan:
         ----------
         - floorplan_svg_path -- The path to the SVG to show.
         """
-        self.html = etree.Element("html")
-        head = etree.SubElement(self.html, "head")
+        self._html = etree.Element("html")
+        head = etree.SubElement(self._html, "head")
         title = etree.SubElement(head, "title")
         title.text = 'MSK floorplan'
         style = etree.SubElement(head, "style")
         style.text = "#content { display: flex; flex-direction: column; justify-content: space-around; align-items: center; } #content img { width: 50%; }"
-        body = etree.SubElement(self.html, "body")
+        body = etree.SubElement(self._html, "body")
 
         content = etree.SubElement(body, 'div')
         content.set('id', 'content')
@@ -48,20 +52,20 @@ class Floorplan:
 
 
         self._img_preview = img
-        self.html_tree = etree.ElementTree(self.html)
+        self._html_tree = etree.ElementTree(self._html)
 
 
-    def __content_updated(self):
+    cdef __content_updated(self):
         """
         Send the updated HTML tree to the given output pipe.
         """
-        if not self.html_tree:
+        if not self._html_tree:
             raise Exception('No root element created!')
 
-        self._output_pipe.send(etree.tostring(self.html))
+        self._output_pipe.send(etree.tostring(self._html))
 
 
-    def __update_room(self, room, chance, is_current=False):
+    cdef __update_room(self, room, chance, is_current=False):
         """
         Update the chance of the given room if the room exists.
 
@@ -75,25 +79,25 @@ class Floorplan:
         -------
         Nothing.
         """
-        rooms_found = CSSSelector(f'polygon#{room}')(self.html)
+        rooms_found = CSSSelector(f'polygon#{room}')(self._html)
 
         if len(rooms_found):
             room_in_svg = rooms_found[0]
             room_in_svg.set('style', f'fill:{self._room_color};opacity:{round(chance, 4)}')
 
             if is_current:
-                current_room = CSSSelector('text#currentRoom')(self.html)[0]
+                current_room = CSSSelector('text#currentRoom')(self._html)[0]
                 current_room.text = room
 
-                probability = CSSSelector('text#probability')(self.html)[0]
+                probability = CSSSelector('text#probability')(self._html)[0]
                 probability.text = f'{round(chance * 100, 2)} %'
 
 
-    def __update_image(self, image):
+    cdef __update_image(self, image):
         self._img_preview.set('src', f'data:image/jpeg;base64,{image}')
 
 
-    def update_current_video(self, video):
+    cpdef update_current_video(self, video):
         """
         Update the video that's currently being processed.
 
@@ -101,12 +105,12 @@ class Floorplan:
         ----------
         - video - The room to set.
         """
-        current_video = CSSSelector('text#currentVideo')(self.html)[0]
+        current_video = CSSSelector('text#currentVideo')(self._html)[0]
         current_video.text = video
         self.__content_updated()
 
 
-    def update_rooms(self, all_room_chances, current_room, image):
+    cpdef update_rooms(self, all_room_chances, current_room, image):
         """
         Update the chances for all rooms.
 

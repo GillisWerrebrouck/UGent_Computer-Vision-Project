@@ -1,3 +1,6 @@
+import pyximport
+pyximport.install(language_level='3')
+
 import cv2
 import multiprocessing
 import base64
