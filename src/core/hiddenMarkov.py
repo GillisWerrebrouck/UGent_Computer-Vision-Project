@@ -1,7 +1,6 @@
 import functools
 import operator
 import numpy as np
-from hmmlearn.hmm import MultinomialHMM
 from statistics import mode, StatisticsError
 
 from core.logger import get_root_logger

@@ -82,6 +82,16 @@ def __convert_NxN_to_three_dims(histogram):
     return histogram
 
 
+def FLD(image):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Create default Fast Line Detector class
+    fld = cv2.ximgproc.createFastLineDetector(_length_threshold=10, _distance_threshold=6, _canny_th1=60, _canny_th2=60, _do_merge=False)
+    # Get line vectors from the image
+    lines = fld.detect(image)
+    return lines
+
+
 def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=transitions['INKOM']):
     """
     Predict the room of the given (full color!) image.
@@ -126,6 +136,12 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
 
         quad_scores = []
 
+        line1 = FLD(painting)
+        line1_img = np.zeros([painting.shape[0], painting.shape[1], 3], dtype=np.uint8)
+        fld = cv2.ximgproc.createFastLineDetector()
+        line1_img = fld.drawSegments(line1_img, line1)
+        show_image('test1', line1_img)
+
         for image in images:
             # skip images that are not possible!
             if image['room'] not in possible_rooms:
@@ -133,6 +149,21 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
 
             compare_full_histogram = image['histograms']['full_histogram']
             compare_block_histogram = image['histograms']['block_histogram']
+
+            compare_painting = cv2.imread('.\\datasets\\images\\dataset_pictures_msk\\zaal_' + image['room'] +'\\' + image['filename'])
+            compare_painting = resize_image(compare_painting, 0.2)
+            compare_painting = cut_painting(compare_painting, image['corners'])
+
+            fld = cv2.ximgproc.createFastLineDetector()
+
+            compare_painting = cv2.resize(compare_painting, (painting.shape[1], int(painting.shape[1]/compare_painting.shape[1] * compare_painting.shape[0])), interpolation=cv2.INTER_AREA)
+            line2 = FLD(compare_painting)
+            line2_img = np.zeros([compare_painting.shape[0], compare_painting.shape[1], 3], dtype=np.uint8)
+            
+            line2_img = fld.drawSegments(line2_img, line2)
+            show_image('test2', line2_img)
+
+
 
             full_histogram_score = cv2.compareHist(src_full_histogram, compare_full_histogram, cv2.HISTCMP_CORREL)
 
