@@ -62,7 +62,7 @@ def start_detection(output_pipe):
     )
 
     loop_through_video(
-        './datasets/videos/gopro/MSK_13.mp4',
+        './datasets/videos/gopro/MSK_15.mp4',
         partial(on_frame, fp),
         nr_of_frames_to_skip=60,
         blur_threshold=10,

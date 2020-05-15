@@ -31,7 +31,6 @@ def __fetch_images(force=False):
         imagesFromDB = get_all_images({
             'histograms.full_histogram': 1,
             'histograms.block_histogram': 1,
-            'keypoints': 1,
             'filename': 1,
             'room': 1,
             'corners': 1
@@ -83,6 +82,7 @@ def __convert_NxN_to_three_dims(histogram):
 
 
 def FLD(image):
+    global fld
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Create default Fast Line Detector class
@@ -100,7 +100,7 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
     ----------
     - original_image -- The image to predict.
     - quadrilaterals -- The detected paintings in the image.
-    - threshold -- The probability threshold to reach before concidering it a valid match, matches with a probability below the threshold are ignored.
+    - threshold -- The probability threshold to reach before considering if it is a valid match. Matches with a probability below this threshold are ignored.
     - possible_rooms -- The rooms that are possible at this stage of the prediction.
 
     Returns:
@@ -136,11 +136,11 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
 
         quad_scores = []
 
-        line1 = FLD(painting)
-        line1_img = np.zeros([painting.shape[0], painting.shape[1], 3], dtype=np.uint8)
-        fld = cv2.ximgproc.createFastLineDetector()
-        line1_img = fld.drawSegments(line1_img, line1)
-        show_image('test1', line1_img)
+        # line1 = FLD(painting)
+        # line1_img = np.zeros([painting.shape[0], painting.shape[1], 3], dtype=np.uint8)
+        # fld = cv2.ximgproc.createFastLineDetector()
+        # line1_img = fld.drawSegments(line1_img, line1)
+        # show_image('test1', line1_img)
 
         for image in images:
             # skip images that are not possible!
@@ -150,18 +150,18 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
             compare_full_histogram = image['histograms']['full_histogram']
             compare_block_histogram = image['histograms']['block_histogram']
 
-            compare_painting = cv2.imread('.\\datasets\\images\\dataset_pictures_msk\\zaal_' + image['room'] +'\\' + image['filename'])
-            compare_painting = resize_image(compare_painting, 0.2)
-            compare_painting = cut_painting(compare_painting, image['corners'])
+            # compare_painting = cv2.imread('.\\datasets\\images\\dataset_pictures_msk\\zaal_' + image['room'] +'\\' + image['filename'])
+            # compare_painting = resize_image(compare_painting, 0.2)
+            # compare_painting = cut_painting(compare_painting, image['corners'])
 
-            fld = cv2.ximgproc.createFastLineDetector()
+            # fld = cv2.ximgproc.createFastLineDetector()
 
-            compare_painting = cv2.resize(compare_painting, (painting.shape[1], int(painting.shape[1]/compare_painting.shape[1] * compare_painting.shape[0])), interpolation=cv2.INTER_AREA)
-            line2 = FLD(compare_painting)
-            line2_img = np.zeros([compare_painting.shape[0], compare_painting.shape[1], 3], dtype=np.uint8)
-            
-            line2_img = fld.drawSegments(line2_img, line2)
-            show_image('test2', line2_img)
+            # compare_painting = cv2.resize(compare_painting, (painting.shape[1], int(painting.shape[1]/compare_painting.shape[1] * compare_painting.shape[0])), interpolation=cv2.INTER_AREA)
+            # line2 = FLD(compare_painting)
+            # line2_img = np.zeros([compare_painting.shape[0], compare_painting.shape[1], 3], dtype=np.uint8)
+
+            # line2_img = fld.drawSegments(line2_img, line2)
+            # show_image('test2', line2_img)
 
 
 

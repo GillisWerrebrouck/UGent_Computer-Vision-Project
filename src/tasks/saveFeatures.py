@@ -31,7 +31,7 @@ def save_features():
                         'full_histogram': pickle_serialize(features['histograms']['full_histogram']),
                         'block_histogram': pickle_serialize(features['histograms']['block_histogram'])
                     },
-                    # 'good_features': pickle_serialize(features['good_features'])
+                    # 'good_features': pickle_serialize(features['good_features']),
                 }
             })
 
