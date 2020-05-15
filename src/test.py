@@ -28,6 +28,7 @@ def on_kill(processes):
 def load_html(window, input_pipe):
     while True:
         html = input_pipe.recv()
+        print('read data')
 
         if html is not None:
             window.load_html(html.decode())
@@ -45,7 +46,7 @@ def on_frame(fp, frame):
     global possible_rooms
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
-    chances = predict_room(frame, quadriliterals, possible_rooms=possible_rooms)
+    chances = predict_room(frame, quadriliterals, threshold=0.6, possible_rooms=possible_rooms)
 
     chances, room, possible_rooms = hm.predict(chances)
 
@@ -65,9 +66,9 @@ def start_detection(output_pipe):
     )
 
     loop_through_video(
-        './datasets/videos/gopro/MSK_15.mp4',
+        './datasets/videos/gopro/MSK_13.mp4',
         partial(on_frame, fp),
-        nr_of_frames_to_skip=60,
+        nr_of_frames_to_skip=10,
         blur_threshold=10,
         calibration_matrix=calibration_matrix
     )

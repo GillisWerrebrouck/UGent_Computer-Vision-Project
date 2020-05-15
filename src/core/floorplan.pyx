@@ -1,14 +1,16 @@
+from time import time
 from lxml import etree
 from lxml.cssselect import CSSSelector
-
 
 cdef class Floorplan:
 
     cdef object _output_pipe
-    cdef str _room_color
+    cdef str _room_color, _current_room_color
+    cdef float _last_update
     cdef object _html, _img_preview, _html_tree
 
-    def __init__(self, output_pipe, floorplan_svg_path, video_file_processing, room_color='#69c7e5'):
+    def __init__(self, output_pipe, floorplan_svg_path, video_file_processing, room_color='#2980b9',
+    current_room_color='#c0392b'):
         """
         Construct a floorplan.
 
@@ -19,8 +21,10 @@ cdef class Floorplan:
         - video_file_processing -- The video file we're processing.
         - room_color -- Color to color the rooms with. (Default: #69c7e5)
         """
+        self._last_update = 0
         self._output_pipe = output_pipe
         self._room_color = room_color
+        self._current_room_color = current_room_color
         self.__init_html_tree(floorplan_svg_path)
         self.update_current_video(video_file_processing)
 
@@ -34,20 +38,22 @@ cdef class Floorplan:
         - floorplan_svg_path -- The path to the SVG to show.
         """
         self._html = etree.Element("html")
-        head = etree.SubElement(self._html, "head")
-        title = etree.SubElement(head, "title")
+        cdef object head = etree.SubElement(self._html, "head")
+        cdef object title = etree.SubElement(head, "title")
         title.text = 'MSK floorplan'
-        style = etree.SubElement(head, "style")
-        style.text = "#content { display: flex; flex-direction: column; justify-content: space-around; align-items: center; } #content img { width: 50%; }"
-        body = etree.SubElement(self._html, "body")
+        cdef object style = etree.SubElement(head, "style")
+        css_file = open('floorplan.css', 'r')
+        style.text = css_file.read()
 
-        content = etree.SubElement(body, 'div')
+        cdef object body = etree.SubElement(self._html, "body")
+
+        cdef object content = etree.SubElement(body, 'div')
         content.set('id', 'content')
 
-        svg = etree.parse(floorplan_svg_path, parser=etree.HTMLParser())
+        cdef object svg = etree.parse(floorplan_svg_path, parser=etree.HTMLParser())
         content.append(svg.getroot())
 
-        img = etree.SubElement(content, "img")
+        cdef object img = etree.SubElement(content, "img")
         img.set('alt', 'Video frame processed will come here...')
 
 
@@ -79,11 +85,14 @@ cdef class Floorplan:
         -------
         Nothing.
         """
-        rooms_found = CSSSelector(f'polygon#{room}')(self._html)
+        cdef list rooms_found = CSSSelector(f'polygon#{room}')(self._html)
 
+        cdef object current_room, probability
+        cdef str color = self._current_room_color if is_current else self._room_color
+        cdef float opacity = 1 if is_current else round(chance, 4)
         if len(rooms_found):
             room_in_svg = rooms_found[0]
-            room_in_svg.set('style', f'fill:{self._room_color};opacity:{round(chance, 4)}')
+            room_in_svg.set('style', f'fill:{color};opacity:{opacity}')
 
             if is_current:
                 current_room = CSSSelector('text#currentRoom')(self._html)[0]
@@ -93,7 +102,7 @@ cdef class Floorplan:
                 probability.text = f'{round(chance * 100, 2)} %'
 
 
-    cdef __update_image(self, image):
+    cdef update_image(self, image):
         self._img_preview.set('src', f'data:image/jpeg;base64,{image}')
 
 
@@ -122,5 +131,5 @@ cdef class Floorplan:
         for room, chance in all_room_chances.items():
             self.__update_room(room, chance, room == current_room)
 
-        self.__update_image(image)
+        self.update_image(image)
         self.__content_updated()

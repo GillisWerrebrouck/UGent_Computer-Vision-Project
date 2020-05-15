@@ -9,6 +9,7 @@ from core.detection import detect_quadrilaterals
 from core.extractFeatures import get_histogram, get_NxN_histograms, extract_orb
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 from core.transitions import transitions
+from core.equalization import equalize
 
 logger = get_root_logger()
 images = None
@@ -92,7 +93,11 @@ def FLD(image):
     return lines
 
 
-def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=transitions['INKOM']):
+cdef sort_by_probability(x):
+    return x[0]
+
+
+cpdef list predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=transitions['INKOM']):
     """
     Predict the room of the given (full color!) image.
 
@@ -109,7 +114,7 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
     each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
 
-    t1 = time.time()
+    cpdef float t1 = time.time()
 
     # Yes Python, we're using the global variable
     global images
@@ -118,18 +123,25 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
     if not len(quadrilaterals):
         return []
 
-    full_histogram_weight = 1
-    block_histogram_weight = 8
-    total_weight = full_histogram_weight + block_histogram_weight
+    cpdef int full_histogram_weight = 1
+    cpdef int block_histogram_weight = 8
+    cpdef int total_weight = full_histogram_weight + block_histogram_weight
 
-    all_scores = []
+    cpdef list all_scores = []
 
-    width, height = original_image.shape[:2]
+    cpdef object quad = None, painting = None
+    cpdef object src_full_histogram = None, src_block_histogram = None
+    cpdef object compare_full_histogram = None, compare_block_histogram = None
+    cpdef float full_histogram_score = 0, block_histogram_score = 0, combined_score = 0
+
+    cpdef list quad_scores = None
+    cpdef int width = original_image.shape[0]
+    cpdef int height = original_image.shape[1]
     for quad in quadrilaterals:
         quad = quad.reshape(4,2)
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
-        painting = cut_painting(original_image, quad)
+        painting = equalize(cut_painting(original_image, quad))
         src_full_histogram = __convert_to_three_dims(get_histogram(painting))
         src_block_histogram = get_NxN_histograms(painting)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
@@ -164,7 +176,6 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
             # show_image('test2', line2_img)
 
 
-
             full_histogram_score = cv2.compareHist(src_full_histogram, compare_full_histogram, cv2.HISTCMP_CORREL)
 
             block_histogram_score = 0
@@ -178,10 +189,10 @@ def predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=t
                 quad_scores.append(tuple([combined_score, image['filename'], image['room']]))
 
         # sort the array of probabilities in descending probability order
-        quad_scores = sorted(quad_scores, key=lambda x: x[0], reverse=True)
+        quad_scores = sorted(quad_scores, key=sort_by_probability, reverse=True)
         all_scores.append(quad_scores)
 
-    t2 = time.time()
+    cpdef float t2 = time.time()
     logger.info("room prediction time: {}".format(t2-t1))
 
     return all_scores

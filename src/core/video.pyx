@@ -8,7 +8,8 @@ from core.visualize import show_image, resize_image
 
 logger = get_root_logger()
 
-def loop_through_video(
+# TODO: docs!
+cpdef loop_through_video(
     video_file,
     on_frame,
     nr_of_frames_to_skip=10,
@@ -17,15 +18,18 @@ def loop_through_video(
     calibration_matrix=None
 ):
     logger.info('Starting loop for video {}'.format(video_file))
-    cap = cv2.VideoCapture(video_file)
+    cdef object cap = cv2.VideoCapture(video_file)
 
     if (cap.isOpened() == False):
         raise Exception("Videofile {} not found".format(video_file))
 
-    needsCalibration = calibration_matrix is not None
+    cdef int needsCalibration = calibration_matrix is not None
 
-    framesRead = 0
-    previousFrame = None
+    cdef int framesRead = 0
+    cdef object previousFrame = None
+
+    cdef int success = False
+    cdef object frame = None
 
     while (cap.isOpened()):
         success, frame = cap.read()
@@ -47,9 +51,8 @@ def loop_through_video(
         if needsCalibration:
             frame = undistort_frame(frame, params=calibration_matrix)
 
-        # TODO: terug aanzetten
-        # if not is_sharp_image(frame, blur_threshold):
-        #     continue
+        if not is_sharp_image(frame, blur_threshold):
+            continue
 
         # TODO: search a fancy way to determine if it's worth to show the frame
         # if previousFrame is not None:

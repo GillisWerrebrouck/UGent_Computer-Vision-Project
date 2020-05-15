@@ -88,8 +88,8 @@
     </text>
     <text transform="translate(4000 980)" style="font-size:90px;font-family:sans-serif">VIDEO:
     </text>
-    <text id="currentRoom" transform="translate(4500 720)" style="font-size:90px;font-family:sans-serif">PH</text>
-    <text id="probability" transform="translate(4500 850)" style="font-size:90px;font-family:sans-serif">PH</text>
-    <text id="currentVideo" transform="translate(4500 980)" style="font-size:90px;font-family:sans-serif">PH</text>
+    <text id="currentRoom" transform="translate(4500 720)" style="font-size:90px;font-family:sans-serif">Loading...</text>
+    <text id="probability" transform="translate(4500 850)" style="font-size:90px;font-family:sans-serif">Loading...</text>
+    <text id="currentVideo" transform="translate(4500 980)" style="font-size:90px;font-family:sans-serif">Loading...</text>
     <path d="M2475.87,1712.55" transform="translate(0 0)" style="fill:#69c7e5"/>
 </svg>
