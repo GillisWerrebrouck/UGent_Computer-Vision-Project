@@ -51,7 +51,7 @@ def get_all_images(projection = None):
     """
     Get all images in the database.
     Please use the project parameter for rapid image fetching and deserialization. For example,
-    it's not necessary to fetch the ORB keypoints when you only need the histograms.
+    it's not necessary to fetch the histograms when you only need the room and filename.
     So be smart!
 
     Parameters

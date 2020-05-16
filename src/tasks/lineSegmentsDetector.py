@@ -8,11 +8,19 @@ from ntpath import basename
 
 from core.detection import detect_quadrilaterals
 from core.cornerHelpers import cut_painting, convert_corners_to_uniform_format, sort_corners
-from core.prediction import FLD
 from core.visualize import show_image, resize_image
 from data.imageRepo import get_paintings_for_image, get_all_images
 
 filenames = glob('./datasets/images/dataset_pictures_msk/zaal_1/*.jpg')
+
+def FLD(image):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Create default Fast Line Detector class
+    fld = cv2.ximgproc.createFastLineDetector(_length_threshold=10, _distance_threshold=6, _canny_th1=60, _canny_th2=60, _do_merge=False)
+    # Get line vectors from the image
+    lines = fld.detect(image)
+    return lines
 
 def compare_segments(size1, lines1, size2, lines2, max_ratio=1.1):
     height1, width1 = size1
