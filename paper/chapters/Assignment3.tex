@@ -1,0 +1,25 @@
+\section{Matching}
+\label{sec:matching}
+
+\subsection{Features}
+\label{subsec:the-features}
+
+Before diving deeper into the matching algorithm, it's important to explain the features that used to do the matching. The algorithm only depends on two types histograms of the detected paintings. The first type is a histogram of the full painting, the second type is a collection of histograms gathered from different blocks of the painting. The block sized used in this algorithm divides the painting in 4 rows by 4 columns, independent of the painting's size. Both features are saved to the database for each of the labeled paintings and are both used in the matching algorithm explained in \sectionref{subsec:matching-algo}.
+
+\subsection{The matching algorithm}
+\label{subsec:matching-algo}
+
+The first step in matching a given painting with the entire dataset of paintings is a light intensity equalization. This way different light intensities have no influence on the histograms gathered from the detected painting.
+
+The second step consists of fetching the histograms as described in \sectionref{subsec:the-features}. Thereafter these histograms are compared against all histograms in the dataset. Per known painting the distance between the histograms is calculated using a correlation. This way a chance between 0 and 1 is obtained from this calculation. The histogram of the whole painting gives one chance, the block histogram gives a total of 16 chances which are combined by taking the average. These two chances are combined using \formularef{eq:histogram-score} which calculates a weighted average. In this formula $P(X = P_{i})$ stands for the chance that the detected painting $X$ is painting $P_{i}$ from the dataset, $B$ stands for the average of the block histogram distances and $F$ stands for the distance of the normal histograms. The block histogram gets a much higher weight because the predictions of these histograms are much more reliable than these of the normal histograms.
+
+\begin{equation}
+    \label{eq:histogram-score}
+    P(X = P_{i}) = \frac{(8 * B) + (1 * F)}{9}
+\end{equation}
+
+The matching algorithm gives per detected painting a list of possible rooms with the according chances, even if the room is not possible. How impossible rooms are treated, will be explained in \sectionref{sec:localization}. It's also possible to ignore chances that are below a given threshold.
+
+
+
+
