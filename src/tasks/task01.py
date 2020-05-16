@@ -493,16 +493,14 @@ def run_task_01():
                 ], img_shape[0], img_shape[1])
                 uniform_corners = sort_corners(uniform_corners)
 
-                features = extract_features(img, uniform_corners)
+                full_histogram, block_histogram = extract_features(img, uniform_corners)
 
                 image = {
                     'filename': basename(filepath),
                     'corners': uniform_corners,
                     'room': room,
-                    'histograms': {
-                        'full_histogram': pickle_serialize(features['histograms']['full_histogram']),
-                        'block_histogram': pickle_serialize(features['histograms']['block_histogram'])
-                    }
+                    'full_histogram': full_histogram,
+                    'block_histogram': block_histogram
                 }
 
                 create_image(image)

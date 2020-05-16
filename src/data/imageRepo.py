@@ -2,7 +2,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 
 from data.connect import connect_mongodb_database
-from data.serializer import deserialize_histograms, pickle_deserialize
+from data.serializer import pickle_deserialize, pickle_serialize
 from core.logger import get_root_logger
 
 logger = get_root_logger()
@@ -10,15 +10,15 @@ db_connection = connect_mongodb_database(
     'localhost', 27017, 'computervision', 'devuser', 'devpwd')
 
 if (db_connection == None):
-    logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is '
-                 'running.')
+    logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is running.')
     exit(-1)
 
 
 def create_image(image):
     """
     Insert a new image in the database. If you have an image with multiple paintings,
-    add one image to the database per painting.
+    add one image to the database per painting. The histograms will automatically be
+    serialized here.
 
     Parameters
     ----------
@@ -26,9 +26,8 @@ def create_image(image):
       - filename -- The filename of the image saving info about.
       - corners -- The (uniform!) corners of a painting in the image.
       - room -- The room this painting is located in.
-      - histograms -- Object with serialized keys 'full_histogram' and 'block_histogram'. (optional)
-      - good_features -- The serialized good features of the image. (optional)
-      - keypoints -- The serialized ORB keypoints and descriptors. (optional)
+      - full_histogram -- Histogram of the whole painting.
+      - block_histogram -- Histograms per block in the painting.
 
     Returns
     -------
@@ -38,6 +37,10 @@ def create_image(image):
     image['createdAt'] = datetime.now()
 
     logger.info('Saving image info for file {}'.format(image['filename']))
+
+    # Serialize the histograms before saving to MongoDB, binary is more efficiënt than huge number arrays
+    image['full_histogram'] = pickle_serialize(image['full_histogram'])
+    image['block_histogram'] = pickle_serialize(image['block_histogram'])
 
     # Save the image to the database
     db_connection['images'].insert(image)
@@ -174,13 +177,10 @@ def __deserialize_features(image):
     if image is None:
         return image
 
-    if 'histograms' in image:
-        if 'full_histogram' in image['histograms']:
-            image['histograms']['full_histogram'] = pickle_deserialize(
-                image.get('histograms')['full_histogram'])
+    if 'full_histogram' in image:
+        image['full_histogram'] = pickle_deserialize(image['full_histogram'])
 
-        if 'block_histogram' in image['histograms']:
-            image['histograms']['block_histogram'] = pickle_deserialize(
-                image.get('histograms')['block_histogram'])
+    if 'block_histogram' in image:
+        image['block_histogram'] = pickle_deserialize(image['block_histogram'])
 
     return image

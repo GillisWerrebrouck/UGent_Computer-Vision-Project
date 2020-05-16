@@ -159,9 +159,4 @@ def extract_features(image, corners, equalize_=True):
     full_histogram = get_histogram(painting)
     block_histogram = get_NxN_histograms(painting)
 
-    return {
-        'histograms': {
-            'full_histogram': full_histogram,
-            'block_histogram': block_histogram
-        }
-    }
+    return (full_histogram, block_histogram)
