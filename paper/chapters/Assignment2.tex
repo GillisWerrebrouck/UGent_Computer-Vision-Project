@@ -42,7 +42,7 @@ The next step is to use Canny, the difference with the naive approach is that th
 
 Next, a morphological transformations is performed on the Canny edges (see \figureref{fig:paiting_detection_paintings-edges}). This will close edges that are close to each other as this will improve the detection of closed contours. This morphological transformation is in essence a dilation followed by an erosion.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \includegraphics[width=8cm]{IMG_20190323_121447_edges.jpg}
     \centering
     \caption{Paintings edges.}
@@ -72,7 +72,7 @@ With the creation of the solution for this problem, a new problem occured: how t
 
 The accuracy results for this detection algorithm were fairly good. An example of the detection can be found in \figureref{fig:paiting_detection_with_ground_truth}. The detected contours are shown in red and the groundtruth is shown in blue as determined with the use of the naive algorithm. The dataset consists of 553 images which all together contain 836 paintings. The detection algorithm had 86 false negatives and 32 false positives. The average bounding box accuracy is 81.30\%. These results are displayed on the graphs in \figureref{fig:performance-measurements}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \includegraphics[width=8cm]{IMG_20190323_121447.jpg}
     \centering
     \caption{Paintings detection.}
