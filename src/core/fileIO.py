@@ -1,5 +1,8 @@
 import os, errno
 from datetime import datetime
+import matplotlib.pyplot as plt
+import pandas as pd
+
 
 def createFolders(path):
     """
@@ -49,3 +52,21 @@ def appendFile(filename, line):
     file = open(filename, 'a')
     file.write(line)
     file.close()
+
+
+def savePlot(data, title, filename, style='seaborn-muted'):
+    """
+    Saves the plot as png.
+
+    Parameters
+    ----------
+    - data -- The data (dist) to plot.
+    - title -- The title for the plot.
+    - filename -- The filename for the png.
+    - style (optional) -- The style to aply to the plot.
+    """
+    plt.style.use(style)
+    pd.DataFrame(data).plot(kind='bar', figsize=(18,6))
+    plt.title(title, fontsize=12)
+    plt.xticks(rotation=45)
+    plt.savefig(filename)
