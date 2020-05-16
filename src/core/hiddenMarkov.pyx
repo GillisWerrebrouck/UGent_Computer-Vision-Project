@@ -40,7 +40,7 @@ cdef class HiddenMarkov:
         self._counters['INKOM'] = 1
 
 
-    cpdef predict(self, quadrilateral_chances):
+    cpdef predict(self, object quadrilateral_chances):
         logger.info(quadrilateral_chances)
 
         if not len(quadrilateral_chances):
@@ -76,7 +76,7 @@ cdef class HiddenMarkov:
         return transitions[self._current_room]
 
 
-    cdef __play_the_odds(self, quadriliterals):
+    cdef __play_the_odds(self, object quadriliterals):
         cdef list possible_rooms = transitions[self._current_room]
 
         cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
@@ -132,7 +132,7 @@ cdef class HiddenMarkov:
         return max_room
 
 
-    cdef __get_max_chance_room(self, quadriliterals):
+    cdef __get_max_chance_room(self, object quadriliterals):
         cdef int max_chance = 0
         cdef str max_room = None
 
@@ -150,7 +150,7 @@ cdef class HiddenMarkov:
         return max_room
 
 
-    cdef __get_most_common_room(self, quadriliterals):
+    cdef __get_most_common_room(self, object quadriliterals):
         cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
         cdef int length = len(flattened)
 

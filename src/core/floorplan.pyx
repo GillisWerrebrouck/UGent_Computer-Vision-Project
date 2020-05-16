@@ -29,7 +29,7 @@ cdef class Floorplan:
         self.update_current_video(video_file_processing)
 
 
-    cpdef __init_html_tree(self, floorplan_svg_path):
+    cpdef __init_html_tree(self, str floorplan_svg_path):
         """
         Construct the HTML tree for the given SVG.
 
@@ -71,7 +71,7 @@ cdef class Floorplan:
         self._output_pipe.send(etree.tostring(self._html))
 
 
-    cdef __update_room(self, room, chance, is_current=False):
+    cdef __update_room(self, str room, float chance, int is_current=False):
         """
         Update the chance of the given room if the room exists.
 
@@ -102,11 +102,11 @@ cdef class Floorplan:
                 probability.text = f'{round(chance * 100, 2)} %'
 
 
-    cdef update_image(self, image):
+    cdef update_image(self, object image):
         self._img_preview.set('src', f'data:image/jpeg;base64,{image}')
 
 
-    cpdef update_current_video(self, video):
+    cpdef update_current_video(self, str video):
         """
         Update the video that's currently being processed.
 
@@ -119,7 +119,7 @@ cdef class Floorplan:
         self.__content_updated()
 
 
-    cpdef update_rooms(self, all_room_chances, current_room, image):
+    cpdef update_rooms(self, dict all_room_chances, str current_room, object image):
         """
         Update the chances for all rooms.
 

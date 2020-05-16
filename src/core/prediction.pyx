@@ -93,11 +93,11 @@ def FLD(image):
     return lines
 
 
-cdef sort_by_probability(x):
+cdef sort_by_probability(tuple x):
     return x[0]
 
 
-cpdef list predict_room(original_image, quadrilaterals, threshold=0.5, possible_rooms=transitions['INKOM']):
+cpdef list predict_room(object original_image, object quadrilaterals, float threshold=0.5, list possible_rooms=transitions['INKOM']):
     """
     Predict the room of the given (full color!) image.
 
