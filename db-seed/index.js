@@ -31,8 +31,8 @@ function formatImages(images) {
             ...image,
             _id: new ObjectId(_id),
             createdAt: new Date(createdAt),
-            full_histogram = Buffer.from(full_histogram, 'base64'),
-            block_histogram = Buffer.from(block_histogram, 'base64')
+            full_histogram: Buffer.from(full_histogram, 'base64'),
+            block_histogram: Buffer.from(block_histogram, 'base64')
         };
     });
 }
