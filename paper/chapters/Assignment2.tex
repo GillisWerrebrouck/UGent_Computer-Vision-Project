@@ -11,7 +11,7 @@ The first step in the algorithm is a mean shift segmentation (see \figureref{fig
 \begin{figure}[h]
     \includegraphics[width=8cm]{IMG_20190323_121447_mean-shift.jpg}
     \centering
-    \caption{Mean shift segmentation.}
+    \caption{An example image after mean shift segmentation}
     \label{fig:paiting_detection_mean_shift}
 \end{figure}
 
@@ -23,13 +23,13 @@ Another issue is that this mask can't be statically programmed in code for each 
     \centering
     \begin{minipage}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{IMG_20190323_121447_wall-mask.jpg}
-        \caption{Wall mask.}
+        \caption{The wall mask for the example image}
         \label{fig:paiting_detection_wall-mask}
     \end{minipage}
     \hfill
     \begin{minipage}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{IMG_20190323_121447_paintings-mask.jpg}
-        \caption{Paintings mask.}
+        \caption{The Painting mask for the example image}
         \label{fig:paiting_detection_paintings-mask}
     \end{minipage}
 \end{figure}
@@ -45,7 +45,7 @@ Next, a morphological transformations is performed on the Canny edges (see \figu
 \begin{figure}[ht]
     \includegraphics[width=8cm]{IMG_20190323_121447_edges.jpg}
     \centering
-    \caption{Paintings edges.}
+    \caption{The edges of the detected paintings}
     \label{fig:paiting_detection_paintings-edges}
 \end{figure}
 
@@ -75,7 +75,7 @@ The accuracy results for this detection algorithm were fairly good. An example o
 \begin{figure}[ht]
     \includegraphics[width=8cm]{IMG_20190323_121447.jpg}
     \centering
-    \caption{Paintings detection.}
+    \caption{A visualization of the detected paintings}
     \label{fig:paiting_detection_with_ground_truth}
 \end{figure}
 
@@ -90,7 +90,7 @@ The accuracy results for this detection algorithm were fairly good. An example o
 
     \begin{tabular}{@{}c@{}}
         \includegraphics[width=\linewidth]{detection_accuracy_ranges.png} \\[\abovecaptionskip]
-        \small (b) Detection accuracy rangesc for the dataset
+        \small (b) Detection accuracy ranges for the dataset
     \end{tabular}
 
     \begin{tabular}{@{}c@{}}
