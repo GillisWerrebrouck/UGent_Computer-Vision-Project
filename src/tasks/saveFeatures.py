@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from glob import glob
 from os.path import basename
@@ -5,9 +6,8 @@ from os.path import basename
 from core.logger import get_root_logger
 from core.extractFeatures import extract_features
 from data.imageRepo import get_paintings_for_image, update_by_id
-from data.serializer import serialize_keypoints, pickle_serialize
+from data.serializer import pickle_serialize
 
-# TODO: uncomment the keypoints here and in extract_features if you want them
 def save_features():
     logger = get_root_logger()
     filenames = glob('./datasets/images/dataset_pictures_msk/zaal_*/*.jpg')
@@ -15,6 +15,7 @@ def save_features():
     count = 0
 
     for path in filenames:
+        image = cv2.imread(path)
         filename = basename(path)
         count += 1
         paintings_in_image = get_paintings_for_image(filename)
@@ -22,16 +23,12 @@ def save_features():
         for painting in paintings_in_image:
             logger.info('Extracting features of image with id {}'.format(
                 painting.get('_id')))
-            features = extract_features(path, painting.get('corners'), False)
+            full_histogram, block_histogram = extract_features(image, painting.get('corners'), False)
 
             update_by_id(painting.get('_id'), {
                 '$set': {
-                    # 'keypoints': serialize_keypoints(features['orb']['keypoints'], features['orb']['descriptors']),
-                    'histograms': {
-                        'full_histogram': pickle_serialize(features['histograms']['full_histogram']),
-                        'block_histogram': pickle_serialize(features['histograms']['block_histogram'])
-                    },
-                    # 'good_features': pickle_serialize(features['good_features']),
+                    'full_histogram': pickle_serialize(full_histogram),
+                    'block_histogram': pickle_serialize(block_histogram)
                 }
             })
 

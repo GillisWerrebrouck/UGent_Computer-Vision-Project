@@ -6,15 +6,16 @@ from core.logger import get_root_logger
 from data.imageRepo import get_all_images
 from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaterals
-from core.extractFeatures import get_histogram, get_NxN_histograms, extract_orb
+from core.extractFeatures import get_histogram, get_NxN_histograms
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 from core.transitions import transitions
 
 logger = get_root_logger()
 images = None
 
+# TODO: meer cython hier!
 
-def __fetch_images(force=False):
+cdef __fetch_images(force=False):
     """
     Lazy load the images. Will only query the database once.
     You can force to query the database with the first parameter.
@@ -29,8 +30,8 @@ def __fetch_images(force=False):
 
     if force or images is None:
         imagesFromDB = get_all_images({
-            'histograms.full_histogram': 1,
-            'histograms.block_histogram': 1,
+            'full_histogram': 1,
+            'block_histogram': 1,
             'filename': 1,
             'room': 1,
             'corners': 1
@@ -39,8 +40,8 @@ def __fetch_images(force=False):
         images = []
 
         for image in imagesFromDB:
-            image['histograms']['full_histogram'] = __convert_to_three_dims(image['histograms']['full_histogram'])
-            image['histograms']['block_histogram'] = __convert_NxN_to_three_dims(image['histograms']['block_histogram'])
+            image['full_histogram'] = __convert_to_three_dims(image['full_histogram'])
+            image['block_histogram'] = __convert_NxN_to_three_dims(image['block_histogram'])
 
             images.append(image)
 
@@ -79,17 +80,6 @@ def __convert_NxN_to_three_dims(histogram):
             histogram[row][col] = __convert_to_three_dims(histogram[row][col])
 
     return histogram
-
-
-def FLD(image):
-    global fld
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Create default Fast Line Detector class
-    fld = cv2.ximgproc.createFastLineDetector(_length_threshold=10, _distance_threshold=6, _canny_th1=60, _canny_th2=60, _do_merge=False)
-    # Get line vectors from the image
-    lines = fld.detect(image)
-    return lines
 
 
 cdef sort_by_probability(tuple x):
@@ -147,29 +137,9 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
 
         quad_scores = []
 
-        # line1 = FLD(painting)
-        # line1_img = np.zeros([painting.shape[0], painting.shape[1], 3], dtype=np.uint8)
-        # fld = cv2.ximgproc.createFastLineDetector()
-        # line1_img = fld.drawSegments(line1_img, line1)
-        # show_image('test1', line1_img)
-
         for image in images:
-            compare_full_histogram = image['histograms']['full_histogram']
-            compare_block_histogram = image['histograms']['block_histogram']
-
-            # compare_painting = cv2.imread('.\\datasets\\images\\dataset_pictures_msk\\zaal_' + image['room'] +'\\' + image['filename'])
-            # compare_painting = resize_image(compare_painting, 0.2)
-            # compare_painting = cut_painting(compare_painting, image['corners'])
-
-            # fld = cv2.ximgproc.createFastLineDetector()
-
-            # compare_painting = cv2.resize(compare_painting, (painting.shape[1], int(painting.shape[1]/compare_painting.shape[1] * compare_painting.shape[0])), interpolation=cv2.INTER_AREA)
-            # line2 = FLD(compare_painting)
-            # line2_img = np.zeros([compare_painting.shape[0], compare_painting.shape[1], 3], dtype=np.uint8)
-
-            # line2_img = fld.drawSegments(line2_img, line2)
-            # show_image('test2', line2_img)
-
+            compare_full_histogram = image['full_histogram']
+            compare_block_histogram = image['block_histogram']
 
             full_histogram_score = cv2.compareHist(src_full_histogram, compare_full_histogram, cv2.HISTCMP_CORREL)
 

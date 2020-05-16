@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plt
 
-from data.serializer import serialize_keypoints, pickle_serialize
+from data.serializer import pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
 from core.equalization import equalize
@@ -135,83 +135,28 @@ def __plot_NxN_histogram(histograms):
     plt.show()
 
 
-def extract_orb(gray):
-    """
-    Extract ORB features from the given image.
-
-    Parameters
-    ----------
-    - gray -- A grayscale image to extract ORB features from.
-
-    Returns
-    -------
-    The ORB keypoints and descriptors.
-    """
-    orb = cv2.ORB_create()
-    keypoints = orb.detect(gray, None)
-    keypoints, des = orb.compute(gray, keypoints)
-
-    return tuple([keypoints, des])
-
-
-def extract_sobel(gray):
-    """
-    Extract sobel features from the given image.
-
-    Parameters
-    ----------
-    - gray -- A grayscale image to extract sobel features from.
-
-    Returns
-    -------
-    The sobel feature.
-    """
-    sobelX = cv2.Sobel(gray, cv2.CV_64F, 1, 0, 5)
-    sobelY = cv2.Sobel(gray, cv2.CV_64F, 0, 1, 5)
-
-    sobelX = cv2.convertScaleAbs(sobelX)
-    sobelY = cv2.convertScaleAbs(sobelY)
-    return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
-
-
-def extract_features(path, corners, equilize_=True):
+def extract_features(image, corners, equalize_=True):
     """
     Extract fancy features from the given image.
 
     Parameters
     ----------
-    - path -- The path to the image to extract features from.
+    - image -- The image to extract features from.
     - corners -- The corners of the painting in our database.
+    - equalize_ -- Optional boolean to disable the equalization of the image's light intensity.
 
     Returns
     -------
     Object containing our very usefull features.
     """
-    image = cv2.imread(path)
     painting = cut_painting(image, corners)
 
     # Equalization
-    if equilize_:
+    if equalize_:
         painting = equalize(painting)
 
-    painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
-
-    # Features with color image
+    # Extract the two types of histograms for the cut painting
     full_histogram = get_histogram(painting)
     block_histogram = get_NxN_histograms(painting)
 
-    # Features with gray image
-    # keypoints, descriptors = extract_orb(painting_gray)
-    # good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
-
-    return {
-        # 'orb': {
-        #   'keypoints': keypoints,
-        #   'descriptors': descriptors
-        # },
-        'histograms': {
-            'full_histogram': full_histogram,
-            'block_histogram': block_histogram
-        },
-        # 'good_features': good_features
-    }
+    return (full_histogram, block_histogram)
