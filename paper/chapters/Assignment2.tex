@@ -9,7 +9,7 @@ The algorithm in assignment 2 drastically differs from the algorithm in assignme
 The first step in the algorithm is a mean shift segmentation (see \figureref{fig:paiting_detection_mean_shift})). This is a method to remove noise by taking the mean of the pixels within a certain range. A big advantage is that it partialy removes color gradients and fine-grain textures which would cause issues in the further steps of the algorithm.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/IMG_20190323_121447_mean-shift.jpg}
+    \includegraphics[width=\linewidth]{IMG_20190323_121447_mean-shift.jpg}
     \caption{Mean shift segmentation.}
     \label{fig:paiting_detection_mean_shift}
 \end{figure}
@@ -19,7 +19,7 @@ A common technique in object detection is by creating a mask of the object. The 
 Another issue is that this mask can't be statically programmed in code for each image since we wan't to be able to use the algorithm on any image or video frame. This can be solved by using a technique called flooding. Flooding will create a mask from a starting position in the image and will fill all neighbouring pixels if they have a color close to the color of the starting position. This is done recursively until no pixels are withing the color range of the starting position anymore.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/IMG_20190323_121447_wall-mask.jpg}
+    \includegraphics[width=\linewidth]{IMG_20190323_121447_wall-mask.jpg}
     \caption{Wall mask.}
     \label{fig:paiting_detection_wall-mask}
 \end{figure}
@@ -29,7 +29,7 @@ The next problem is that there needs to be a good starting position to have a go
 Once the mask of the wall has been obtained, it is inverted to have the mask of the paintings (see \figureref{fig:paiting_detection_paintings-mask}). The mask is then eroded to remove small imperfections in the mask and a median blur is used to smooth the edges of the mask.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/IMG_20190323_121447_paintings-mask.jpg}
+    \includegraphics[width=\linewidth]{IMG_20190323_121447_paintings-mask.jpg}
     \caption{Paintings mask.}
     \label{fig:paiting_detection_paintings-mask}
 \end{figure}
@@ -39,7 +39,7 @@ The next step is to use Canny, the difference with the naive approach is that th
 Next, a morphological transformations is performed on the Canny edges (see \figureref{fig:paiting_detection_paintings-edges}). This will close edges that are close to each other as this will improve the detection of closed contours. This morphological transformations is in essence a dilation followed by an erosion.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/IMG_20190323_121447_edges.jpg}
+    \includegraphics[width=\linewidth]{IMG_20190323_121447_edges.jpg}
     \caption{Paintings edges.}
     \label{fig:paiting_detection_paintings-edges}
 \end{figure}
@@ -69,7 +69,7 @@ For each of the presumably perfect paintings, all of the found quadrilaterals ar
 The accuracy results for the detection algorithm were fairly good. An example of the detection can be seen in \figureref{fig:paiting_detection_with_ground_truth}. Red is the detected contours and blue is the groundtruth as determined with the use of assignment 1. The dataset consists of 553 images which all together contain 836 paintings. The detection algorithm had 68 false negatives (paintings) and 35 false positives (paintings). The average bounding box accuracy is 82.80\%.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{images/IMG_20190323_121447.jpg}
+    \includegraphics[width=\linewidth]{IMG_20190323_121447.jpg}
     \caption{Paintings detection.}
     \label{fig:paiting_detection_with_ground_truth}
 \end{figure}
