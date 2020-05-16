@@ -6,7 +6,7 @@ from core.logger import get_root_logger
 from data.imageRepo import get_all_images
 from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaterals
-from core.extractFeatures import get_histogram, get_NxN_histograms, extract_orb
+from core.extractFeatures import get_histogram, get_NxN_histograms
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 from core.transitions import transitions
 

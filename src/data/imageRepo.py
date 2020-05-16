@@ -2,7 +2,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 
 from data.connect import connect_mongodb_database
-from data.serializer import deserialize_keypoints, deserialize_histograms, pickle_deserialize
+from data.serializer import deserialize_histograms, pickle_deserialize
 from core.logger import get_root_logger
 
 logger = get_root_logger()
@@ -182,14 +182,5 @@ def __deserialize_features(image):
         if 'block_histogram' in image['histograms']:
             image['histograms']['block_histogram'] = pickle_deserialize(
                 image.get('histograms')['block_histogram'])
-
-    if 'keypoints' in image:
-        image['keypoints'] = deserialize_keypoints(image.get('keypoints'))
-
-    if 'sobel' in image:
-        image['sobel'] = pickle_deserialize(image.get('sobel'))
-
-    if 'good_features' in image:
-        image['good_features'] = pickle_deserialize(image.get('good_features'))
 
     return image
