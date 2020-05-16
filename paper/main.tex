@@ -30,7 +30,7 @@
 
 \begin{document}
 
-\title{Computer vision: project}
+\title{An approach for continuous painting detection and room prediction during a museum walk}
 %
 %\titlerunning{Abbreviated paper title}
 % If the paper title is too long for the running head, you can set
@@ -54,10 +54,10 @@
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-The abstract should briefly summarize the contents of the paper in
-150--250 words.
 
-\keywords{Painting detection \and Painting matching \and Hidden Markove model.}
+Are you tired of exploring a museum on a map and figuring out where you are? This paper focusses on resolving this issue. It allows the detection of paintings in a video or on a live recording while walking through the museum. The paintings are detected using a mean-shift segmentation filter, floodfilling and contour dection. The detected paintings are matched against all known paintings in the museum and a couple of predictions are made. These predictions are then used as input for an model inspired by the Hidden Markov model which determines if the given predictions are possible and don't cause a teleportation through the museum. All information is displayed on a clear map so it's easy to know where you are in the museum. Never look at the map again, look at your phone while enjoying the paintings!
+
+\keywords{Painting detection \and Painting matching \and Painting mask \and Hidden Markov model}
 \end{abstract}
 %
 
