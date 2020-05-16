@@ -23,33 +23,17 @@ function formatImages(images) {
         const {
             _id,
             createdAt,
-            histograms,
-            good_features,
+            full_histogram,
+            block_histogram,
         } = image;
 
-        const parsedImage = {
+        return {
             ...image,
             _id: new ObjectId(_id),
             createdAt: new Date(createdAt),
+            full_histogram = Buffer.from(full_histogram, 'base64'),
+            block_histogram = Buffer.from(block_histogram, 'base64')
         };
-
-        if (good_features) {
-            parsedImage.good_features = Buffer.from(good_features, 'base64');
-        }
-
-        if (histograms) {
-            const {
-                full_histogram,
-                block_histogram,
-            } = histograms;
-
-            parsedImage.histograms = {
-                full_histogram: Buffer.from(full_histogram, 'base64'),
-                block_histogram: Buffer.from(block_histogram, 'base64'),
-            };
-        }
-
-        return parsedImage;
     });
 }
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 from bson.objectid import ObjectId
+import base64
 
 from data.connect import connect_mongodb_database
 from data.serializer import pickle_deserialize, pickle_serialize
@@ -178,9 +179,9 @@ def __deserialize_features(image):
         return image
 
     if 'full_histogram' in image:
-        image['full_histogram'] = pickle_deserialize(image['full_histogram'])
+        image['full_histogram'] = pickle_deserialize(image["full_histogram"])
 
     if 'block_histogram' in image:
-        image['block_histogram'] = pickle_deserialize(image['block_histogram'])
+        image['block_histogram'] = pickle_deserialize(image["block_histogram"])
 
     return image
