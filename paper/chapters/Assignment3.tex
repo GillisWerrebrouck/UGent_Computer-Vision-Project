@@ -11,6 +11,9 @@ Before diving deeper into the matching algorithm, it's important to explain the 
 
 The first step in matching a given painting with the entire dataset of paintings is a light intensity equalization. This way different light intensities have no influence on the histograms gathered from the detected painting. Equalization is a technique that is only used on the video frames because of the rather bad frame quality, the dataset itself and the previously performed benchmarks don't need this step.
 
+\todo[inline]{add reference about equalization to links underneath in comment}
+% https://www.researchgate.net/publication/258566696_A_Comparative_Study_of_Histogram_Equalization_Based_Image_Enhancement_Techniques_for_Brightness_Preservation_and_Contrast_Enhancement/fulltext/0301de660cf23c5c592c8908/A-Comparative-Study-of-Histogram-Equalization-Based-Image-Enhancement-Techniques-for-Brightness-Preservation-and-Contrast-Enhancement.pdf
+
 The second step consists of fetching the histograms as described in \sectionref{subsec:the-features}. Thereafter these histograms are compared against all histograms in the dataset. Per known painting the distance between the histograms is calculated using a correlation. This way a chance between 0 and 1 is obtained from this calculation. The histogram of the whole painting gives one chance, the block histogram gives a total of 16 chances which are combined by taking the average. These two chances are combined using \formularef{eq:histogram-score} which calculates a weighted average. In this formula $P(X = P_{i})$ stands for the chance that the detected painting $X$ is painting $P_{i}$ from the dataset, $B$ stands for the average of the block histogram distances and $F$ stands for the distance of the normal histograms. The block histogram gets a much higher weight because the predictions of these histograms are much more reliable than these of the normal histograms.
 
 \begin{equation}
