@@ -19,12 +19,6 @@ from core.transitions import transitions
 
 hm = HiddenMarkov()
 
-def on_kill(processes):
-    for process in processes:
-        process.kill()
-        process.join()
-
-
 def load_html(window, input_pipe):
     while True:
         html = input_pipe.recv()
@@ -68,7 +62,7 @@ def start_detection(output_pipe):
     loop_through_video(
         './datasets/videos/gopro/MSK_13.mp4',
         partial(on_frame, fp),
-        nr_of_frames_to_skip=10,
+        nr_of_frames_to_skip=30,
         blur_threshold=10,
         calibration_matrix=calibration_matrix
     )
@@ -82,7 +76,4 @@ if __name__ == "__main__":
     detection = multiprocessing.Process(target=start_detection, args=(child_pipe,))
     floorplan_viewer = multiprocessing.Process(target=show_floorplan, args=(parent_pipe,))
 
-    detection.start()
-    floorplan_viewer.start()
-
-    GracefulKiller(partial(on_kill, [detection, floorplan_viewer]))
+    GracefulKiller([detection, floorplan_viewer])
