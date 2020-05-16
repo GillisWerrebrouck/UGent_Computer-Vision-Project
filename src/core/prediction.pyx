@@ -10,10 +10,8 @@ from core.extractFeatures import get_histogram, get_NxN_histograms
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 from core.transitions import transitions
 
-logger = get_root_logger()
-images = None
-
-# TODO: meer cython hier!
+cdef object logger = get_root_logger()
+cdef list images = None
 
 cdef __fetch_images(force=False):
     """
@@ -28,6 +26,7 @@ cdef __fetch_images(force=False):
     # Yes Python, we're using the global variable
     global images
 
+    cdef list imagesFromDB
     if force or images is None:
         imagesFromDB = get_all_images({
             'full_histogram': 1,
@@ -46,7 +45,7 @@ cdef __fetch_images(force=False):
             images.append(image)
 
 
-def __convert_to_three_dims(histogram):
+cdef __convert_to_three_dims(histogram):
     """
     Cut the colors ('blue', 'green' and 'red') from the given array.
 
@@ -56,7 +55,7 @@ def __convert_to_three_dims(histogram):
 
     Returns: The converted histogram.
     """
-    result = []
+    cdef list result = []
 
     if histogram.dtype == np.object:
         for color, hist in histogram:
@@ -65,7 +64,7 @@ def __convert_to_three_dims(histogram):
     return np.array(result)
 
 
-def __convert_NxN_to_three_dims(histogram):
+cdef __convert_NxN_to_three_dims(histogram):
     """
     Cut the colors ('blue', 'green' and 'red') from each block of the given array.
 

@@ -1,8 +1,6 @@
 import cv2
 import pickle
 
-# TODO: check if everything uses these
-
 
 def pickle_serialize(obj):
     """
