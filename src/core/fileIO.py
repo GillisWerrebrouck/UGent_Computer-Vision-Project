@@ -67,6 +67,9 @@ def savePlot(data, title, filename, style='seaborn-muted'):
     """
     plt.style.use(style)
     pd.DataFrame(data).plot(kind='bar', figsize=(18,6))
-    plt.title(title, fontsize=12)
-    plt.xticks(rotation=45)
+    # plt.title(title, fontsize=20)
+    plt.legend(prop={'size': 18})
+    plt.xticks(rotation=45, fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.tight_layout()
     plt.savefig(filename)
