@@ -9,7 +9,6 @@ from core.detection import detect_quadrilaterals
 from core.extractFeatures import get_histogram, get_NxN_histograms, extract_orb
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 from core.transitions import transitions
-from core.equalization import equalize
 
 logger = get_root_logger()
 images = None
@@ -141,7 +140,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         quad = quad.reshape(4,2)
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
-        painting = equalize(cut_painting(original_image, quad))
+        painting = cut_painting(original_image, quad)
         src_full_histogram = __convert_to_three_dims(get_histogram(painting))
         src_block_histogram = get_NxN_histograms(painting)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
