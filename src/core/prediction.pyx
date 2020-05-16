@@ -155,10 +155,6 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         # show_image('test1', line1_img)
 
         for image in images:
-            # skip images that are not possible!
-            if image['room'] not in possible_rooms:
-                continue
-
             compare_full_histogram = image['histograms']['full_histogram']
             compare_block_histogram = image['histograms']['block_histogram']
 

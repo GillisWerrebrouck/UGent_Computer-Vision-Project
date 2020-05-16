@@ -174,7 +174,7 @@ def extract_sobel(gray):
     return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
 
 
-def extract_features(path, corners):
+def extract_features(path, corners, equilize_=True):
     """
     Extract fancy features from the given image.
 
@@ -191,7 +191,8 @@ def extract_features(path, corners):
     painting = cut_painting(image, corners)
 
     # Equalization
-    painting = equalize(painting)
+    if equilize_:
+        painting = equalize(painting)
 
     painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
 
@@ -200,8 +201,8 @@ def extract_features(path, corners):
     block_histogram = get_NxN_histograms(painting)
 
     # Features with gray image
-    keypoints, descriptors = extract_orb(painting_gray)
-    good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
+    # keypoints, descriptors = extract_orb(painting_gray)
+    # good_features = cv2.goodFeaturesToTrack(painting_gray, 25, 0.01, 2)
 
     return {
         # 'orb': {
