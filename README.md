@@ -1,6 +1,6 @@
 # Group 10
 
-Welcome on the repository of group 10's assignment for the course Computer Vision. In the sections below you can find instructions on how to setup and run the different assignments in this project.
+Welcome on the repository of group 10's assignment for the course Computer Vision (Ghent University). In the sections below you can find instructions on how to setup and run the different assignments in this project.
 
 ## Paper
 The paper can be found in the directory `paper`. A built version can be found in `main.pdf`.
@@ -38,7 +38,7 @@ Finally, run the project:
 python src/index.py
 ``
 
-## Task 1
+## Unsupervised painting detection tool
 
 For the unsupervised painting detection, a series of actions are executed. The way this works is as follow. All the contours are being detected by a naive method; however, these contours are not being shown yet. A graphical user interface has been made to make the unsupervised image detection easy and user friendly by providing a variaty of actions. The available actions are the following:
 
