@@ -4,13 +4,13 @@ pyximport.install(language_level='3')
 import cv2
 import numpy as np
 from glob import glob
-from os.path import basename
+from os.path import basename, dirname
 import re
 import os
 
 from core.logger import get_root_logger
 from data.imageRepo import get_all_images
-from core.fileIO import createFolders, createFile, appendFile
+from core.fileIO import createFolders, createFile, appendFile, savePlot
 from core.detection import detect_quadrilaterals
 from core.visualize import resize_image, show_image, draw_quadrilaterals_opencv
 from core.prediction import predict_room
@@ -18,16 +18,19 @@ from core.prediction import predict_room
 logger = get_root_logger()
 
 
-# TODO: add possibility to run prediction on video frames
 def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
   if save:
     filename = createFile('./results/task3/' + dataset_folder + '_prediction')
+    plot_filename_base = './results/task3/dataset_pictures_msk_'
 
   filenames = glob('./datasets/images/' + dataset_folder + '/zaal_*/*.jpg')
 
   correct_image_predictions = 0
   correct_room_predictions = 0
   total_predictions = 0
+
+  correct_predictions_per_room = {} # key -> room, value -> count
+  incorrect_predictions_per_room = {} # key -> room, value -> count
 
   for f in filenames:
     original_image = cv2.imread(f, 1)
@@ -39,6 +42,7 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
 
     match = re.search('(z|Z)aal_(.+)$', os.path.dirname(f))
     room = match.group(2)
+    room_name = basename(dirname(f)).replace('_', ' ')
     image_filename =  os.path.basename(f)
 
     for painting_probabilities in probabilities:
@@ -57,6 +61,16 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
       # always sure about the correctness of the predicted room due to the folder structure
       if room == max_probability[2]:
         correct_room_predictions += 1
+
+        if room_name in correct_predictions_per_room:
+          correct_predictions_per_room[room_name] += 1
+        else:
+          correct_predictions_per_room[room_name] = 1
+      else:
+        if room_name in incorrect_predictions_per_room:
+          incorrect_predictions_per_room[room_name] += 1
+        else:
+          incorrect_predictions_per_room[room_name] = 1
 
       if save:
         appendFile(filename, f + '\n')
@@ -101,6 +115,12 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
     logger.info(log)
     if save:
       appendFile(filename, log + '\n')
+
+      savePlot(
+        {'correct predictions': correct_predictions_per_room, 'incorrect predictions': incorrect_predictions_per_room}, 
+        'Correct and incorrect painting predictions per room',
+        plot_filename_base + 'correect_and_incorrect_predictions_per_room'
+      )
 
   log = "total # of correct room predictions: {}/{}".format(correct_room_predictions, total_predictions)
   logger.info(log)
