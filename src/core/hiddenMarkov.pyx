@@ -10,7 +10,7 @@ logger = get_root_logger()
 
 cdef class HiddenMarkov:
 
-    cdef int _start_prob_count, _min_start_count, _min_observations
+    cdef int _start_prob_count, _min_observations
     cdef int _circular_index, _nr_of_samples
     cdef str _current_room
     cdef float _weight_non_possible_rooms
@@ -18,9 +18,8 @@ cdef class HiddenMarkov:
     cdef list _circular_buffer
 
 
-    def __init__(self, min_start_count=20, min_observations=5, weight_non_possible_rooms=0.5):
+    def __init__(self, min_observations=5, weight_non_possible_rooms=0.5):
         self._start_prob_count = 0
-        self._min_start_count = min_start_count
         self._current_room = 'INKOM'
         self._weight_non_possible_rooms = weight_non_possible_rooms
         self.__init_counters()
@@ -41,17 +40,18 @@ cdef class HiddenMarkov:
         self._counters['INKOM'] = 1
 
 
-    cpdef predict(self, quadriliteral_chances):
-        print(quadriliteral_chances)
-        if not len(quadriliteral_chances):
+    cpdef predict(self, object quadrilateral_chances):
+        logger.info(quadrilateral_chances)
+
+        if not len(quadrilateral_chances):
             return (self._counters, self._current_room, transitions[self._current_room])
 
-        observation = self.__play_the_odds(quadriliteral_chances)
+        cdef str observation = self.__play_the_odds(quadrilateral_chances)
 
         logger.info('Observed room {}'.format(observation))
 
         self._nr_of_samples += 1
-        possible_rooms = transitions[self._current_room]
+        cdef list possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms:
             self._circular_buffer[self._circular_index] = observation
@@ -60,6 +60,8 @@ cdef class HiddenMarkov:
 
         self._circular_index = (self._circular_index + 1) % self._min_observations
 
+        logger.debug(self._circular_buffer)
+        logger.debug(self._counters)
         try:
             if self._nr_of_samples >= self._min_observations:
                 self._current_room = mode(self._circular_buffer)
@@ -74,23 +76,26 @@ cdef class HiddenMarkov:
         return transitions[self._current_room]
 
 
-    cdef __play_the_odds(self, quadriliterals):
-        possible_rooms = transitions[self._current_room]
+    cdef __play_the_odds(self, object quadriliterals):
+        cdef list possible_rooms = transitions[self._current_room]
 
-        flattened = functools.reduce(operator.iconcat, quadriliterals, [])
+        cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
 
         if len(flattened) == 0:
             return self._current_room
 
         # keep a list that tracks which rooms we've already seen
-        freq_list = np.zeros(len(indices))
+        cdef object freq_list = np.zeros(len(indices))
 
         # keep a list of chances that we're in this room
-        chances_here = np.zeros(len(indices))
+        cdef object chances_here = np.zeros(len(indices))
 
         # keep a list of chances that we're not in this room
-        chances_not_here = np.zeros(len(indices))
+        cdef object chances_not_here = np.zeros(len(indices))
 
+        cdef int index
+        cdef float chance, weight
+        cdef str filename, room
         for prediction in flattened:
             chance, _, room = prediction
             index = indices[room]
@@ -106,9 +111,10 @@ cdef class HiddenMarkov:
             chances_here[index] *= chance
             chances_not_here[index] *= (1 - chance)
 
-        max_chance = 0
-        max_room = None
+        cdef float max_chance = 0
+        cdef str max_room = None
 
+        cdef float nominator = 0, denominator = 0, new_chance = 0
         for room, chance in self._counters.items():
             index = indices[room]
             chances_here[index] *= chance if chance != 0 else 1
@@ -126,29 +132,29 @@ cdef class HiddenMarkov:
         return max_room
 
 
-    cdef __get_max_chance_room(self, quadriliterals):
-        maxChance = 0
-        maxRoom = None
+    cdef __get_max_chance_room(self, object quadriliterals):
+        cdef int max_chance = 0
+        cdef str max_room = None
 
-        rooms = set()
+        cdef set rooms = set()
 
         for quad in quadriliterals:
             if len(quad):
                 rooms.add(quad[0][2])
 
-            if len(quad) and quad[0][0] > maxChance:
-                maxChance = quad[0][0]
-                maxRoom = quad[0][2]
+            if len(quad) and quad[0][0] > max_chance:
+                max_chance = quad[0][0]
+                max_room = quad[0][2]
 
         logger.info('Possibilities: {}'.format(rooms))
-        return maxRoom
+        return max_room
 
 
-    cdef __get_most_common_room(self, quadriliterals):
-        flattened = functools.reduce(operator.iconcat, quadriliterals, [])
-        length = len(flattened)
+    cdef __get_most_common_room(self, object quadriliterals):
+        cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
+        cdef int length = len(flattened)
 
-        means = {}
+        cdef dict means = {}
 
         for prediction in flattened:
             chance, _, room = prediction
@@ -158,14 +164,14 @@ cdef class HiddenMarkov:
 
             means[room] += chance
 
-        maxMean = 0
-        maxRoom = None
+        cdef float max_mean = 0
+        cdef str max_room = None
 
         for room, mean in means.items():
-            if mean > maxMean:
-                maxMean = mean
-                maxRoom = room
+            if mean > max_mean:
+                max_mean = mean
+                max_room = room
 
-        return maxRoom
+        return max_room
 
 

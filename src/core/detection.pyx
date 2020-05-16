@@ -103,7 +103,7 @@ def pop_contour_with_id(point, contours):
     return None
 
 
-cdef __flooding(image, mask, step, y):
+cdef __flooding(object image, object mask, int step, int y):
     # consider 4 nearest neighbours (those that share an edge)
     cdef int floodFlags = 4
     floodFlags |= cv2.FLOODFILL_MASK_ONLY  # do not change the image
@@ -114,8 +114,9 @@ cdef __flooding(image, mask, step, y):
     cdef int channels = image.shape[2]
     cdef float img_area = img_h * img_w
 
-    cdef int largest_segment_size = 0
-    cdef object largest_mask = None
+    cdef int num, x
+    cdef float w, h, current_size, largest_segment_size = 0
+    cdef object largest_mask = None, im, rect
 
     for x in range(0, image.shape[1], step):
         num, im, mask, rect = cv2.floodFill(
@@ -132,7 +133,7 @@ cdef __flooding(image, mask, step, y):
     return (largest_mask, largest_segment_size)
 
 
-cpdef detect_quadrilaterals(original_image):
+cpdef detect_quadrilaterals(object original_image):
     """
     Detect painings in an image.
 

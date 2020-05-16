@@ -1,6 +1,6 @@
 import cv2
 
-def is_sharp_image(img, threshHold):
+cpdef is_sharp_image(img, threshHold):
     """
     Determine if a given grayscale image is sharp
     Parameters
@@ -10,5 +10,5 @@ def is_sharp_image(img, threshHold):
     Returns: bool indicating if the image is sharp enough
     """
 
-    blurIndex = cv2.Laplacian(img, cv2.CV_64F).var()
+    cdef int blurIndex = cv2.Laplacian(img, cv2.CV_64F).var()
     return blurIndex > threshHold

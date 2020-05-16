@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from data.serializer import serialize_keypoints, pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
-
+from core.equalization import equalize
 
 def get_histogram(image):
     """
@@ -174,9 +174,6 @@ def extract_sobel(gray):
     return cv2.addWeighted(sobelX, 0.5, sobelY, 0.5, 0)
 
 
-clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-
-
 def extract_features(path, corners):
     """
     Extract fancy features from the given image.
@@ -194,10 +191,7 @@ def extract_features(path, corners):
     painting = cut_painting(image, corners)
 
     # Equalization
-    # we only need the light (L) value not all colors for equalization
-    lab = cv2.cvtColor(painting, cv2.COLOR_BGR2LAB)
-    lab[...,0] = clahe.apply(lab[...,0])
-    painting = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+    painting = equalize(painting)
 
     painting_gray = cv2.cvtColor(painting, cv2.COLOR_BGR2GRAY)
 
