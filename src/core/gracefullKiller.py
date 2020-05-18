@@ -40,7 +40,7 @@ class GracefulKiller:
                         self._logger.info(f'Process with PID {process.pid} died, killing the others')
                         self.exit_gracefully(signal.SIGTERM, None)
 
-                sleep(0.5)
+                sleep(2)
         except Exception as err:
             self._logger.error(err)
             self.exit_gracefully(signal.SIGTERM, None)

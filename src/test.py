@@ -49,9 +49,8 @@ def on_frame(output_pipe, frame, video_file):
 
 def start_detection(output_pipe):
     prepare_prediction()
-    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=10, blur_threshold=50)
+    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=50)
     video_loop.start()
-
 
 if __name__ == "__main__":
     multiprocessing.set_start_method('spawn')
