@@ -82,7 +82,14 @@ cdef class VideoLoop:
                 frame = undistort_frame(frame, params=calibration_matrix)
 
             if not is_sharp_image(frame, self.blur_threshold):
-                continue
+                # try to sharpen the image
+                blurred_frame = cv2.GaussianBlur(frame, (0, 0), 3)
+                diff = 1.0 * frame - 1.0 * blurred_frame
+                sharper = 1.0 * frame + abs(diff)
+
+                # if not better, skip the frame
+                if not is_sharp_image(frame, self.blur_threshold):
+                    continue
 
             self.on_frame(frame, filename)
 

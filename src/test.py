@@ -17,7 +17,7 @@ from core.gracefullKiller import GracefulKiller
 from core.transitions import transitions
 
 def load_html(window, input_pipe):
-    hm = HiddenMarkov()
+    hm = HiddenMarkov(min_observations=10)
     fp = Floorplan('floorplan.svg', 'MSK_15.mp4')
     html = fp.tostring()
 
@@ -27,7 +27,6 @@ def load_html(window, input_pipe):
 
         quadriliterals, frame, video_file = input_pipe.recv()
         chances = predict_room(frame, quadriliterals)
-        print('read data')
 
         chances, room = hm.predict(chances)
 
@@ -50,7 +49,7 @@ def on_frame(output_pipe, frame, video_file):
 
 def start_detection(output_pipe):
     prepare_prediction()
-    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=1000, blur_threshold=10)
+    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=10, blur_threshold=50)
     video_loop.start()
 
 
