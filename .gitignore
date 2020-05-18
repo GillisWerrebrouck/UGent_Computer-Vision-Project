@@ -48,6 +48,7 @@ paper/**/*.dvi
 paper/**/*.ist
 paper/**/*.glsdefs
 paper/_minted-main
+paper/main.pdf
 
 # JabRef rubbish
 paper/*.bib.bak
