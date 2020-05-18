@@ -1,8 +1,9 @@
 from datetime import datetime
 from bson.objectid import ObjectId
+import base64
 
 from data.connect import connect_mongodb_database
-from data.serializer import deserialize_keypoints, deserialize_histograms, pickle_deserialize
+from data.serializer import pickle_deserialize, pickle_serialize
 from core.logger import get_root_logger
 
 logger = get_root_logger()
@@ -10,15 +11,15 @@ db_connection = connect_mongodb_database(
     'localhost', 27017, 'computervision', 'devuser', 'devpwd')
 
 if (db_connection == None):
-    logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is '
-                 'running.')
+    logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is running.')
     exit(-1)
 
 
 def create_image(image):
     """
     Insert a new image in the database. If you have an image with multiple paintings,
-    add one image to the database per painting.
+    add one image to the database per painting. The histograms will automatically be
+    serialized here.
 
     Parameters
     ----------
@@ -26,9 +27,8 @@ def create_image(image):
       - filename -- The filename of the image saving info about.
       - corners -- The (uniform!) corners of a painting in the image.
       - room -- The room this painting is located in.
-      - histograms -- Object with serialized keys 'full_histogram' and 'block_histogram'. (optional)
-      - good_features -- The serialized good features of the image. (optional)
-      - keypoints -- The serialized ORB keypoints and descriptors. (optional)
+      - full_histogram -- Histogram of the whole painting.
+      - block_histogram -- Histograms per block in the painting.
 
     Returns
     -------
@@ -39,6 +39,10 @@ def create_image(image):
 
     logger.info('Saving image info for file {}'.format(image['filename']))
 
+    # Serialize the histograms before saving to MongoDB, binary is more efficiënt than huge number arrays
+    image['full_histogram'] = pickle_serialize(image['full_histogram'])
+    image['block_histogram'] = pickle_serialize(image['block_histogram'])
+
     # Save the image to the database
     db_connection['images'].insert(image)
 
@@ -47,7 +51,7 @@ def get_all_images(projection = None):
     """
     Get all images in the database.
     Please use the project parameter for rapid image fetching and deserialization. For example,
-    it's not necessary to fetch the ORB keypoints when you only need the histograms.
+    it's not necessary to fetch the histograms when you only need the room and filename.
     So be smart!
 
     Parameters
@@ -115,18 +119,19 @@ def update_by_id(id, updates):
     logger.info('{} image(s) updated'.format(result.modified_count))
 
 
-def get_paintings_for_image(filename):
+def get_paintings_for_image(filename, projection=None):
     """
     Parameters
     ----------
     - filename -- The filename of the paintings to update.
+    - projection -- Fields to fetch.
 
     Returns
     -------
     - paintings -- The paintings of the image (being 4 corners)
     """
     logger.info('Getting paintings for image with filename {}'.format(filename))
-    result = db_connection['images'].find({'filename': filename})
+    result = db_connection['images'].find({'filename': filename}, projection)
     logger.info('{} painting(s) found'.format(result.count()))
 
     # deserialize the features if present
@@ -173,22 +178,10 @@ def __deserialize_features(image):
     if image is None:
         return image
 
-    if 'histograms' in image:
-        if 'full_histogram' in image['histograms']:
-            image['histograms']['full_histogram'] = pickle_deserialize(
-                image.get('histograms')['full_histogram'])
+    if 'full_histogram' in image:
+        image['full_histogram'] = pickle_deserialize(image["full_histogram"])
 
-        if 'block_histogram' in image['histograms']:
-            image['histograms']['block_histogram'] = pickle_deserialize(
-                image.get('histograms')['block_histogram'])
-
-    if 'keypoints' in image:
-        image['keypoints'] = deserialize_keypoints(image.get('keypoints'))
-
-    if 'sobel' in image:
-        image['sobel'] = pickle_deserialize(image.get('sobel'))
-
-    if 'good_features' in image:
-        image['good_features'] = pickle_deserialize(image.get('good_features'))
+    if 'block_histogram' in image:
+        image['block_histogram'] = pickle_deserialize(image["block_histogram"])
 
     return image

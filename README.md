@@ -7,6 +7,15 @@ The paper can be found in the directory `paper`. A built version can be found in
 
 ## Setup
 
+### VS Code
+In order to have Python syntax coloring in VS Code for Cython files, add the following entry to your `settings.json`:
+
+```json
+"files.associations": {
+    "*.pyx": "python"
+}
+```
+
 #### Prerequisites
 
 This tutorial assumes you have the following dependencies already installed on your pc.

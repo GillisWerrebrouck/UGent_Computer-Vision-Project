@@ -1,3 +1,6 @@
+import pyximport
+pyximport.install(language_level='3')
+
 import cv2
 import PySimpleGUI as sg
 from glob import glob
@@ -10,7 +13,7 @@ from core.extractFeatures import extract_features
 from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format
 from data.imageRepo import create_image
-from data.serializer import serialize_keypoints, pickle_serialize
+from data.serializer import pickle_serialize
 
 logger = get_root_logger()
 
@@ -117,7 +120,7 @@ def show_next_image(graph, filenames, file_number):
     graph.change_coordinates(
         (-loc[0], graph_size[1]-loc[1]), (graph_size[0]-loc[0], -loc[1]))
 
-    return (detected_contours, filepath, img.shape[:2])
+    return (detected_contours, filepath, img.shape[:2], img)
 
 
 def on_add_contour_event(point, graph, visible_contours, invisible_contours):
@@ -426,7 +429,7 @@ def run_task_01():
     visible_contours = []
     file_counter = 0
     # display the first image
-    invisible_contours, filepath, img_shape = show_next_image(
+    invisible_contours, filepath, img_shape, img = show_next_image(
         graph, filenames, file_counter)
     room = get_room_from_file(filepath)
 
@@ -463,7 +466,7 @@ def run_task_01():
             visible_contours = []
         if event == "Clear canvas":
             graph.erase()
-            invisible_contours, filepath, img_shape = show_next_image(
+            invisible_contours, filepath, img_shape, img = show_next_image(
                 graph, filenames, file_counter)
             room = get_room_from_file(filepath)
             all_quadrilaterals = []
@@ -490,18 +493,14 @@ def run_task_01():
                 ], img_shape[0], img_shape[1])
                 uniform_corners = sort_corners(uniform_corners)
 
-                features = extract_features(filepath, uniform_corners)
+                full_histogram, block_histogram = extract_features(img, uniform_corners)
 
                 image = {
                     'filename': basename(filepath),
                     'corners': uniform_corners,
                     'room': room,
-                    'keypoints': serialize_keypoints(features['orb']['keypoints'], features['orb']['descriptors']),
-                    'histograms': {
-                        'full_histogram': pickle_serialize(features['histograms']['full_histogram']),
-                        'block_histogram': pickle_serialize(features['histograms']['block_histogram'])
-                    },
-                    'good_features': pickle_serialize(features['good_features'])
+                    'full_histogram': full_histogram,
+                    'block_histogram': block_histogram
                 }
 
                 create_image(image)
@@ -513,7 +512,7 @@ def run_task_01():
 
             visible_contours = []
             file_counter += 1
-            invisible_contours, filepath, img_shape = show_next_image(
+            invisible_contours, filepath, img_shape, img = show_next_image(
                 graph, filenames, file_counter)
             room = get_room_from_file(filepath)
             if invisible_contours is None:
