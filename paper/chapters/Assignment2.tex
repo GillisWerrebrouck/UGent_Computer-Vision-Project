@@ -6,7 +6,7 @@
 
 The second detection algorithm drastically differs from the first attempt (see \sectionref{subsec:contour_detection}), it was designed from scratch with the weaknesses of the previous algorithm in mind. A little insipiration was taken from Geoff Natin (\cite{natin2020}).
 
-The first step in the algorithm is a mean shift segmentation (see \figureref{fig:paiting_detection_mean_shift})). This is a method to remove noise by taking the mean of the pixels within a certain range. A big advantage is that it partially removes color gradients and fine-grain textures which would cause issues in the further steps of the algorithm.
+The first step in the algorithm is a mean shift segmentation (see \figureref{fig:paiting_detection_mean_shift})). This is a method to remove noise by taking the mean of the pixels within a certain range. A big advantage is that it partially removes color gradients and fine-grained textures which would cause issues in the further steps of the algorithm.
 
 \begin{figure}[h]
     \includegraphics[width=8cm]{IMG_20190323_121447_mean-shift.jpg}
