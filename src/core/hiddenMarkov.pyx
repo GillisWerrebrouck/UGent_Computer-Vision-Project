@@ -1,5 +1,6 @@
 import functools
 import operator
+from time import time
 import numpy as np
 from statistics import mode, StatisticsError
 

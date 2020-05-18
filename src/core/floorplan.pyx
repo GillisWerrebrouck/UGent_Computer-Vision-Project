@@ -4,12 +4,11 @@ from lxml.cssselect import CSSSelector
 
 cdef class Floorplan:
 
-    cdef object _output_pipe
     cdef str _room_color, _current_room_color
     cdef float _last_update
     cdef object _html, _img_preview, _html_tree
 
-    def __init__(self, output_pipe, floorplan_svg_path, video_file_processing, room_color='#2980b9',
+    def __init__(self, floorplan_svg_path, video_file_processing, room_color='#2980b9',
     current_room_color='#c0392b'):
         """
         Construct a floorplan.
@@ -22,7 +21,6 @@ cdef class Floorplan:
         - room_color -- Color to color the rooms with. (Default: #69c7e5)
         """
         self._last_update = 0
-        self._output_pipe = output_pipe
         self._room_color = room_color
         self._current_room_color = current_room_color
         self.__init_html_tree(floorplan_svg_path)
@@ -59,16 +57,6 @@ cdef class Floorplan:
 
         self._img_preview = img
         self._html_tree = etree.ElementTree(self._html)
-
-
-    cdef __content_updated(self):
-        """
-        Send the updated HTML tree to the given output pipe.
-        """
-        if not self._html_tree:
-            raise Exception('No root element created!')
-
-        self._output_pipe.send(etree.tostring(self._html))
 
 
     cdef __update_room(self, str room, float chance, int is_current=False):
@@ -116,7 +104,7 @@ cdef class Floorplan:
         """
         current_video = CSSSelector('text#currentVideo')(self._html)[0]
         current_video.text = video
-        self.__content_updated()
+        return self.tostring()
 
 
     cpdef update_rooms(self, dict all_room_chances, str current_room, object image):
@@ -132,4 +120,11 @@ cdef class Floorplan:
             self.__update_room(room, chance, room == current_room)
 
         self.update_image(image)
-        self.__content_updated()
+        return self.tostring()
+
+
+    cpdef tostring(self):
+        if not self._html:
+            return None
+
+        return etree.tostring(self._html)

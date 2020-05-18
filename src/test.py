@@ -17,15 +17,24 @@ from core.floorplan import Floorplan
 from core.gracefullKiller import GracefulKiller
 from core.transitions import transitions
 
-hm = HiddenMarkov()
-
 def load_html(window, input_pipe):
-    while True:
-        html = input_pipe.recv()
-        print('read data')
+    hm = HiddenMarkov()
+    fp = Floorplan('floorplan.svg', 'MSK_15.mp4')
+    html = fp.tostring()
 
+    while True:
         if html is not None:
             window.load_html(html.decode())
+
+        quadriliterals, frame = input_pipe.recv()
+        chances = predict_room(frame, quadriliterals)
+        print('read data')
+
+        chances, room = hm.predict(chances)
+
+        ret, buffer = cv2.imencode('.jpg', frame)
+        jpg_as_text = base64.b64encode(buffer).decode()
+        html = fp.update_rooms(chances, room, jpg_as_text)
 
 
 def show_floorplan(input_pipe):
@@ -33,24 +42,14 @@ def show_floorplan(input_pipe):
     webview.start(load_html, (window, input_pipe))
 
 
-def on_frame(fp, frame):
-    global possible_rooms
+def on_frame(output_pipe, frame):
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
-    chances = predict_room(frame, quadriliterals)
-
-    chances, room = hm.predict(chances)
-
     frame = draw_quadrilaterals_opencv(frame, quadriliterals)
-
-    ret, buffer = cv2.imencode('.jpg', frame)
-    jpg_as_text = base64.b64encode(buffer).decode()
-    fp.update_rooms(chances, room, jpg_as_text)
+    output_pipe.send((quadriliterals, frame))
 
 
 def start_detection(output_pipe):
-    fp = Floorplan(output_pipe, 'floorplan.svg', 'MSK_15.mp4')
-
     calibration_matrix = get_calibration_matrix(
         './datasets/videos/gopro/calibration_M.mp4',
         fov='M'
@@ -58,8 +57,8 @@ def start_detection(output_pipe):
 
     loop_through_video(
         './datasets/videos/gopro/MSK_15.mp4',
-        partial(on_frame, fp),
-        nr_of_frames_to_skip=30,
+        partial(on_frame, output_pipe),
+        nr_of_frames_to_skip=60,
         blur_threshold=10,
         calibration_matrix=calibration_matrix
     )

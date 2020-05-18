@@ -154,7 +154,7 @@ cpdef detect_quadrilaterals(object original_image):
     # use flooding to find mask
     cdef int largest_segment_size = 0
     cdef object largest_mask = None
-    cdef int step = 100
+    cdef int step = 50
 
     cdef object flooding_result = None
     cdef object mask = np.zeros((h+2, w+2), np.uint8)
