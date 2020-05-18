@@ -25,9 +25,9 @@ The matching algorithm gives a list of possible rooms with the according chances
 \subsection{Matching results}
 The matching algorithm has been tested in three ways. First, the dataset was matched against itself without using the detection algorithm but by using the corners from the semi-supervised algorithm. This test uniquely matched 835 of 836 paintings correctly. This means that only one painting could not be uniquely matched, this could be because some paintings appear in multiple images. The average matching probability is 92.24\%.
 
-The second test was performed on the dataset but in combination with the detection algorithm described in \sectionref{subsec:detection-algo}. This test indicates that 702 of the 762 detected paintings were matched correctly.
+The second test was performed on the dataset but in combination with the detection algorithm described in \sectionref{subsec:detection-algo}. This test indicates that 702 of the 762 detected paintings were matched correctly. These results are displayed on the graphs in \figureref{fig:correct-incorrect-paintings}.
 
-The third and last test was performed on the test dataset also in combination with the detection algorithm. The images have been divided in folders with the correct room as name to be able to count the amount of correct room matches. This test reveals that 158 of the 338 detected paintings had a correct room match. This is lower than the dataset because these images are meant to be more difficult to match becuase of the angle, rotation, light intensity, etc. These results are displayed on the graphs in \figureref{fig:correct-incorrect-paintings}.
+The third and last test was performed on the test dataset also in combination with the detection algorithm. The images have been divided in folders with the correct room as name to be able to count the amount of correct room matches. This test reveals that 158 of the 338 detected paintings had a correct room match. This is lower than the dataset because these images are meant to be more difficult to match becuase of the angle, rotation, light intensity, etc.
 
 \begin{figure}
     \centering
