@@ -42,7 +42,7 @@ def run_task_03(dataset_folder='dataset_pictures_msk', show=True, save=True):
 
     match = re.search('(z|Z)aal_(.+)$', os.path.dirname(f))
     room = match.group(2)
-    room_name = basename(dirname(f)).replace('_', ' ')
+    room_name = 'room ' + str(basename(dirname(f)).split('_')[-1])
     image_filename =  os.path.basename(f)
 
     for painting_probabilities in probabilities:
