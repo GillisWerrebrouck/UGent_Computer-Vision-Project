@@ -70,24 +70,48 @@ cdef class HiddenMarkov:
         return (self._counters, self._current_room)
 
 
-    cdef __play_the_odds(self, object quadriliterals):
-        cdef dict possible_rooms = transitions[self._current_room]
+    cdef __play_the_odds(self, object quadrilaterals):
+        # first get the updated chances for each room
+        cdef object chances = self.__combine_chances(quadrilaterals)
 
+        cdef int index
+        cdef float chance, max_chance = 0
+        cdef str max_room = self._current_room
+
+        # update the dict with all chances per room
+        for room in self._counters.keys():
+            index = indices[room]
+            chance = chances[index]
+            self._counters[room] = chance
+
+            if chance > max_chance:
+                max_room = room
+                max_chance = chance
+
+        return max_room
+
+
+    cdef __combine_chances(self, object quadriliterals):
+        cdef dict possible_rooms = transitions[self._current_room]
         cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
 
         # keep a list that tracks which rooms we've already seen
-        cdef object freq_list = np.zeros(len(indices))
-
-        # keep a list of chances that we're in this room
         cdef object chances_here = np.zeros(len(indices))
 
         # keep a list of chances that we're not in this room
         cdef object chances_not_here = np.zeros(len(indices))
 
         cdef int index
-        cdef float chance, weight
-        cdef str filename, room
+        cdef float chance
+        cdef str room
         cdef int current_room_predicted = False
+
+        # collect the current chances in the arrays above
+        for room, chance in possible_rooms.items():
+            if chance > 0:
+                index = indices[room]
+                chances_here[index] = self._counters[room]
+                chances_not_here[index] = 1 - self._counters[room]
 
         # loop over all predictions and determine the chances that we are or aren't in a given room
         for prediction in flattened:
@@ -95,61 +119,35 @@ cdef class HiddenMarkov:
             current_room_predicted = room == self._current_room
 
             index = indices[room]
-            weight = possible_rooms[room]
-            chance *= weight
-
-            if freq_list[index] == 0:
-                # we've not had this room before, set the chance to 1, this is easier for the maths
-                chances_here[index] = 1
-                chances_not_here[index] = 1
-                freq_list[index] = 1
+            # multiply the chance by its weight
+            chance *= possible_rooms[room]
 
             chances_here[index] *= chance
             chances_not_here[index] *= (1 - chance)
 
-        cdef float max_chance = 0
-        cdef str max_room = None
-
-        cdef float nominator = 0, denominator = 0, new_chance = 0
-        cdef float total = 0
-
-        if not current_room_predicted and len(flattened) > 0:
-            self._counters[self._current_room] *= 0.5
+        cdef float total = 0, new_chance
 
         # calculate the combined chances for each room and find the room with the highest value
-        for room, chance in self._counters.items():
+        for room in self._counters.keys():
             index = indices[room]
 
-            if room == self._current_room and room != 'ENTRANCE' and chances_here[index] == 0:
-                total += chance
-                continue
+            if room in possible_rooms and possible_rooms[room] > 0:
+                total += new_chance
 
-            chances_here[index] *= chance if chance != 0 else 1
-            chances_not_here[index] *= (1 - chance) if chance != 1 else 1
+                nominator = chances_here[index]
+                denominator = chances_here[index] + chances_not_here[index]
 
-            nominator = chances_here[index]
-            denominator = chances_here[index] + chances_not_here[index]
+                if denominator > 0:
+                    new_chance = nominator / denominator
+                elif room != 'ENTRANCE':
+                    new_chance = 0
+            else:
+                new_chance = 0
 
-            if denominator > 0:
-                new_chance = nominator / denominator
-            elif room != 'ENTRANCE':
-                new_chance = chance
+            chances_here[index] = new_chance
 
-            self._counters[room] = new_chance
-            total += new_chance
-
-        if total != 0:
-            total *= 1.01
-
-            for room in self._counters.keys():
-                self._counters[room] /= total
-
-        for room, chance in self._counters.items():
-            if chance > max_chance:
-                max_room = room
-                max_chance = chance
-
-        return max_room
+        chances_here /= total
+        return chances_here
 
 
     cdef __get_max_chance_room(self, object quadriliterals):

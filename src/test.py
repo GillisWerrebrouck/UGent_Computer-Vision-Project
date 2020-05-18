@@ -37,7 +37,7 @@ def on_frame(fp, frame):
     global possible_rooms
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
-    chances = predict_room(frame, quadriliterals, threshold=0.6)
+    chances = predict_room(frame, quadriliterals)
 
     chances, room = hm.predict(chances)
 
