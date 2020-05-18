@@ -104,10 +104,9 @@ cdef class Floorplan:
         """
         current_video = CSSSelector('text#currentVideo')(self._html)[0]
         current_video.text = video
-        return self.tostring()
 
 
-    cpdef update_rooms(self, dict all_room_chances, str current_room, object image):
+    cpdef update_rooms(self, dict all_room_chances, str current_room, object image, str video_file):
         """
         Update the chances for all rooms.
 
@@ -120,11 +119,12 @@ cdef class Floorplan:
             self.__update_room(room, chance, room == current_room)
 
         self.update_image(image)
+        self.update_current_video(video_file)
         return self.tostring()
 
 
     cpdef tostring(self):
-        if not self._html:
-            return None
+        if not self._html or len(self._html) == 0:
+            return 'Loading...'
 
         return etree.tostring(self._html)

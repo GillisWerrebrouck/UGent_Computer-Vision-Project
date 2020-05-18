@@ -7,12 +7,11 @@ import base64
 import webview
 from functools import partial
 
-from core.video import loop_through_video
-from core.cameraCalibration import get_calibration_matrix
+from core.video import VideoLoop
 from core.visualize import show_image, resize_image, draw_quadrilaterals_opencv
 from core.detection import detect_quadrilaterals
 from core.hiddenMarkov import HiddenMarkov
-from core.prediction import predict_room
+from core.prediction import predict_room, prepare_prediction
 from core.floorplan import Floorplan
 from core.gracefullKiller import GracefulKiller
 from core.transitions import transitions
@@ -26,7 +25,7 @@ def load_html(window, input_pipe):
         if html is not None:
             window.load_html(html.decode())
 
-        quadriliterals, frame = input_pipe.recv()
+        quadriliterals, frame, video_file = input_pipe.recv()
         chances = predict_room(frame, quadriliterals)
         print('read data')
 
@@ -34,7 +33,7 @@ def load_html(window, input_pipe):
 
         ret, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer).decode()
-        html = fp.update_rooms(chances, room, jpg_as_text)
+        html = fp.update_rooms(chances, room, jpg_as_text, video_file)
 
 
 def show_floorplan(input_pipe):
@@ -42,26 +41,17 @@ def show_floorplan(input_pipe):
     webview.start(load_html, (window, input_pipe))
 
 
-def on_frame(output_pipe, frame):
+def on_frame(output_pipe, frame, video_file):
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
     frame = draw_quadrilaterals_opencv(frame, quadriliterals)
-    output_pipe.send((quadriliterals, frame))
+    output_pipe.send((quadriliterals, frame, video_file))
 
 
 def start_detection(output_pipe):
-    calibration_matrix = get_calibration_matrix(
-        './datasets/videos/gopro/calibration_M.mp4',
-        fov='M'
-    )
-
-    loop_through_video(
-        './datasets/videos/gopro/MSK_15.mp4',
-        partial(on_frame, output_pipe),
-        nr_of_frames_to_skip=60,
-        blur_threshold=10,
-        calibration_matrix=calibration_matrix
-    )
+    prepare_prediction()
+    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=1000, blur_threshold=10)
+    video_loop.start()
 
 
 if __name__ == "__main__":

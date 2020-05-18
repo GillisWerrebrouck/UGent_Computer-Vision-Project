@@ -9,6 +9,7 @@ from core.detection import detect_quadrilaterals
 from core.extractFeatures import get_histogram, get_NxN_histograms
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 
+
 cdef object logger = get_root_logger()
 cdef list images = None
 
@@ -42,6 +43,11 @@ cdef __fetch_images(force=False):
             image['block_histogram'] = __convert_NxN_to_three_dims(image['block_histogram'])
 
             images.append(image)
+
+
+cpdef prepare_prediction():
+    global images
+    __fetch_images()
 
 
 cdef __convert_to_three_dims(histogram):
