@@ -37,11 +37,12 @@ indices = {
     'R': 35,
     'S': 36,
     'V': 37,
-    'INKOM': 38
+    'ENTRANCE': 38
 }
 
-transitions = {
-    'INKOM': ['1', '2', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'II', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'V'],
+entrance = ['1', '2', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'II', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'V']
+
+neighbour_list = {
     '1': ['1', '2', 'II'],
     '2': ['1', '2', '5'],
     '5': ['2', '5', '7', 'II'],
@@ -81,3 +82,44 @@ transitions = {
     'S': ['P', 'Q', 'R', 'S', 'V'],
     'V': ['19', 'S', 'V']
 }
+
+transitions = {
+    'ENTRANCE': {}
+}
+
+DECREASE_FACTOR = 2
+
+for room in entrance:
+    transitions['ENTRANCE'][room] = 1
+
+for room in neighbour_list.keys():
+    queue = list([(room, 1, 0)])
+    neighbours = {}
+
+    # add the immediate neighbours with the same chance
+    for immediate_neighbour in neighbour_list[room]:
+        queue.append((immediate_neighbour, 1, 1))
+
+    # find 2nd and 3rd degree neighbours
+    while len(queue) is not 0:
+        neighbour, chance, level = queue[0]
+        queue.pop(0)
+
+        if level > 3:
+            continue
+
+        if neighbour not in neighbours:
+            neighbours[neighbour] = chance
+
+            level += 1
+
+            for decendant in neighbour_list[neighbour]:
+                if decendant not in neighbours:
+                    queue.append((decendant, chance / DECREASE_FACTOR, level))
+
+    # fill any missing rooms with chance of 0 for convenience
+    for missing_room in entrance:
+        if missing_room not in neighbours:
+            neighbours[missing_room] = 0
+
+    transitions[room] = neighbours

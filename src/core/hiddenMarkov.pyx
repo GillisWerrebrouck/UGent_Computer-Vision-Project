@@ -20,7 +20,7 @@ cdef class HiddenMarkov:
 
     def __init__(self, min_observations=5, weight_non_possible_rooms=0.5):
         self._start_prob_count = 0
-        self._current_room = 'INKOM'
+        self._current_room = 'ENTRANCE'
         self._weight_non_possible_rooms = weight_non_possible_rooms
         self.__init_counters()
 
@@ -37,21 +37,19 @@ cdef class HiddenMarkov:
         for room, _ in indices.items():
             self._counters[room] = 1
 
-        self._counters['INKOM'] = 1
-
 
     cpdef predict(self, object quadrilateral_chances):
         logger.info(quadrilateral_chances)
 
         if not len(quadrilateral_chances):
-            return (self._counters, self._current_room, transitions[self._current_room])
+            return (self._counters, self._current_room)
 
         cdef str observation = self.__play_the_odds(quadrilateral_chances)
 
         logger.info('Observed room {}'.format(observation))
 
         self._nr_of_samples += 1
-        cdef list possible_rooms = transitions[self._current_room]
+        cdef dict possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms:
             self._circular_buffer[self._circular_index] = observation
@@ -69,20 +67,13 @@ cdef class HiddenMarkov:
             # we have two modi, skip the prediction here
             pass
 
-        return (self._counters, self._current_room, transitions[self._current_room])
-
-
-    cpdef get_possible_transitions(self):
-        return transitions[self._current_room]
+        return (self._counters, self._current_room)
 
 
     cdef __play_the_odds(self, object quadriliterals):
-        cdef list possible_rooms = transitions[self._current_room]
+        cdef dict possible_rooms = transitions[self._current_room]
 
         cdef list flattened = functools.reduce(operator.iconcat, quadriliterals, [])
-
-        if len(flattened) == 0:
-            return self._current_room
 
         # keep a list that tracks which rooms we've already seen
         cdef object freq_list = np.zeros(len(indices))
@@ -96,10 +87,15 @@ cdef class HiddenMarkov:
         cdef int index
         cdef float chance, weight
         cdef str filename, room
+        cdef int current_room_predicted = False
+
+        # loop over all predictions and determine the chances that we are or aren't in a given room
         for prediction in flattened:
             chance, _, room = prediction
+            current_room_predicted = room == self._current_room
+
             index = indices[room]
-            weight = 1 if room in possible_rooms else self._weight_non_possible_rooms
+            weight = possible_rooms[room]
             chance *= weight
 
             if freq_list[index] == 0:
@@ -115,19 +111,43 @@ cdef class HiddenMarkov:
         cdef str max_room = None
 
         cdef float nominator = 0, denominator = 0, new_chance = 0
+        cdef float total = 0
+
+        if not current_room_predicted and len(flattened) > 0:
+            self._counters[self._current_room] *= 0.5
+
+        # calculate the combined chances for each room and find the room with the highest value
         for room, chance in self._counters.items():
             index = indices[room]
+
+            if room == self._current_room and room != 'ENTRANCE' and chances_here[index] == 0:
+                total += chance
+                continue
+
             chances_here[index] *= chance if chance != 0 else 1
             chances_not_here[index] *= (1 - chance) if chance != 1 else 1
 
             nominator = chances_here[index]
             denominator = chances_here[index] + chances_not_here[index]
-            new_chance = nominator / denominator if denominator > 0 else 0
-            self._counters[room] = new_chance
 
-            if new_chance > max_chance:
+            if denominator > 0:
+                new_chance = nominator / denominator
+            elif room != 'ENTRANCE':
+                new_chance = chance
+
+            self._counters[room] = new_chance
+            total += new_chance
+
+        if total != 0:
+            total *= 1.01
+
+            for room in self._counters.keys():
+                self._counters[room] /= total
+
+        for room, chance in self._counters.items():
+            if chance > max_chance:
                 max_room = room
-                max_chance = new_chance
+                max_chance = chance
 
         return max_room
 

@@ -8,7 +8,6 @@ from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaterals
 from core.extractFeatures import get_histogram, get_NxN_histograms
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
-from core.transitions import transitions
 
 cdef object logger = get_root_logger()
 cdef list images = None
@@ -85,7 +84,7 @@ cdef sort_by_probability(tuple x):
     return x[0]
 
 
-cpdef list predict_room(object original_image, object quadrilaterals, float threshold=0.5, list possible_rooms=transitions['INKOM']):
+cpdef list predict_room(object original_image, object quadrilaterals, float threshold=0.5):
     """
     Predict the room of the given (full color!) image.
 
@@ -94,7 +93,6 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
     - original_image -- The image to predict.
     - quadrilaterals -- The detected paintings in the image.
     - threshold -- The probability threshold to reach before considering if it is a valid match. Matches with a probability below this threshold are ignored.
-    - possible_rooms -- The rooms that are possible at this stage of the prediction.
 
     Returns:
     --------

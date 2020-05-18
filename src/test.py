@@ -33,16 +33,13 @@ def show_floorplan(input_pipe):
     webview.start(load_html, (window, input_pipe))
 
 
-possible_rooms = hm.get_possible_transitions()
-
-
 def on_frame(fp, frame):
     global possible_rooms
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
-    chances = predict_room(frame, quadriliterals, threshold=0.6, possible_rooms=possible_rooms)
+    chances = predict_room(frame, quadriliterals, threshold=0.6)
 
-    chances, room, possible_rooms = hm.predict(chances)
+    chances, room = hm.predict(chances)
 
     frame = draw_quadrilaterals_opencv(frame, quadriliterals)
 
@@ -52,7 +49,7 @@ def on_frame(fp, frame):
 
 
 def start_detection(output_pipe):
-    fp = Floorplan(output_pipe, 'floorplan.svg', 'MSK_13.mp4')
+    fp = Floorplan(output_pipe, 'floorplan.svg', 'MSK_15.mp4')
 
     calibration_matrix = get_calibration_matrix(
         './datasets/videos/gopro/calibration_M.mp4',
@@ -60,7 +57,7 @@ def start_detection(output_pipe):
     )
 
     loop_through_video(
-        './datasets/videos/gopro/MSK_13.mp4',
+        './datasets/videos/gopro/MSK_15.mp4',
         partial(on_frame, fp),
         nr_of_frames_to_skip=30,
         blur_threshold=10,
