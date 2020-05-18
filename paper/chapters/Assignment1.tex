@@ -6,7 +6,7 @@
 
 The contour detection is the core part of the semi-supervised painting detection. It's the part that decides what contours are in the image and it works as described below.
 
-Before any contour detection can be done, as many unnecessary details as possible have to be removed. OpenCV has several options to solve this problem, for example eroding, dilating, blurring (median, Gaussian\dots) or downscaling. The image needs to get rid of as many details as possible to prevent detection of contours inside the paintings or on the wall. Although this won't be perfect, the removal of details will decrease the number of incorrectly detected contours.
+Before any contour detection can be done, as many unnecessary details as possible have to be removed. OpenCV has several options to solve this problem, for example eroding, dilating, blurring (median, Gaussian\dots) or downscaling. The algorithm needs to get rid of as many details as possible to prevent incorrect detection. Although this won't be perfect, the removal of details will decrease the number of incorrectly detected contours.
 
 So the first step of the algorithm is to remove details by resizing the image. The current implementation scales the image down and back up with a factor 5. To scale the image back up, pixel values are calculated using a pixel's area. The scale up was mostly done to be able to show the original image, but it's also a possibility to use the algorithm with the downscaled image. This will result in a slight increase in performance because the image it's working on would be smaller.
 
@@ -16,7 +16,7 @@ The next step is to detect edges with Canny. The result of the Canny function wi
 
 \subsection{Strengths and weaknesses}
 
-This biggest strength of this algorithm is that it will give an output in almost every image. An example of an image where no painting will be detected is an image where the framework of the painting is invisible, meaning the image only contains the painting itself, no wall and no framework. With this kind of paintings, the desired sulution is a contour containing the entire painting, while this is impossible because the painting has no border at all. Another advantage is that the algorithm is very fast in detecting contours due to the fact that all parts of the algorithm are standard functions that have a good performance.
+This biggest strength of this algorithm is that it will give an output in almost every image. An example of an image where no painting will be detected is an image where the framework of the painting is invisible, meaning the image only contains the painting itself, no wall and no framework. With this kind of paintings, the desired solution is a contour containing the entire painting, while this is impossible because the painting has no border at all. Another advantage is that the algorithm is very fast in detecting contours due to the fact that all parts of the algorithm are standard functions that have a good performance.
 
 However, the biggest weakness of this algorithm is that almost every found contour is not precise enough, so almost every solution needs a slight adjustment. For some solutions, the algorithm detects contours that are slightly larger than the actual painting, while for other paintings, it doesn't even include the border of the painting.
 

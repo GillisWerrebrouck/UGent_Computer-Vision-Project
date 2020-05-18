@@ -1,0 +1,11 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper demonstrates an approach for a continuous painting detection and room prediction algorithm during a museum walk. The first approach was very rudimental and therefor had a lot of weaknesses. Most of these weaknesses were resolved in a second approach which resulted in a bounding box accuracy of 81.31\%. The improved algorithm detected a total of 750 out of 836 paintings correct. On top of that, it also found 32 nonexistent paintings.
+
+It must be noticed that image matching based on two types of histograms results in a high average matching probability of 92.24\% on the dataset. In combination with the detection algorithm, 702 out of 762 detected paintings were correctly matched.
+
+Another conclusion can be drawn out of tweaking certain parameters of the algorithm to improve the accuracy. By doing this, the performance drops to a certain level and vice versa. So it's more art than science to find the perfect balance.
+
+The use of a custom Hidden Markov model makes it possible to determine the current room using a stochastic method. This model ignores impossible teleportations through the museum and predicts a viable path, keeping in mind that a certain room could be skipped because of bad matching results due to poor frame quality.
+
