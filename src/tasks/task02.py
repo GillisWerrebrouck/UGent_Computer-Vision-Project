@@ -41,7 +41,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
     original_image = cv2.imread(f, 1)
 
     filename_image = basename(f)
-    room_name = basename(dirname(f)).replace('_', ' ')
+    room_name = 'room ' + str(basename(dirname(f)).split('_')[-1])
 
     original_image = resize_image(original_image, 0.2)
     image = original_image.copy()
