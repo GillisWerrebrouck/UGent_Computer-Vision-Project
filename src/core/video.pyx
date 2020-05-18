@@ -15,7 +15,17 @@ cdef class VideoLoop:
     cdef object on_frame
     cdef list videos
 
-    def __init__(self, on_frame, nr_of_frames_to_skip=10, blur_threshold=100, videos_path='./datasets/videos'):
+    def __init__(self, on_frame, nr_of_frames_to_skip=30, blur_threshold=100, video=None):
+        """
+        Loop through all videos in the dataset.
+
+        Parameters
+        ----------
+        - on_frame -- Function that will be called when a frame is fetched.
+        - nr_of_frames_to_skip -- The number of frames to skip before fetching a frame (default is 30).
+        - blur_threshold -- Threshold of Laplacian before accepting a frame (default is 100).
+        - video -- Optional path when only one videos needs to be processed.
+        """
         self.logger = get_root_logger()
         self.on_frame = on_frame
         self.nr_of_frames_to_skip = nr_of_frames_to_skip
@@ -25,12 +35,14 @@ cdef class VideoLoop:
             fov='M'
         )
 
-        # first loop through the smartphone videos
-        self.videos = sorted(glob(f'{videos_path}/smartphone/*.mp4'))
+        if video is None:
+            # first loop through the smartphone videos
+            self.videos = sorted(glob('./datasets/videos/smartphone/*.mp4'))
 
-        # then the gopro videos
-        self.videos.append(sorted(glob(f'{videos_path}/gopro/*.mp4')))
-
+            # then the gopro videos
+            self.videos.append(sorted(glob('/datasets/videos/gopro/*.mp4')))
+        else:
+            self.videos = [video]
 
     cpdef start(self):
         self.logger.info('Video loop started')
