@@ -18,7 +18,7 @@ The model takes a list of probabilities per painting as an input which could pos
     P(X = R) = \frac{\prod_{i} P_{test_i}(X = R)}{\prod_{i} P_{test_i}(X = R) + \prod_{i} P_{test_i}(X \ne R)}
 \end{equation}
 
-Although this formula can combine probabilities, it doesn't take the current room into account. Therefor a weight is added to each of the chances. This weight is equal to 1 when the room is accessible from within the current room and can be chosen for rooms that aren't accessible, the default is 0.5. This results in \formularef{eq:combine-chances-next-level}. If chances per room, e.g. from previous observations, are already known, then these are also taken into account in this calculation.
+Although this formula can combine probabilities, it doesn't take the current room into account. Therefore a weight is added to each of the chances. This weight is equal to 1 when the room is accessible from within the current room and can be chosen for rooms that aren't accessible, the default is 0.5. This results in \formularef{eq:combine-chances-next-level}. If chances per room, e.g. from previous observations, are already known, then these are also taken into account in this calculation.
 
 \begin{equation}
     \label{eq:combine-chances-next-level}
