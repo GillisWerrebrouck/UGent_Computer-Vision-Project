@@ -90,7 +90,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
         all_accuracies_per_room[room_name] = (all_accuracies_per_room[room_name][0] + average_accuracy, all_accuracies_per_room[room_name][1] + 1)
       else:
         all_accuracies_per_room[room_name] = (average_accuracy, 1)
-      
+
       upper_range_value = int(math.ceil(average_accuracy * 10.0)) * 10
       if upper_range_value == 0: upper_range_value = 10
       if upper_range_value in per_10_accuracy_count:
@@ -108,7 +108,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
       createFolders(path)
       cv2.imwrite(path, detection_image)
 
-  for room_name in all_accuracies_per_room: 
+  for room_name in all_accuracies_per_room:
     all_accuracies_per_room_processed[room_name] = all_accuracies_per_room[room_name][0]/all_accuracies_per_room[room_name][1]
 
   for upper_range_value in range(10, 110, 10):
@@ -121,19 +121,19 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
 
   if dataset_folder == 'dataset_pictures_msk':
     savePlot(
-      {'false negatives': false_negatives_per_room, 'false positives': false_positives_per_room}, 
+      {'false negatives': false_negatives_per_room, 'false positives': false_positives_per_room},
       'False negatives and false positives per room',
       plot_filename_base + 'false_negatives_and_positives_detected_per_room'
     )
 
     savePlot(
-      {'paintings': per_10_accuracy_count_processed}, 
+      {'paintings': per_10_accuracy_count_processed},
       'Detection accuracy ranges',
       plot_filename_base + 'per_10_detection_accuracy_count'
     )
 
     savePlot(
-      {'accuracy': all_accuracies_per_room_processed}, 
+      {'accuracy': all_accuracies_per_room_processed},
       'Average room detection accuracy',
       plot_filename_base + 'average_room_detection_accuracies'
     )

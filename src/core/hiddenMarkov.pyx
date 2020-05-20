@@ -26,7 +26,7 @@ cdef class HiddenMarkov:
         # we're going to keep the last `min_observations` in a circular array
         self._min_observations = min_observations
         self._circular_index = 0
-        self._circular_buffer = [None] * min_observations
+        self._circular_buffer = []
         self._nr_of_samples = 0
 
 
@@ -52,22 +52,40 @@ cdef class HiddenMarkov:
         cdef dict possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms:
-            self._circular_buffer[self._circular_index] = observation
-        else:
-            self._circular_buffer[self._circular_index] = self._current_room
+            if len(self._circular_buffer) > self._min_observations:
+                self._current_room = observation
+            elif len(self._circular_buffer) < self._min_observations:
+                self._circular_buffer.append(observation)
+            else:
+                print(self._circular_buffer)
+                self._current_room = self.__get_most_common_room()
 
-        self._circular_index = (self._circular_index + 1) % self._min_observations
-
-        logger.debug(self._circular_buffer)
         logger.debug(self._counters)
-        try:
-            if self._nr_of_samples >= self._min_observations:
-                self._current_room = mode(self._circular_buffer)
-        except StatisticsError:
-            # we have two modi, skip the prediction here
-            pass
 
         return (self._counters, self._current_room)
+
+
+    cdef __get_most_common_room(self):
+        cdef int index, max_count = 0
+        cdef str max_room = 'ENTRANCE'
+        cdef dict freq_list = {}
+
+        for room in self._circular_buffer:
+            if room not in freq_list:
+                freq_list[room] = 0
+
+            freq_list[room] += 1
+
+
+        for room, count in freq_list.items():
+            # strict greater count OR
+            # equal count but strict greater chance
+            if count > max_count or (count == max_count and self._counters[room] > self._counters[max_room]):
+                max_count = count
+                max_room = room
+
+        return max_room
+
 
 
     cdef __play_the_odds(self, object quadrilaterals):
@@ -124,15 +142,13 @@ cdef class HiddenMarkov:
             chances_here[index] *= chance
             chances_not_here[index] *= (1 - chance)
 
-        cdef float total = 0, new_chance
+        cdef double total = 0, new_chance
 
         # calculate the combined chances for each room and find the room with the highest value
         for room in self._counters.keys():
             index = indices[room]
 
             if room in possible_rooms and possible_rooms[room] > 0:
-                total += new_chance
-
                 nominator = chances_here[index]
                 denominator = chances_here[index] + chances_not_here[index]
 
@@ -140,6 +156,8 @@ cdef class HiddenMarkov:
                     new_chance = nominator / denominator
                 elif room != 'ENTRANCE':
                     new_chance = 0
+
+                total += new_chance
             else:
                 new_chance = 0
 

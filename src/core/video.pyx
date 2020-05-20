@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from glob import glob
 from ntpath import basename
+from queue import Queue
+from multiprocessing import Process
 
 from core.cameraCalibration import undistort_frame, get_calibration_matrix
 from core.detectBlurredImages import is_sharp_image
@@ -14,6 +16,8 @@ cdef class VideoLoop:
     cdef int nr_of_frames_to_skip, blur_threshold
     cdef object on_frame
     cdef list videos
+    cdef object buffer
+    cdef int min_buffer_size
 
     def __init__(self, on_frame, nr_of_frames_to_skip=30, blur_threshold=100, video=None):
         """
@@ -34,6 +38,8 @@ cdef class VideoLoop:
             './datasets/videos/gopro/calibration_M.mp4',
             fov='M'
         )
+        self.min_buffer_size = 10
+        self.buffer = Queue()
 
         if video is None:
             # first loop through the smartphone videos
@@ -43,6 +49,7 @@ cdef class VideoLoop:
             self.videos.append(sorted(glob('/datasets/videos/gopro/*.mp4')))
         else:
             self.videos = [video]
+
 
     cpdef start(self):
         self.logger.info('Video loop started')
@@ -57,6 +64,12 @@ cdef class VideoLoop:
             self.loop_through_video(video_file, calibration_matrix)
             index += 1
 
+        # clear the frames buffer
+        self.logger.info('Clearing the video loop buffer')
+        while not self.buffer.empty():
+            frame_to_emit, filename_to_emit = self.buffer.get()
+            self.on_frame(frame_to_emit, filename_to_emit)
+
         self.logger.info('Video loop ended')
 
 
@@ -68,13 +81,15 @@ cdef class VideoLoop:
             self.logger.error("Videofile {} not found".format(video_file))
             return
 
-        cdef str filename = basename(video_file)
+        cdef str filename = basename(video_file), filename_to_emit = None
         cdef int needsCalibration = calibration_matrix is not None
 
         cdef int success = False
-        cdef object frame = None
+        cdef object frame = None, frame_to_emit = None
         cdef int total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         cdef int frame_counter = 0
+        cdef int unsharp_counter = 0
+        cdef int buffer_initialized = False
 
         while (cap.isOpened() and frame_counter <= total_frames):
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_counter)
@@ -88,7 +103,6 @@ cdef class VideoLoop:
 
             # we read a frame
             self.logger.info('Read frame {}/{}'.format(frame_counter, total_frames))
-            frame_counter += self.nr_of_frames_to_skip
 
             if needsCalibration:
                 self.logger.info('Calibrating frame')
@@ -97,9 +111,34 @@ cdef class VideoLoop:
             self.logger.info('Checking if frame is sharp')
             if not is_sharp_image(frame, self.blur_threshold):
                 self.logger.info('Frame not sharp enough, skipping!')
-                continue
+
+                # Try the next frame (if not already 5 unsharp frames seen) when not sharp enough
+                unsharp_counter += 1
+
+                if unsharp_counter >= 5:
+                    unsharp_counter = 0
+                    frame_counter += self.nr_of_frames_to_skip
+                else:
+                    frame_counter += 1
+            else:
+                unsharp_counter = 0
 
             self.logger.info('Emitting new frame')
-            self.on_frame(frame, filename)
+
+            # if enough frames are buffered, emit one that was buffered
+            if buffer_initialized and not self.buffer.empty():
+                frame_to_emit, filename_to_emit = self.buffer.get()
+                self.on_frame(frame_to_emit, filename_to_emit)
+            else:
+                self.logger.info(f'Video loop buffer not full yet, size = {self.buffer.qsize()}')
+
+            if unsharp_counter == 0:
+                self.buffer.put((frame, filename))
+
+            # only increment with the skip size when we had a good frame
+            frame_counter += self.nr_of_frames_to_skip
 
         cap.release()
+
+        # the buffer doesn't need to be cleared here, so we can begin processing
+        # a new video while still having some leftovers in the buffer

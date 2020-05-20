@@ -29,17 +29,11 @@ def load_html(window, input_pipe):
             window.load_html(html.decode())
 
         quadriliterals, frame, video_file = input_pipe.recv()
-        logger.info('Room prediction')
-
         chances = predict_room(frame, quadriliterals)
-        logger.info('HMM update')
-
         chances, room = hm.predict(chances)
-        logger.info('Encoding')
 
         ret, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer).decode()
-        logger.info('Updating floor plan')
         html = fp.update_rooms(chances, room, jpg_as_text, video_file)
 
 
@@ -50,18 +44,14 @@ def show_floorplan(input_pipe):
 
 
 def on_frame(output_pipe, frame, video_file):
-    logger.info('Resizing')
     frame = resize_image(frame, 0.5)
-    logger.info('Detecting')
     quadriliterals = detect_quadrilaterals(frame)
-    logger.info('Drawing')
     frame = draw_quadrilaterals_opencv(frame, quadriliterals)
-    logger.info('Sending data')
     output_pipe.send((quadriliterals, frame, video_file))
 
 
 def start_detection(output_pipe):
-    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=10)
+    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=20, video='./datasets/videos/gopro/MSK_13.mp4')
     video_loop.start()
 
 

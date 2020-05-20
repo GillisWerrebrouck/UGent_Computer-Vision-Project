@@ -144,9 +144,16 @@ cpdef detect_quadrilaterals(object original_image):
     Returns: The detected paintings as polygons.
     """
 
-    cdef float t1 = time.time()
+    cdef double t1 = time.time()
 
-    cdef object image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
+    cdef double t5 = time.time()
+    # , termcrit=(cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 2, .9)
+    cdef object image = cv2.pyrMeanShiftFiltering(original_image, 7, 13, maxLevel=1)
+    # cdef object image = cv2.bilateralFilter(original_image, 12, 18, 12)
+    cdef double t6 = time.time()
+    cdef double diff = t6 - t5
+    print(diff)
+
     cdef int h = image.shape[0]
     cdef int w = image.shape[1]
     cdef int channels = image.shape[2]
@@ -159,21 +166,29 @@ cpdef detect_quadrilaterals(object original_image):
     cdef object flooding_result = None
     cdef object mask = np.zeros((h+2, w+2), np.uint8)
     cdef int size = 0
+    cdef float min_mask_size = h * w
 
+    cdef double t3 = time.time()
     for y in range(0, image.shape[0], step):
         mask, size = __flooding(image, mask, step, y)
 
         if largest_segment_size < size:
             largest_segment_size = size
             largest_mask = mask
-        if size == h*w:
+        if size == min_mask_size:
             break
+    cdef double t4 = time.time()
+    diff = t4 - t3
+    print(diff)
 
     mask = largest_mask
 
+    if mask is None:
+        return []
+
     cdef object kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
     mask = cv2.bitwise_not(mask)
-    mask = cv2.erode(mask, kernel, 1)
+    mask = cv2.erode(mask, kernel)
     mask = cv2.medianBlur(mask, 9)
 
     # Calculate OTSU threshold to use as threshold for Canny detection
@@ -208,8 +223,10 @@ cpdef detect_quadrilaterals(object original_image):
             if(polygon.is_valid and polygon.area/polygonImage.area > 0.005):
                 quadrilaterals.append(approx)
 
-    cdef float t2 = time.time()
-    logger.info("painting detection time: {}".format(t2-t1))
+    cdef double t2 = time.time()
+    diff = t2 - t1
+    print(diff)
+    logger.info("painting detection time: {}".format(diff))
 
     return quadrilaterals
 
