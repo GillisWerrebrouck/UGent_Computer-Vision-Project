@@ -7,12 +7,18 @@ from data.serializer import pickle_deserialize, pickle_serialize
 from core.logger import get_root_logger
 
 logger = get_root_logger()
-db_connection = connect_mongodb_database(
-    'localhost', 27017, 'computervision', 'devuser', 'devpwd')
+db_connection = None
 
-if (db_connection == None):
-    logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is running.')
-    exit(-1)
+
+def __ensure_connection_created():
+    global db_connection
+    if db_connection == None:
+        db_connection = connect_mongodb_database(
+            'localhost', 27017, 'computervision', 'devuser', 'devpwd')
+
+        if (db_connection == None):
+            logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is running.')
+            exit(-1)
 
 
 def create_image(image):
@@ -34,7 +40,7 @@ def create_image(image):
     -------
     Nothing
     """
-
+    __ensure_connection_created()
     image['createdAt'] = datetime.now()
 
     logger.info('Saving image info for file {}'.format(image['filename']))
@@ -62,6 +68,7 @@ def get_all_images(projection = None):
     -------
     Nothing
     """
+    __ensure_connection_created()
     logger.info('Fetching all images')
     images = db_connection['images'].find({}, projection)
     logger.info('Fetched {} images'.format(images.count()))
@@ -78,7 +85,7 @@ def get_image_by_id(id):
     -------
     The image.
     """
-
+    __ensure_connection_created()
     return __deserialize_features(db_connection['images'].find_one({'_id': ObjectId(id)}))
 
 
@@ -93,6 +100,7 @@ def update_paintings_of_file(filename, updates):
     -------
     Nothing
     """
+    __ensure_connection_created()
     logger.info('Updating image(s) with filename {}'.format(filename))
 
     result = db_connection['images'].update_many(
@@ -112,6 +120,7 @@ def update_by_id(id, updates):
     -------
     Nothing
     """
+    __ensure_connection_created()
     logger.info('Updating image(s) with id {}'.format(id))
 
     result = db_connection['images'].update_one({'_id': ObjectId(id)}, updates)
@@ -130,6 +139,7 @@ def get_paintings_for_image(filename, projection=None):
     -------
     - paintings -- The paintings of the image (being 4 corners)
     """
+    __ensure_connection_created()
     logger.info('Getting paintings for image with filename {}'.format(filename))
     result = db_connection['images'].find({'filename': filename}, projection)
     logger.info('{} painting(s) found'.format(result.count()))
