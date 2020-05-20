@@ -6,7 +6,7 @@ from core.logger import get_root_logger
 from data.imageRepo import get_all_images
 from core.visualize import show_image, resize_image
 from core.detection import detect_quadrilaterals
-from core.extractFeatures import get_histogram, get_NxN_histograms
+from core.extractFeatures import get_histogram, get_NxN_histograms, extract_features
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
 
 
@@ -133,9 +133,8 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         quad = quad.reshape(4,2)
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
-        painting = cut_painting(original_image, quad)
-        src_full_histogram = __convert_to_three_dims(get_histogram(painting))
-        src_block_histogram = get_NxN_histograms(painting)
+        src_full_histogram, src_block_histogram = extract_features(original_image, quad)
+        src_full_histogram = __convert_to_three_dims(src_full_histogram)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
 
         quad_scores = []

@@ -16,6 +16,7 @@ cdef class HiddenMarkov:
     cdef str _current_room
     cdef dict _counters
     cdef list _circular_buffer
+    cdef int _initialized
 
 
     def __init__(self, min_observations=5):
@@ -28,6 +29,7 @@ cdef class HiddenMarkov:
         self._circular_index = 0
         self._circular_buffer = []
         self._nr_of_samples = 0
+        self._initialized = False
 
 
     cpdef __init_counters(self):
@@ -52,13 +54,13 @@ cdef class HiddenMarkov:
         cdef dict possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms:
-            if len(self._circular_buffer) > self._min_observations:
+            if self._initialized:
                 self._current_room = observation
             elif len(self._circular_buffer) < self._min_observations:
                 self._circular_buffer.append(observation)
             else:
-                print(self._circular_buffer)
                 self._current_room = self.__get_most_common_room()
+                self._initialized = True
 
         logger.debug(self._counters)
 
@@ -162,6 +164,8 @@ cdef class HiddenMarkov:
                 new_chance = 0
 
             chances_here[index] = new_chance
+
+        total *= 1.02
 
         chances_here /= total
         return chances_here

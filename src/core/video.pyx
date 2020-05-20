@@ -4,6 +4,7 @@ from glob import glob
 from ntpath import basename
 from queue import Queue
 from multiprocessing import Process
+from time import sleep
 
 from core.cameraCalibration import undistort_frame, get_calibration_matrix
 from core.detectBlurredImages import is_sharp_image
@@ -19,7 +20,7 @@ cdef class VideoLoop:
     cdef object buffer
     cdef int min_buffer_size
 
-    def __init__(self, on_frame, nr_of_frames_to_skip=30, blur_threshold=100, video=None):
+    def __init__(self, buffer, nr_of_frames_to_skip=30, blur_threshold=100, video=None):
         """
         Loop through all videos in the dataset.
 
@@ -31,7 +32,7 @@ cdef class VideoLoop:
         - video -- Optional path when only one videos needs to be processed.
         """
         self.logger = get_root_logger()
-        self.on_frame = on_frame
+        # self.on_frame = on_frame
         self.nr_of_frames_to_skip = nr_of_frames_to_skip
         self.blur_threshold = blur_threshold
         self.calibration_matrix = get_calibration_matrix(
@@ -39,7 +40,7 @@ cdef class VideoLoop:
             fov='M'
         )
         self.min_buffer_size = 10
-        self.buffer = Queue()
+        self.buffer = buffer
 
         if video is None:
             # first loop through the smartphone videos
@@ -64,11 +65,12 @@ cdef class VideoLoop:
             self.loop_through_video(video_file, calibration_matrix)
             index += 1
 
-        # clear the frames buffer
-        self.logger.info('Clearing the video loop buffer')
-        while not self.buffer.empty():
-            frame_to_emit, filename_to_emit = self.buffer.get()
-            self.on_frame(frame_to_emit, filename_to_emit)
+        try:
+            # wait till the buffer is empty
+            self.buffer.join()
+        except:
+            # we don't need the stupid EOFError
+            pass
 
         self.logger.info('Video loop ended')
 
@@ -102,15 +104,14 @@ cdef class VideoLoop:
                 break
 
             # we read a frame
-            self.logger.info('Read frame {}/{}'.format(frame_counter, total_frames))
+            self.logger.debug('Read frame {}/{}'.format(frame_counter, total_frames))
 
             if needsCalibration:
-                self.logger.info('Calibrating frame')
+                self.logger.debug('Calibrating frame')
                 frame = undistort_frame(frame, params=calibration_matrix)
 
-            self.logger.info('Checking if frame is sharp')
             if not is_sharp_image(frame, self.blur_threshold):
-                self.logger.info('Frame not sharp enough, skipping!')
+                self.logger.debug('Frame not sharp enough, skipping!')
 
                 # Try the next frame (if not already 5 unsharp frames seen) when not sharp enough
                 unsharp_counter += 1
@@ -123,15 +124,9 @@ cdef class VideoLoop:
             else:
                 unsharp_counter = 0
 
-            self.logger.info('Emitting new frame')
+            self.logger.debug('Emitting new frame')
 
-            # if enough frames are buffered, emit one that was buffered
-            if buffer_initialized and not self.buffer.empty():
-                frame_to_emit, filename_to_emit = self.buffer.get()
-                self.on_frame(frame_to_emit, filename_to_emit)
-            else:
-                self.logger.info(f'Video loop buffer not full yet, size = {self.buffer.qsize()}')
-
+            # if the frame is sharp, add it to the buffer
             if unsharp_counter == 0:
                 self.buffer.put((frame, filename))
 

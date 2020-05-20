@@ -50,17 +50,36 @@ def on_frame(output_pipe, frame, video_file):
     output_pipe.send((quadriliterals, frame, video_file))
 
 
-def start_detection(output_pipe):
-    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=20, video='./datasets/videos/gopro/MSK_13.mp4')
+def start_video_loop(frames_queue):
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=20)
     video_loop.start()
+
+
+def start_detection(output_pipe, frames_queue):
+    # wait for the first value to arrive
+    frame, filename = frames_queue.get()
+    on_frame(output_pipe, frame, filename)
+
+    # then wait till the queue is empty
+    while not frames_queue.empty():
+        frame, filename = frames_queue.get()
+        on_frame(output_pipe, frame, filename)
 
 
 def run_task_04():
     multiprocessing.set_start_method('spawn')
 
     parent_pipe, child_pipe = multiprocessing.Pipe(duplex=False)
+    manager = multiprocessing.Manager()
+    frames_queue = manager.Queue(60)
 
-    detection = multiprocessing.Process(target=start_detection, args=(child_pipe,))
+    detection = multiprocessing.Process(target=start_detection, args=(child_pipe,frames_queue))
+    videoloop = multiprocessing.Process(target=start_video_loop, args=(frames_queue,))
     floorplan_viewer = multiprocessing.Process(target=show_floorplan, args=(parent_pipe,))
 
+    videoloop.start()
     GracefulKiller([detection, floorplan_viewer])
+
+    if videoloop.is_alive():
+        videoloop.kill()
+
