@@ -4,7 +4,7 @@ import coloredlogs, logging
 loggers_to_disable = ['matplotlib', 'shapely.geos']
 
 for logger_name in loggers_to_disable:
-    logger = logging.getLogger('matplotlib')
+    logger = logging.getLogger(logger_name)
     logger.setLevel(logging.WARNING)
 
 rootLogger = logging.getLogger('MSK')

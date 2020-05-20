@@ -91,18 +91,15 @@ cdef class VideoLoop:
             frame_counter += self.nr_of_frames_to_skip
 
             if needsCalibration:
+                self.logger.info('Calibrating frame')
                 frame = undistort_frame(frame, params=calibration_matrix)
 
+            self.logger.info('Checking if frame is sharp')
             if not is_sharp_image(frame, self.blur_threshold):
-                # try to sharpen the image
-                blurred_frame = cv2.GaussianBlur(frame, (0, 0), 3)
-                diff = 1.0 * frame - 1.0 * blurred_frame
-                sharper = 1.0 * frame + abs(diff)
+                self.logger.info('Frame not sharp enough, skipping!')
+                continue
 
-                # if not better, skip the frame
-                if not is_sharp_image(frame, self.blur_threshold):
-                    continue
-
+            self.logger.info('Emitting new frame')
             self.on_frame(frame, filename)
 
         cap.release()

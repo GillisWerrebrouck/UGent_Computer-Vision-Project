@@ -7,6 +7,7 @@ import base64
 import webview
 from functools import partial
 
+from core.logger import get_root_logger
 from core.video import VideoLoop
 from core.visualize import show_image, resize_image, draw_quadrilaterals_opencv
 from core.detection import detect_quadrilaterals
@@ -15,6 +16,8 @@ from core.prediction import predict_room, prepare_prediction
 from core.floorplan import Floorplan
 from core.gracefullKiller import GracefulKiller
 from core.transitions import transitions
+
+logger = get_root_logger()
 
 def load_html(window, input_pipe):
     hm = HiddenMarkov(min_observations=10)
@@ -26,33 +29,43 @@ def load_html(window, input_pipe):
             window.load_html(html.decode())
 
         quadriliterals, frame, video_file = input_pipe.recv()
+        logger.info('Room prediction')
+
         chances = predict_room(frame, quadriliterals)
+        logger.info('HMM update')
 
         chances, room = hm.predict(chances)
+        logger.info('Encoding')
 
         ret, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer).decode()
+        logger.info('Updating floor plan')
         html = fp.update_rooms(chances, room, jpg_as_text, video_file)
 
 
 def show_floorplan(input_pipe):
+    prepare_prediction()
     window = webview.create_window('Floorplan', html='Loading...', width=800, height=700, frameless=True)
     webview.start(load_html, (window, input_pipe))
 
 
 def on_frame(output_pipe, frame, video_file):
+    logger.info('Resizing')
     frame = resize_image(frame, 0.5)
+    logger.info('Detecting')
     quadriliterals = detect_quadrilaterals(frame)
+    logger.info('Drawing')
     frame = draw_quadrilaterals_opencv(frame, quadriliterals)
+    logger.info('Sending data')
     output_pipe.send((quadriliterals, frame, video_file))
 
 
 def start_detection(output_pipe):
-    prepare_prediction()
-    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=50)
+    video_loop = VideoLoop(on_frame=partial(on_frame, output_pipe), nr_of_frames_to_skip=20, blur_threshold=10)
     video_loop.start()
 
-if __name__ == "__main__":
+
+def run_task_04():
     multiprocessing.set_start_method('spawn')
 
     parent_pipe, child_pipe = multiprocessing.Pipe(duplex=False)
