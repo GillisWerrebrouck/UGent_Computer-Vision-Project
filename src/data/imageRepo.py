@@ -194,4 +194,7 @@ def __deserialize_features(image):
     if 'block_histogram' in image:
         image['block_histogram'] = pickle_deserialize(image["block_histogram"])
 
+    if 'LBP_histogram' in image:
+        image['LBP_histogram'] = pickle_deserialize(image["LBP_histogram"])
+
     return image

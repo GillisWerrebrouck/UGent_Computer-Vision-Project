@@ -493,14 +493,15 @@ def run_task_01():
                 ], img_shape[0], img_shape[1])
                 uniform_corners = sort_corners(uniform_corners)
 
-                full_histogram, block_histogram = extract_features(img, uniform_corners)
+                full_histogram, block_histogram, LBP_histogram = extract_features(img, uniform_corners, False)
 
                 image = {
                     'filename': basename(filepath),
                     'corners': uniform_corners,
                     'room': room,
                     'full_histogram': full_histogram,
-                    'block_histogram': block_histogram
+                    'block_histogram': block_histogram,
+                    'LBP_histogram': LBP_histogram
                 }
 
                 create_image(image)

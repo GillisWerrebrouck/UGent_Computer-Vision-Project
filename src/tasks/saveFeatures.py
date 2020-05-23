@@ -23,12 +23,13 @@ def save_features():
         for painting in paintings_in_image:
             logger.info('Extracting features of image with id {}'.format(
                 painting.get('_id')))
-            full_histogram, block_histogram = extract_features(image, painting.get('corners'), False)
+            full_histogram, block_histogram, LBP_histogram = extract_features(image, painting.get('corners'), False)
 
             update_by_id(painting.get('_id'), {
                 '$set': {
                     'full_histogram': pickle_serialize(full_histogram),
-                    'block_histogram': pickle_serialize(block_histogram)
+                    'block_histogram': pickle_serialize(block_histogram),
+                    'LBP_histogram': pickle_serialize(LBP_histogram)
                 }
             })
 

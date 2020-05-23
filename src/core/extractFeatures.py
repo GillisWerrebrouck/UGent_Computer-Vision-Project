@@ -2,11 +2,14 @@ import cv2
 import sys
 import numpy as np
 from matplotlib import pyplot as plt
+from skimage.feature import local_binary_pattern
 
 from data.serializer import pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
+from core.visualize import resize_image_to_width
 from core.equalization import equalize
+
 
 def get_histogram(image):
     """
@@ -88,6 +91,33 @@ def get_NxN_histograms(image, N=4):
     return histograms
 
 
+def get_LBP_histogram(image):
+    """
+    Get LBP histogram from an image.
+
+    Parameters
+    ----------
+    - image -- Color image to get histogram from.
+
+    Returns
+    -------
+    - histograms -- Array with 1 histogram.
+    """
+    radius = 2
+    no_points = 8 * radius
+    eps = 1e-7
+
+    image = resize_image_to_width(image, 200)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    lbp = local_binary_pattern(gray, no_points, radius, method='uniform')
+    (hist, _) = np.histogram(lbp.ravel(), bins=np.arange(0, no_points + 3), range=(0, no_points + 2))
+    hist = hist.astype("float")
+    hist /= (hist.sum() + eps)
+
+    return hist
+
+
 def __plot_histogram(histograms):
     """
     Plot one histogram generated from get_histogram.
@@ -135,7 +165,7 @@ def __plot_NxN_histogram(histograms):
     plt.show()
 
 
-def extract_features(image, corners, equalize_=True):
+def extract_features(image, corners, equalize_=False):
     """
     Extract fancy features from the given image.
 
@@ -158,5 +188,6 @@ def extract_features(image, corners, equalize_=True):
     # Extract the two types of histograms for the cut painting
     full_histogram = get_histogram(painting)
     block_histogram = get_NxN_histograms(painting)
+    LBP_histogram = get_LBP_histogram(painting)
 
-    return (full_histogram, block_histogram)
+    return (full_histogram, block_histogram, LBP_histogram)

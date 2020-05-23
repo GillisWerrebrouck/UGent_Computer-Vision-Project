@@ -145,14 +145,7 @@ cpdef detect_quadrilaterals(object original_image):
     """
 
     cdef double t1 = time.time()
-
-    cdef double t5 = time.time()
-    # , termcrit=(cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 2, .9)
-    cdef object image = cv2.pyrMeanShiftFiltering(original_image, 7, 13, maxLevel=1)
-    # cdef object image = cv2.bilateralFilter(original_image, 12, 18, 12)
-    cdef double t6 = time.time()
-    cdef double diff = t6 - t5
-    print(diff)
+    cdef object image = cv2.pyrMeanShiftFiltering(original_image, 12, 18, maxLevel=4)
 
     cdef int h = image.shape[0]
     cdef int w = image.shape[1]
@@ -168,7 +161,6 @@ cpdef detect_quadrilaterals(object original_image):
     cdef int size = 0
     cdef float min_mask_size = h * w
 
-    cdef double t3 = time.time()
     for y in range(0, image.shape[0], step):
         mask, size = __flooding(image, mask, step, y)
 
@@ -177,9 +169,6 @@ cpdef detect_quadrilaterals(object original_image):
             largest_mask = mask
         if size == min_mask_size:
             break
-    cdef double t4 = time.time()
-    diff = t4 - t3
-    print(diff)
 
     mask = largest_mask
 
@@ -225,7 +214,6 @@ cpdef detect_quadrilaterals(object original_image):
 
     cdef double t2 = time.time()
     diff = t2 - t1
-    print(diff)
     logger.info("painting detection time: {}".format(diff))
 
     return quadrilaterals
