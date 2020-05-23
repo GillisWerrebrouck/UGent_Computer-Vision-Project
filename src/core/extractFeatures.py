@@ -7,7 +7,7 @@ from skimage.feature import local_binary_pattern
 from data.serializer import pickle_serialize
 from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
-from core.visualize import resize_image_to_width
+from core.visualize import resize_image, resize_image_to_width
 from core.equalization import equalize
 
 
@@ -107,7 +107,7 @@ def get_LBP_histogram(image):
     no_points = 8 * radius
     eps = 1e-7
 
-    image = resize_image_to_width(image, 200)
+    image = resize_image_to_width(image, 250)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     lbp = local_binary_pattern(gray, no_points, radius, method='uniform')
