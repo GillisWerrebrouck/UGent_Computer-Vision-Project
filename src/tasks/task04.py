@@ -32,6 +32,7 @@ def load_html(window, input_pipe):
         chances = predict_room(frame, quadriliterals)
         chances, room = hm.predict(chances)
 
+        frame = draw_quadrilaterals_opencv(frame, quadriliterals)
         ret, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer).decode()
         html = fp.update_rooms(chances, room, jpg_as_text, video_file)
@@ -46,7 +47,6 @@ def show_floorplan(input_pipe):
 def on_frame(output_pipe, frame, video_file):
     frame = resize_image(frame, 0.5)
     quadriliterals = detect_quadrilaterals(frame)
-    frame = draw_quadrilaterals_opencv(frame, quadriliterals)
     output_pipe.send((quadriliterals, frame, video_file))
 
 
