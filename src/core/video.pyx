@@ -47,7 +47,7 @@ cdef class VideoLoop:
             self.videos = sorted(glob('./datasets/videos/smartphone/*.mp4'))
 
             # then the gopro videos
-            self.videos.append(sorted(glob('/datasets/videos/gopro/*.mp4')))
+            self.videos.append(sorted(glob('./datasets/videos/gopro/*.mp4')))
         else:
             self.videos = [video]
 

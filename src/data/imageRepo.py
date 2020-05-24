@@ -89,6 +89,20 @@ def get_image_by_id(id):
     return __deserialize_features(db_connection['images'].find_one({'_id': ObjectId(id)}))
 
 
+def get_painting_count_by_room(room):
+    """
+    Parameters
+    ----------
+    - room -- The room to get the painting count from.
+
+    Returns
+    -------
+    The number of paintings for a room.
+    """
+    __ensure_connection_created()
+    return db_connection['images'].find({'room': room}).count()
+
+
 def update_paintings_of_file(filename, updates):
     """
     Parameters

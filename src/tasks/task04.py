@@ -29,10 +29,10 @@ def load_html(window, input_pipe):
             window.load_html(html.decode())
 
         quadriliterals, frame, video_file = input_pipe.recv()
-        chances = predict_room(frame, quadriliterals)
+        chances = predict_room(frame, quadriliterals, 0.6)
         chances, room = hm.predict(chances)
 
-        frame = draw_quadrilaterals_opencv(frame, quadriliterals)
+        frame = draw_quadrilaterals_opencv(frame, quadriliterals, 4)
         ret, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer).decode()
         html = fp.update_rooms(chances, room, jpg_as_text, video_file)
@@ -40,18 +40,26 @@ def load_html(window, input_pipe):
 
 def show_floorplan(input_pipe):
     prepare_prediction()
-    window = webview.create_window('Floorplan', html='Loading...', width=800, height=700, frameless=True)
+    window = webview.create_window('Floorplan', html='Loading...', width=800, height=700, frameless=False)
     webview.start(load_html, (window, input_pipe))
 
 
 def on_frame(output_pipe, frame, video_file):
-    frame = resize_image(frame, 0.5)
-    quadriliterals = detect_quadrilaterals(frame)
+    compression_factor = 0.6
+
+    frame_copy = resize_image(frame, compression_factor)
+    quadriliterals = detect_quadrilaterals(frame_copy)
+
+    for quadriliteral in quadriliterals: 
+        for point in quadriliteral:
+            point[0][0] *= 1/compression_factor
+            point[0][1] *= 1/compression_factor
+
     output_pipe.send((quadriliterals, frame, video_file))
 
 
 def start_video_loop(frames_queue):
-    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=20)
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=10)
     video_loop.start()
 
 
@@ -71,7 +79,7 @@ def run_task_04():
 
     parent_pipe, child_pipe = multiprocessing.Pipe(duplex=False)
     manager = multiprocessing.Manager()
-    frames_queue = manager.Queue(60)
+    frames_queue = manager.Queue(180)
 
     detection = multiprocessing.Process(target=start_detection, args=(child_pipe,frames_queue))
     videoloop = multiprocessing.Process(target=start_video_loop, args=(frames_queue,))

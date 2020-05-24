@@ -107,7 +107,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
     each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
 
-    cpdef float t1 = time.time()
+    cpdef double t1 = time.time()
 
     # Yes Python, we're using the global variable
     global images
@@ -117,8 +117,8 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         return []
 
     cpdef int full_histogram_weight = 1
-    cpdef int block_histogram_weight = 3
-    cpdef int LBP_histogram_weight = 3
+    cpdef int block_histogram_weight = 8
+    cpdef int LBP_histogram_weight = 4
     cpdef int total_weight = full_histogram_weight + block_histogram_weight + LBP_histogram_weight
 
     cpdef list all_scores = []
@@ -164,7 +164,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         quad_scores = sorted(quad_scores, key=sort_by_probability, reverse=True)
         all_scores.append(quad_scores)
 
-    cpdef float t2 = time.time()
+    cpdef double t2 = time.time()
     logger.info("room prediction time: {}".format(t2-t1))
 
     return all_scores

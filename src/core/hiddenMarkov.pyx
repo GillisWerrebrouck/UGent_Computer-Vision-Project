@@ -2,6 +2,8 @@ import functools
 import operator
 from time import time
 import numpy as np
+import pickle
+import json
 from statistics import mode, StatisticsError
 
 from core.logger import get_root_logger
@@ -17,6 +19,7 @@ cdef class HiddenMarkov:
     cdef dict _counters
     cdef list _circular_buffer
     cdef int _initialized
+    cdef dict _room_factors
 
 
     def __init__(self, min_observations=5):
@@ -38,6 +41,25 @@ cdef class HiddenMarkov:
         self._circular_buffer = []
         self._nr_of_samples = 0
         self._initialized = False
+        self.__load_room_factors()
+
+
+    cpdef __load_room_factors(self):
+        cdef dict temp_room_factors
+        self._room_factors = {}
+
+        with open('./room_calibrations.pickle', 'rb') as handle:
+            temp_room_factors = pickle.load(handle)
+
+        for room in temp_room_factors:
+            if 1 < temp_room_factors[room][1]:
+                temp_room_factors[room] = (temp_room_factors[room][0], 1)
+            self._room_factors[room] = 1 - temp_room_factors[room][1]
+
+            # interpolate to other range
+            self._room_factors[room] = np.interp(self._room_factors[room], [0, 1], [1, 2.2])
+        
+        logger.info("Calibrated room factors: " + str(json.dumps(self._room_factors)))
 
 
     cpdef __init_counters(self):
@@ -226,6 +248,11 @@ cdef class HiddenMarkov:
         for room, chances_for_room in grouped_chances.items():
             chance_here = np.prod(chances_for_room)
             chance_not_here = np.prod(1 - chances_for_room)
+
+            chance_here *= self._room_factors[room]
+            chance_not_here *= (self._room_factors[room])
+            print(self._room_factors)
+
             chance = chance_here / (chance_here + chance_not_here)
 
             index = indices[room]

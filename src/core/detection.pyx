@@ -154,7 +154,7 @@ cpdef detect_quadrilaterals(object original_image):
     # use flooding to find mask
     cdef int largest_segment_size = 0
     cdef object largest_mask = None
-    cdef int step = 200
+    cdef int step = 40
 
     cdef object flooding_result = None
     cdef object mask = np.zeros((h+2, w+2), np.uint8)
@@ -238,7 +238,7 @@ def calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings
       q2 = np.reshape(q2, (4, 2)).astype(np.float32)
 
       # draw ground truth quadrilaterals on image
-      image = draw_quadrilaterals_opencv(image, [np.asarray(q1_corners).astype(np.int32)], (255, 0, 0))
+      image = draw_quadrilaterals_opencv(image, [np.asarray(q1_corners).astype(np.int32)], 2, (255, 0, 0))
       accuracy = calculate_bounding_box_accuracy(q1_corners, q2)
       if(area < accuracy):
         area = accuracy

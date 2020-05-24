@@ -154,9 +154,9 @@ def resize_image_to_width(image, width):
     return cv2.resize(image, dimensions, interpolation=cv2.INTER_AREA)
 
 
-def draw_quadrilaterals_opencv(original_image, quadrilaterals, color=(0, 0, 255)):
+def draw_quadrilaterals_opencv(original_image, quadrilaterals, width=2, color=(0, 0, 255)):
     image = original_image.copy()
     for q in quadrilaterals:
         q = np.asarray(q)
-        cv2.drawContours(image, [q], -1, color, 2)
+        cv2.drawContours(image, [q], -1, color, width)
     return image
