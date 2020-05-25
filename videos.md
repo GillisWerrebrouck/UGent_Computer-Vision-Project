@@ -18,13 +18,13 @@
 
 ## Gopro
 
-| Filename   | Rooms |
-| ---------- | ----- |
-| MSK_12.mp4 | TODO  |
-| MSK_13.mp4 | TODO  |
-| MSK_14.mp4 | TODO  |
-| MSK_15.mp4 | TODO  |
-| MSK_16.mp4 | TODO  |
-| MSK_17.mp4 | TODO  |
-| MSK_18.mp4 | TODO  |
-| MSK_19.mp4 | TODO  |
+| Filename   | Rooms                                         |
+| ---------- | --------------------------------------------- |
+| MSK_12.mp4 | A - B - C - D - G - F - G - D - H             |
+| MSK_13.mp4 | O - N - M - H - D - B - A                     |
+| MSK_14.mp4 | G - I - J - K - L - 12 - 11 - 10 - 9          |
+| MSK_15.mp4 | S - V - 19 - 18 - 17 - 16                     |
+| MSK_16.mp4 | 13 - 8 - 7 - 6                                |
+| MSK_17.mp4 | 5 - 7                                         |
+| MSK_18.mp4 | 13 - 14 - 15 - 16 - 17                        |
+| MSK_19.mp4 | V - S - R - P - M - H - G - F - G - E - B - A |
