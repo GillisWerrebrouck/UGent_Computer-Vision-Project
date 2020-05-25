@@ -115,7 +115,7 @@ cdef class Floorplan:
         - all_room_chances -- The chances for all rooms.
         - current_room -- The current room we're in.
         """
-        for room, chance in all_room_chances.items():
+        for room, chance in all_room_chances.iteritems():
             self.__update_room(room, chance, room == current_room)
 
         self.update_image(image)

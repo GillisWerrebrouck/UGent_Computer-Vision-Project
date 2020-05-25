@@ -6,6 +6,7 @@ import multiprocessing
 import base64
 import webview
 from functools import partial
+from contextlib import suppress
 
 from core.logger import get_root_logger
 from core.video import VideoLoop
@@ -21,12 +22,16 @@ logger = get_root_logger()
 
 def load_html(window, input_pipe):
     hm = HiddenMarkov(min_observations=12)
-    fp = Floorplan('floorplan.svg', 'MSK_15.mp4')
-    html = fp.tostring()
+    fp = Floorplan('floorplan.svg', '')
+    if fp is not None:
+        html = fp.tostring()
 
-    while True:
+    while input_pipe.readable:
         if html is not None:
-            window.load_html(html.decode())
+            try:
+                window.load_html(html.decode())
+            except KeyError:
+                exit(0)
 
         quadriliterals, frame, video_file = input_pipe.recv()
         chances = predict_room(frame, quadriliterals, 0.7)
@@ -50,16 +55,20 @@ def on_frame(output_pipe, frame, video_file):
     frame_copy = resize_image(frame, compression_factor)
     quadriliterals = detect_quadrilaterals(frame_copy)
 
-    for quadriliteral in quadriliterals: 
+    for quadriliteral in quadriliterals:
         for point in quadriliteral:
             point[0][0] *= 1/compression_factor
             point[0][1] *= 1/compression_factor
 
-    output_pipe.send((quadriliterals, frame, video_file))
+    if output_pipe.writable:
+        output_pipe.send((quadriliterals, frame, video_file))
+    else:
+        exit(0)
 
 
 def start_video_loop(frames_queue):
-    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=10, blur_threshold=15)
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=10, blur_threshold=15,
+    video_file="./datasets/videos/smartphone/MSK_08.mp4")
     video_loop.start()
 
 
@@ -85,9 +94,4 @@ def run_task_04():
     videoloop = multiprocessing.Process(target=start_video_loop, args=(frames_queue,))
     floorplan_viewer = multiprocessing.Process(target=show_floorplan, args=(parent_pipe,))
 
-    videoloop.start()
-    GracefulKiller([detection, floorplan_viewer])
-
-    if videoloop.is_alive():
-        videoloop.kill()
-
+    GracefulKiller([videoloop, detection, floorplan_viewer])

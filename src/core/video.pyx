@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from glob import glob
 from ntpath import basename
 from queue import Queue
 from multiprocessing import Process
@@ -19,51 +18,48 @@ cdef class VideoLoop:
     cdef list videos
     cdef object buffer
     cdef int min_buffer_size
+    cdef str video_file
 
-    def __init__(self, buffer, nr_of_frames_to_skip=30, blur_threshold=100, video=None):
+    def __init__(self, buffer, video_file, nr_of_frames_to_skip=30, blur_threshold=100):
         """
         Loop through all videos in the dataset.
 
         Parameters
         ----------
         - on_frame -- Function that will be called when a frame is fetched.
+        - video_file -- Path to the video that needs to be processed.
         - nr_of_frames_to_skip -- The number of frames to skip before fetching a frame (default is 30).
         - blur_threshold -- Threshold of Laplacian before accepting a frame (default is 100).
-        - video -- Optional path when only one videos needs to be processed.
         """
         self.logger = get_root_logger()
         # self.on_frame = on_frame
         self.nr_of_frames_to_skip = nr_of_frames_to_skip
         self.blur_threshold = blur_threshold
+        self.min_buffer_size = 10
+        self.buffer = buffer
+        self.video_file = video_file
         self.calibration_matrix = get_calibration_matrix(
             './datasets/videos/gopro/calibration_M.mp4',
             fov='M'
-        )
-        self.min_buffer_size = 10
-        self.buffer = buffer
-
-        if video is None:
-            # first loop through the smartphone videos
-            self.videos = sorted(glob('./datasets/videos/smartphone/MSK_08.mp4'))
-
-            # then the gopro videos
-            self.videos.append(sorted(glob('./datasets/videos/gopro/*.mp4')))
-        else:
-            self.videos = [video]
+        ) if "gopro" in self.video_file else None
 
 
     cpdef start(self):
-        self.logger.info('Video loop started')
-        cdef int index = 0
-        cdef str video_file = None
-        cdef object calibration_matrix = None
-        cdef int total_nr_videos = len(self.videos)
+        """
+        Start the video loop. This function loops through the video given as parameter.
+        If the video is completely processed, the loop waits till the buffer is empty
+        before exiting.
 
-        while index < total_nr_videos:
-            video_file = self.videos[index]
-            calibration_matrix = self.calibration_matrix if "gopro" in video_file else None
-            self.loop_through_video(video_file, calibration_matrix)
-            index += 1
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Nothing
+        """
+        self.logger.info('Video loop started')
+        self.loop_through_video()
 
         try:
             # wait till the buffer is empty
@@ -75,16 +71,29 @@ cdef class VideoLoop:
         self.logger.info('Video loop ended')
 
 
-    cdef loop_through_video(self, video_file, calibration_matrix=None):
-        self.logger.info('Starting loop for video {}'.format(video_file))
-        cdef object cap = cv2.VideoCapture(video_file)
+    cdef loop_through_video(self):
+        """
+        Loop through this loop's video file, optionally use a calibration matrix per frame.
+        This function fills the given buffer with frames until it's full, then it waits
+        until the buffer has enough space to add new frames.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Nothing
+        """
+        self.logger.info('Starting loop for video {}'.format(self.video_file))
+        cdef object cap = cv2.VideoCapture(self.video_file)
 
         if (cap.isOpened() == False):
-            self.logger.error("Videofile {} not found".format(video_file))
+            self.logger.error("Videofile {} not found".format(self.video_file))
             return
 
-        cdef str filename = basename(video_file), filename_to_emit = None
-        cdef int needsCalibration = calibration_matrix is not None
+        cdef str filename = basename(self.video_file), filename_to_emit = None
+        cdef int needsCalibration = self.calibration_matrix is not None
 
         cdef int success = False
         cdef object frame = None, frame_to_emit = None
@@ -100,7 +109,7 @@ cdef class VideoLoop:
 
             # if no frame was returned, stop processing the video
             if not success:
-                self.logger.info('Video {} done'.format(video_file))
+                self.logger.info('Video {} done'.format(self.video_file))
                 break
 
             # we read a frame
@@ -108,7 +117,7 @@ cdef class VideoLoop:
 
             if needsCalibration:
                 self.logger.debug('Calibrating frame')
-                frame = undistort_frame(frame, params=calibration_matrix)
+                frame = undistort_frame(frame, params=self.calibration_matrix)
 
             if not is_sharp_image(frame, self.blur_threshold):
                 self.logger.debug('Frame not sharp enough, skipping!')
@@ -128,7 +137,10 @@ cdef class VideoLoop:
 
             # if the frame is sharp, add it to the buffer
             if unsharp_counter == 0:
-                self.buffer.put((frame, filename))
+                try:
+                    self.buffer.put((frame, filename))
+                except BrokenPipeError:
+                    exit(0)
 
             # only increment with the skip size when we had a good frame
             frame_counter += self.nr_of_frames_to_skip

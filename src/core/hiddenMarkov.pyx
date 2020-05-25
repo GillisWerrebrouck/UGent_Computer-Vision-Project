@@ -84,7 +84,7 @@ cdef class HiddenMarkov:
         """
         self._counters = {}
 
-        for room, _ in indices.items():
+        for room, _ in indices.iteritems():
             self._counters[room] = 1
 
 
@@ -120,7 +120,8 @@ cdef class HiddenMarkov:
         logger.info('Observed room {}'.format(observation))
 
         self._nr_of_samples += 1
-        cdef dict possible_rooms = transitions[self._current_room]
+        # object because it's a default dict
+        cdef object possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms and possible_rooms[observation] == 0:
             observation = self._current_room
@@ -162,7 +163,7 @@ cdef class HiddenMarkov:
 
             freq_list[room] += 1
 
-        for room, count in freq_list.items():
+        for room, count in freq_list.iteritems():
             if room != 'ENTRANCE':
                 count /= self._paintings_per_room[room]
             # strict greater count OR
@@ -225,7 +226,8 @@ cdef class HiddenMarkov:
         An array of chances per room, indexed by indices stored in the
         dictionary in the transitions module.
         """
-        cdef dict possible_rooms = transitions[self._current_room]
+        # object because it's a default dict
+        cdef object possible_rooms = transitions[self._current_room]
 
         # delete the filename
         quadrilaterals = np.delete(quadrilaterals, 1, 1)
@@ -238,7 +240,7 @@ cdef class HiddenMarkov:
         cdef dict grouped_chances = {}
 
         # add the existing chances if possible from within current room
-        for room, chance in self._counters.items():
+        for room, chance in self._counters.iteritems():
             if room in possible_rooms and possible_rooms[room] > 0:
                 quadrilaterals = np.append(quadrilaterals, [chance, room])
 
@@ -251,10 +253,11 @@ cdef class HiddenMarkov:
             room = str(room_np_str)
             if room not in grouped_chances:
                 grouped_chances[room] = np.array([], dtype=np.float64)
+
             grouped_chances[room] = np.append(grouped_chances[room], float(chance))
 
         # calculate an aggregated chance per room
-        for room, chances_for_room in grouped_chances.items():
+        for room, chances_for_room in grouped_chances.iteritems():
             chance_here = np.prod(chances_for_room)
             chance_not_here = np.prod(1 - chances_for_room)
 
