@@ -24,7 +24,7 @@ def load_html(window, input_pipe):
     fp = Floorplan('floorplan.svg', 'MSK_15.mp4')
     html = fp.tostring()
 
-    while True:
+    while input_pipe.readable:
         if html is not None:
             window.load_html(html.decode())
 
@@ -50,12 +50,15 @@ def on_frame(output_pipe, frame, video_file):
     frame_copy = resize_image(frame, compression_factor)
     quadriliterals = detect_quadrilaterals(frame_copy)
 
-    for quadriliteral in quadriliterals: 
+    for quadriliteral in quadriliterals:
         for point in quadriliteral:
             point[0][0] *= 1/compression_factor
             point[0][1] *= 1/compression_factor
 
-    output_pipe.send((quadriliterals, frame, video_file))
+    if output_pipe.writable:
+        output_pipe.send((quadriliterals, frame, video_file))
+    else:
+        exit(-1)
 
 
 def start_video_loop(frames_queue):

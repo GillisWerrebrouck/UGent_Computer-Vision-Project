@@ -58,7 +58,7 @@ cdef class HiddenMarkov:
 
             # interpolate to other range
             self._room_factors[room] = np.interp(self._room_factors[room], [0, 1], [1, 2.2])
-        
+
         logger.info("Calibrated room factors: " + str(json.dumps(self._room_factors)))
 
 
@@ -76,7 +76,7 @@ cdef class HiddenMarkov:
         """
         self._counters = {}
 
-        for room, _ in indices.items():
+        for room, _ in indices.iteritems():
             self._counters[room] = 1
 
 
@@ -155,7 +155,7 @@ cdef class HiddenMarkov:
             freq_list[room] += 1
 
 
-        for room, count in freq_list.items():
+        for room, count in freq_list.iteritems():
             # strict greater count OR
             # equal count but strict greater chance
             if count > max_count or (count == max_count and self._counters[room] > self._counters[max_room]):
@@ -229,7 +229,7 @@ cdef class HiddenMarkov:
         cdef dict grouped_chances = {}
 
         # add the existing chances if possible from within current room
-        for room, chance in self._counters.items():
+        for room, chance in self._counters.iteritems():
             if room in possible_rooms and possible_rooms[room] > 0:
                 quadrilaterals = np.append(quadrilaterals, [chance, room])
 
@@ -245,7 +245,7 @@ cdef class HiddenMarkov:
             grouped_chances[room] = np.append(grouped_chances[room], float(chance))
 
         # calculate an aggregated chance per room
-        for room, chances_for_room in grouped_chances.items():
+        for room, chances_for_room in grouped_chances.iteritems():
             chance_here = np.prod(chances_for_room)
             chance_not_here = np.prod(1 - chances_for_room)
 
