@@ -19,9 +19,10 @@ logger = get_root_logger()
 
 
 def load_html(window, input_pipe):
-    hm = HiddenMarkov(min_observations=10)
-    fp = Floorplan('floorplan.svg', 'MSK_15.mp4')
-    html = fp.tostring()
+    hm = HiddenMarkov(min_observations=12)
+    fp = Floorplan('floorplan.svg', '')
+    if fp is not None:
+        html = fp.tostring()
 
     while input_pipe.readable:
         if html is not None:
@@ -31,7 +32,7 @@ def load_html(window, input_pipe):
                 exit(0)
 
         quadriliterals, frame, video_file = input_pipe.recv()
-        chances = predict_room(frame, quadriliterals, 0.6)
+        chances = predict_room(frame, quadriliterals, 0.7)
         chances, room = hm.predict(chances)
 
         frame = draw_quadrilaterals_opencv(frame, quadriliterals, 4)
@@ -47,7 +48,7 @@ def show_floorplan(input_pipe):
 
 
 def on_frame(output_pipe, frame, video_file):
-    compression_factor = 0.6
+    compression_factor = 0.2
 
     frame_copy = resize_image(frame, compression_factor)
     quadriliterals = detect_quadrilaterals(frame_copy)
@@ -64,8 +65,8 @@ def on_frame(output_pipe, frame, video_file):
 
 
 def start_video_loop(frames_queue):
-    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=10,
-    video_file="./datasets/videos/smartphone/MSK_01.mp4")
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=10, blur_threshold=15,
+    video_file="./datasets/videos/smartphone/MSK_08.mp4")
     video_loop.start()
 
 

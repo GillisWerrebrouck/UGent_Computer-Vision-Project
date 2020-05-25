@@ -106,12 +106,12 @@ for room in neighbour_list.keys():
     for immediate_neighbour in neighbour_list[room]:
         queue.append((immediate_neighbour, 1, 1))
 
-    # find 2nd and 3rd degree neighbours
+    # find 2nd degree neighbours
     while len(queue) is not 0:
         neighbour, chance, level = queue[0]
         queue.pop(0)
 
-        if level > 3:
+        if level > 2:
             continue
 
         if neighbour not in neighbours:

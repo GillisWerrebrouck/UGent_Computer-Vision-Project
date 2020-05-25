@@ -18,6 +18,7 @@ cdef class HiddenMarkov:
     cdef list _circular_buffer
     cdef int _initialized
     cdef dict _room_factors
+    cdef dict _paintings_per_room
 
 
     def __init__(self, min_observations=5):
@@ -45,6 +46,7 @@ cdef class HiddenMarkov:
     cpdef __load_room_factors(self):
         cdef dict temp_room_factors
         self._room_factors = {}
+        self._paintings_per_room = {}
 
         with open('./room_calibrations.pickle', 'rb') as handle:
             temp_room_factors = pickle.load(handle)
@@ -53,9 +55,14 @@ cdef class HiddenMarkov:
             if 1 < temp_room_factors[room][1]:
                 temp_room_factors[room] = (temp_room_factors[room][0], 1)
             self._room_factors[room] = 1 - temp_room_factors[room][1]
+            self._paintings_per_room[room] =  temp_room_factors[room][0]
 
+        min_factor_key = min(self._room_factors, key=self._room_factors.get)
+        max_factor_key = max(self._room_factors, key=self._room_factors.get)
+
+        for room in self._room_factors:
             # interpolate to other range
-            self._room_factors[room] = np.interp(self._room_factors[room], [0, 1], [1, 2.2])
+            self._room_factors[room] = np.interp(self._room_factors[room], [self._room_factors[min_factor_key], self._room_factors[max_factor_key]], [1, 2.2])
 
         logger.info("Calibrated room factors: " + str(json.dumps(self._room_factors)))
 
@@ -153,8 +160,9 @@ cdef class HiddenMarkov:
 
             freq_list[room] += 1
 
-
         for room, count in freq_list.iteritems():
+            if room != 'ENTRANCE':
+                count /= self._paintings_per_room[room]
             # strict greater count OR
             # equal count but strict greater chance
             if count > max_count or (count == max_count and self._counters[room] > self._counters[max_room]):
@@ -251,8 +259,7 @@ cdef class HiddenMarkov:
             chance_not_here = np.prod(1 - chances_for_room)
 
             chance_here *= self._room_factors[room]
-            chance_not_here *= (self._room_factors[room])
-            print(self._room_factors)
+            chance_not_here *= self._room_factors[room]
 
             chance = chance_here / (chance_here + chance_not_here)
 

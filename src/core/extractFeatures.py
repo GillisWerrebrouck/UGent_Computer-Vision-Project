@@ -101,11 +101,11 @@ def get_LBP_histogram(image):
     -------
     - histograms -- Array with 1 histogram.
     """
-    radius = 2
+    radius = 4
     no_points = 8 * radius
     eps = 1e-7
 
-    image = resize_image_to_width(image, 250)
+    image = resize_image_to_width(image, 500)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     lbp = local_binary_pattern(gray, no_points, radius, method='uniform')
