@@ -97,4 +97,3 @@ def run_task_04():
 
     if videoloop.is_alive():
         videoloop.kill()
-

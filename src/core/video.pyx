@@ -128,7 +128,10 @@ cdef class VideoLoop:
 
             # if the frame is sharp, add it to the buffer
             if unsharp_counter == 0:
-                self.buffer.put((frame, filename))
+                try:
+                    self.buffer.put((frame, filename))
+                except BrokenPipeError:
+                    exit(0)
 
             # only increment with the skip size when we had a good frame
             frame_counter += self.nr_of_frames_to_skip
