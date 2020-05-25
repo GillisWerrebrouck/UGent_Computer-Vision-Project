@@ -9,12 +9,14 @@ for logger_name in loggers_to_disable:
 
 rootLogger = logging.getLogger('MSK')
 coloredlogs.install(
-  level='DEBUG',
-  fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s'
+    level='DEBUG',
+    fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s'
 )
 
+
 def get_root_logger():
-  return rootLogger
+    return rootLogger
+
 
 def get_child_logger(name):
-  return rootLogger.getChild(name)
+    return rootLogger.getChild(name)

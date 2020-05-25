@@ -1,10 +1,8 @@
 import functools
 import operator
-from time import time
 import numpy as np
 import pickle
 import json
-from statistics import mode, StatisticsError
 
 from core.logger import get_root_logger
 from core.transitions import indices, transitions
@@ -128,7 +126,7 @@ cdef class HiddenMarkov:
 
         logger.debug(self._counters)
 
-        return (self._counters, self._current_room)
+        return self._counters, self._current_room
 
 
     cdef __get_most_common_room(self):

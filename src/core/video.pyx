@@ -1,14 +1,9 @@
 import cv2
-import numpy as np
 from ntpath import basename
-from queue import Queue
-from multiprocessing import Process
-from time import sleep
 
 from core.cameraCalibration import undistort_frame, get_calibration_matrix
 from core.detectBlurredImages import is_sharp_image
 from core.logger import get_root_logger
-from core.visualize import show_image, resize_image
 
 cdef class VideoLoop:
 
@@ -32,10 +27,8 @@ cdef class VideoLoop:
         - blur_threshold -- Threshold of Laplacian before accepting a frame (default is 100).
         """
         self.logger = get_root_logger()
-        # self.on_frame = on_frame
         self.nr_of_frames_to_skip = nr_of_frames_to_skip
         self.blur_threshold = blur_threshold
-        self.min_buffer_size = 10
         self.buffer = buffer
         self.video_file = video_file
         self.calibration_matrix = get_calibration_matrix(
@@ -50,10 +43,6 @@ cdef class VideoLoop:
         If the video is completely processed, the loop waits till the buffer is empty
         before exiting.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         Nothing
@@ -64,8 +53,8 @@ cdef class VideoLoop:
         try:
             # wait till the buffer is empty
             self.buffer.join()
-        except:
-            # we don't need the stupid EOFError
+        except EOFError:
+            # we don't need this error
             pass
 
         self.logger.info('Video loop ended')
@@ -77,10 +66,6 @@ cdef class VideoLoop:
         This function fills the given buffer with frames until it's full, then it waits
         until the buffer has enough space to add new frames.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         Nothing
@@ -88,12 +73,12 @@ cdef class VideoLoop:
         self.logger.info('Starting loop for video {}'.format(self.video_file))
         cdef object cap = cv2.VideoCapture(self.video_file)
 
-        if (cap.isOpened() == False):
+        if not cap.isOpened():
             self.logger.error("Videofile {} not found".format(self.video_file))
             return
 
         cdef str filename = basename(self.video_file), filename_to_emit = None
-        cdef int needsCalibration = self.calibration_matrix is not None
+        cdef int needs_calibration = self.calibration_matrix is not None
 
         cdef int success = False
         cdef object frame = None, frame_to_emit = None
@@ -102,7 +87,7 @@ cdef class VideoLoop:
         cdef int unsharp_counter = 0
         cdef int buffer_initialized = False
 
-        while (cap.isOpened() and frame_counter <= total_frames):
+        while cap.isOpened() and frame_counter <= total_frames:
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_counter)
 
             success, frame = cap.read()
@@ -115,7 +100,7 @@ cdef class VideoLoop:
             # we read a frame
             self.logger.debug('Read frame {}/{}'.format(frame_counter, total_frames))
 
-            if needsCalibration:
+            if needs_calibration:
                 self.logger.debug('Calibrating frame')
                 frame = undistort_frame(frame, params=self.calibration_matrix)
 

@@ -1,35 +1,41 @@
 import cv2
-import sys
 import os
 import numpy as np
-import re
 from core.logger import get_root_logger
 
 logger = get_root_logger()
 
 
-def __output_tuple_from_files(mtxFN, distFN):
+def __output_tuple_from_files(mtx_fn, dist_fn):
     """
     Read the calibration matrix and dist params from there files.
+
     Parameters
     ----------
-    - mtxFN -- File containing the matrix formatted by the nm.savetxt().
-    - distFN -- File containing the dist formatted by the nm.savetxt().
-    Returns: a tuple of 2 np.array object containting the matrix and dist arrays in this order.
+    - mtx_fn -- File containing the matrix formatted by the nm.savetxt().
+    - dist_fn -- File containing the dist formatted by the nm.savetxt().
+
+    Returns
+    -------
+    A tuple of 2 np.array object containting the matrix and dist arrays in this order.
     """
 
     logger.info(
-        "Returning output from file: {}, {} as tuple".format(mtxFN, distFN))
-    return (np.loadtxt(mtxFN, delimiter=','), np.loadtxt(distFN, delimiter=','))
+        "Returning output from file: {}, {} as tuple".format(mtx_fn, dist_fn))
+    return np.loadtxt(mtx_fn, delimiter=','), np.loadtxt(dist_fn, delimiter=',')
 
 
 def __check_file_existance(filename):
     """
-    Check if a given file exists
+    Check if a given file exists.
+
     Parameters
     ----------
     - filename -- file to be checked.
-    Returns: a boolean if the file exists
+
+    Returns
+    -------
+    A boolean if the file exists.
     """
 
     if os.path.isfile(filename):
@@ -42,19 +48,24 @@ def __check_file_existance(filename):
 
 def __delete_file(filename):
     """
-    Delete a given file
+    Delete a given file.
+
     Parameters
     ----------
     - filename -- file to be deleted
-    Returns: void
+
+    Returns
+    -------
+    Nothing
     """
-    logger.debug("Removing file: {}".format(fn))
-    os.remove(fn)
+    logger.debug("Removing file: {}".format(filename))
+    os.remove(filename)
 
 
-def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, imgpoints, matrixFilename, distortionFilename, startVideo):
+def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, imgpoints, matrix_filename, distortion_filename, start_video):
     """
     Calculate the calibration matrix and dist array for a given video and output these results to there speciefied files.
+
     Parameters
     ----------
     - videoFN -- filename of the video.
@@ -65,39 +76,43 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
     - objp -- array containing the objectpoints.
     - objpoints -- array containing the objectpoints.
     - imgpoints -- array containing the imgpoints.
-    - matrixFilename -- filename for the matix parameter
-    - distortionFilename -- filename for the distortion parameter
-    - startVideo -- TODO: output a video for debuging.
-    Returns: void
+    - matrix_filename -- filename for the matix parameter
+    - distortion_filename -- filename for the distortion parameter
+    - start_video -- output a video for debuging.
+
+    Returns
+    -------
+    Nothing
     """
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, dim, 0.001)
 
     cap = cv2.VideoCapture(videoFN)
-    if (cap.isOpened() == False):
+    if not cap.isOpened():
         logger.warning("Videofile not found")
+        return
+
     count = 0
 
     logger.info("Start analysing video")
-    while (cap.isOpened()):
+    while cap.isOpened():
 
         success, frame = cap.read()
 
         if success:
-
-            grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             ret, corners = cv2.findChessboardCorners(
-                grayFrame, (cols, rows), None)
+                gray_frame, (cols, rows), None)
 
-            if ret == True:
+            if ret:
                 count += 1
                 objpoints.append(objp)
 
                 corners2 = cv2.cornerSubPix(
-                    grayFrame, corners, (11, 11), (-1, -1), criteria)
+                    gray_frame, corners, (11, 11), (-1, -1), criteria)
 
                 imgpoints.append(corners2)
-                if startVideo:
+                if start_video:
                     cv2.drawChessboardCorners(
                         frame, (cols, rows), corners2, ret)
                     cv2.imshow('frame', frame)
@@ -115,29 +130,29 @@ def __start_video_calibration(videoFN, cols, rows, skip, dim, objp, objpoints, i
 
     logger.debug("Starting calibration calculations")
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-        objpoints, imgpoints, grayFrame.shape[::-1], None, None)
+        objpoints, imgpoints, gray_frame.shape[::-1], None, None)
     logger.info("Got matrix")
 
-    h, w = grayFrame.shape[:2]
     logger.info("Got dist")
 
-    logger.info("Writing matrix to {}".format(matrixFilename))
-    np.savetxt(matrixFilename, mtx, delimiter=',')
-    logger.info("Writing dist to {}".format(distortionFilename))
-    np.savetxt(distortionFilename, dist, delimiter=',')
+    logger.info("Writing matrix to {}".format(matrix_filename))
+    np.savetxt(matrix_filename, mtx, delimiter=',')
+    logger.info("Writing dist to {}".format(distortion_filename))
+    np.savetxt(distortion_filename, dist, delimiter=',')
 
 
-def undistort_frame(frame, **kwargs):
-    params = kwargs.get('params', None)
-    mtx = kwargs.get('mtx', None)
-    dist = kwargs.get('dist', None)
+def undistort_frame(frame, params=None):
     """
     Given a frame, this function wil return the undistorted image.
+
     Parameters
     ----------
     - frame -- the frame to be processed
-    -params -- the matrix and dist tuple
-    Returns: the undistorted image
+    - params -- the matrix and dist tuple
+
+    Returns
+    -------
+    The undistorted image
     """
 
     h,  w = frame.shape[:2]
@@ -155,9 +170,11 @@ def undistort_frame(frame, **kwargs):
     return dst
 
 
-def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, startVideo=False):
+def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, skip=60, dim=25, start_video=False):
     """
-    Public function to calculate the calibration parameters for a given fideo. If the file for this video is present, the content will be returned. Otherwise the calculations wel be done.
+    Public function to calculate the calibration parameters for a given fideo. If the file for this video is present,
+    the content will be returned. Otherwise the calculations wel be done.
+
     Parameters
     ----------
     - video -- filename of the video.
@@ -168,8 +185,11 @@ def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, ski
     - rows -- number of rows on the calibratrion paper.
     - skip -- number of frames to skip when searching for the chessboard corners. (lower = more longer calculation time)
     - dim -- the dimention of the black squares in tht calibration paper in mm.
-    - startVideo -- TODO: output a video for debuging.
-    Returns: a tuple of 2 np.array object containting the matrix and dist arrays in this order.
+    - start_video -- output a video for debuging.
+
+    Returns
+    -------
+    A tuple of 2 np.array object containting the matrix and dist arrays in this order.
     """
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -181,28 +201,28 @@ def get_calibration_matrix(video, fov, fps=60, quality=720, cols=6, rows=10, ski
     imgpoints = []  # 2d points in image plane.
 
     # See if matrix allready exists
-    matrixFilename = "calibrationMatrix{}{}{}.txt".format(
+    matrix_filename = "calibrationMatrix{}{}{}.txt".format(
         quality, fps, fov)
-    distortionFilename = "calibrationDistortion{}{}{}.txt".format(
+    distortion_filename = "calibrationDistortion{}{}{}.txt".format(
         quality, fps, fov)
 
-    logger.debug(matrixFilename)
-    logger.debug(distortionFilename)
+    logger.debug(matrix_filename)
+    logger.debug(distortion_filename)
 
-    mEx = __check_file_existance(matrixFilename)
-    dEx = __check_file_existance(distortionFilename)
+    mEx = __check_file_existance(matrix_filename)
+    dEx = __check_file_existance(distortion_filename)
 
     logger.debug("mex: {}, dex: {}".format(mEx, dEx))
 
-    if (not mEx or not dEx):
-        mEx and __delete_file(matrixFilename)
-        dEx and __delete_file(distortionFilename)
+    if not mEx or not dEx:
+        mEx and __delete_file(matrix_filename)
+        dEx and __delete_file(distortion_filename)
 
         __start_video_calibration(video, cols, rows, skip, dim, objp, objpoints,
-                                  imgpoints, matrixFilename, distortionFilename, startVideo)
+                                  imgpoints, matrix_filename, distortion_filename, start_video)
 
-    logger.info(__output_tuple_from_files(matrixFilename, distortionFilename))
-    return __output_tuple_from_files(matrixFilename, distortionFilename)
+    logger.info(__output_tuple_from_files(matrix_filename, distortion_filename))
+    return __output_tuple_from_files(matrix_filename, distortion_filename)
 
 
 

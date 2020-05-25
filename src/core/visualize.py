@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import PySimpleGUI as sg
 from core.logger import get_root_logger
-from core.shape import Point, Rect, Quadrilateral, QuadrilateralFigure
+from core.shape import QuadrilateralFigure
 
 logger = get_root_logger()
 
@@ -16,7 +16,9 @@ def get_window(title, layout):
     - title -- The title for the window (will appear in the title bar of the window).
     - layout -- All elements of the window.
 
-    Returns: The created window object.
+    Returns
+    -------
+    The created window object.
     """
 
     logger.info('Creating a window with title: {}'.format(title))
@@ -35,7 +37,9 @@ def draw_contour(graph, contour, width=2, color="red"):
     - graph -- The canvas to draw a contour on.
     - contour -- The contour to draw (object of type Rect).
 
-    Returns: The id of the drawn object.
+    Returns
+    -------
+    The id of the drawn object.
     """
 
     (x1, y1) = contour.TLPoint.x, contour.TLPoint.y
@@ -56,7 +60,9 @@ def draw_quadrilaterals(graph, quadrilaterals, point_size=15, width=2, color="re
     - point_size -- The size of corner points of each quadrilateral.
     - color -- The color of the lines and points of the quadrilaterals.
 
-    Returns: A collection of quadrilateral objects which contain the ids of the lines and corner points that have been drawn.
+    Returns
+    -------
+    A collection of quadrilateral objects which contain the ids of the lines and corner points that have been drawn.
     """
 
     quadrilateralFigures = []
@@ -128,7 +134,9 @@ def resize_image(image, scale):
     - image -- The image to resize.
     - scale -- The scale value between 0 and 1.
 
-    Returns: The resized image.
+    Returns
+    -------
+    The resized image.
     """
 
     width = int(image.shape[1] * scale)
@@ -146,7 +154,9 @@ def resize_image_to_width(image, width):
     - image -- The image to resize.
     - scale -- The scale value between 0 and 1.
 
-    Returns: The resized image.
+    Returns
+    -------
+    The resized image.
     """
 
     height = int(width / image.shape[1] * image.shape[0])

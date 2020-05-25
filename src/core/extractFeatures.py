@@ -4,10 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from skimage.feature import local_binary_pattern
 
-from data.serializer import pickle_serialize
-from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
-from core.visualize import resize_image, resize_image_to_width
+from core.visualize import resize_image_to_width
 from core.equalization import equalize
 
 
@@ -28,7 +26,7 @@ def get_histogram(image):
     colors = ('blue', 'green', 'red')
     histograms = np.empty([3], dtype=tuple)
 
-    if(len(image.shape) == 3 and image.shape[2] == 3):
+    if len(image.shape) == 3 and image.shape[2] == 3:
         max = 0
         min = sys.maxsize
         for i, color in enumerate(colors):
@@ -51,7 +49,7 @@ def get_histogram(image):
         for i, color in enumerate(colors):
             histograms[i] = tuple([color, histograms[i]])
 
-    elif(len(image.shape) == 2):
+    elif len(image.shape) == 2:
         histogram = cv2.calcHist([image], [0], None, [256], [0, 256])
 
         v = histogram
@@ -69,11 +67,11 @@ def get_NxN_histograms(image, N=4):
     Parameters
     ----------
     - image -- Image to divide NxN blocks and calculate a histogram for each block.
+    - N -- NxN blocks to use to divide the image.
 
     Returns
     -------
-    - histograms -- Array with NxN histograms.
-    - N -- NxN blocks to use to divide the image.
+    Array with NxN histograms.
     """
     block_height = int(image.shape[0]/N)
     block_width = int(image.shape[1]/N)
@@ -190,4 +188,4 @@ def extract_features(image, corners, equalize_=False):
     block_histogram = get_NxN_histograms(painting)
     LBP_histogram = get_LBP_histogram(painting)
 
-    return (full_histogram, block_histogram, LBP_histogram)
+    return full_histogram, block_histogram, LBP_histogram

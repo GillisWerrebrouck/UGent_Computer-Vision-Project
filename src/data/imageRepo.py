@@ -1,6 +1,5 @@
 from datetime import datetime
 from bson.objectid import ObjectId
-import base64
 
 from data.connect import connect_mongodb_database
 from data.serializer import pickle_deserialize, pickle_serialize
@@ -12,12 +11,12 @@ db_connection = None
 
 def __ensure_connection_created():
     global db_connection
-    if db_connection == None:
-        db_connection = connect_mongodb_database(
-            'localhost', 27017, 'computervision', 'devuser', 'devpwd')
+    if db_connection is None:
+        db_connection = connect_mongodb_database('localhost', 27017, 'computervision', 'devuser', 'devpwd')
 
-        if (db_connection == None):
-            logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container is running.')
+        if db_connection is None:
+            logger.error('Could not obtain a connection to the database, please check if the MongoDB Docker container '
+                         'is running.')
             exit(-1)
 
 

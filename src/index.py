@@ -1,6 +1,4 @@
-import cv2
 import PySimpleGUI as sg
-from time import sleep
 from functools import partial
 
 from core.visualize import get_window
@@ -27,21 +25,13 @@ window = get_window('Tasks', layout)
 
 switcher = {
   'Run task 1': run_task_01,
-  'Run task 2 (dataset pictures)': run_task_02,
-  'Run task 2 (test pictures)': run_task_02,
-  'Run task 3 (uniqueness)': run_task_03_uniqueness,
-  'Run task 3 (dataset pictures)': run_task_03,
-  'Run task 3 (test pictures)': run_task_03,
+  'Run task 2 (dataset pictures)': partial(run_task_02, 'dataset_pictures_msk', True, True),
+  'Run task 2 (test pictures)': partial(run_task_02, 'test_pictures_msk', True, True),
+  'Run task 3 (uniqueness)': partial(run_task_03_uniqueness, True, True),
+  'Run task 3 (dataset pictures)': partial(run_task_03, 'dataset_pictures_msk', True, True),
+  'Run task 3 (test pictures)': partial(run_task_03, 'test_pictures_msk', True, True),
   'Save features (no task)': save_features,
   'Calibrate rooms (no task)': run_room_calibration
-}
-
-param_switcher = {
-  'Run task 2 (dataset pictures)': ('dataset_pictures_msk', True, True),
-  'Run task 2 (test pictures)': ('test_pictures_msk', True, True),
-  'Run task 3 (uniqueness)': (True, True),
-  'Run task 3 (dataset pictures)': ('dataset_pictures_msk', True, True),
-  'Run task 3 (test pictures)': ('test_pictures_msk', True, True),
 }
 
 # event loop of the main window
@@ -49,16 +39,12 @@ while True:
   event, values = window.Read()
 
   task = switcher.get(event)
-  params = param_switcher.get(event)
   if task is not None:
     window.close()
-    if params is not None:
-      task(*params)
-    else:
-      task()
+    task()
     break
 
-  if event == None:
+  if event is None:
     break
 
 window.close()

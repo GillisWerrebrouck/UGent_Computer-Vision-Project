@@ -48,7 +48,7 @@ def run_room_calibration():
       new_count = probability_per_room[room][0] + 1
       new_avg_probability = ((probability_per_room[room][0] * probability_per_room[room][1]) + probability) / new_count
       probability_per_room[room] = (new_count, new_avg_probability)
-      
+
       logger.info("room: " + room + ", probability: " + str(probability))
 
   for room in probability_per_room:

@@ -1,4 +1,3 @@
-from time import time
 from lxml import etree
 from lxml.cssselect import CSSSelector
 

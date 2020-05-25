@@ -4,10 +4,8 @@ import time
 
 from core.logger import get_root_logger
 from data.imageRepo import get_all_images
-from core.visualize import show_image, resize_image
-from core.detection import detect_quadrilaterals
 from core.extractFeatures import extract_features
-from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
+from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format
 
 
 cdef object logger = get_root_logger()
@@ -26,9 +24,9 @@ cdef __fetch_images(force=False):
     # Yes Python, we're using the global variable
     global images
 
-    cdef list imagesFromDB
+    cdef list images_from_db
     if force or images is None:
-        imagesFromDB = get_all_images({
+        images_from_db = get_all_images({
             'full_histogram': 1,
             'block_histogram': 1,
             'LBP_histogram': 1,
@@ -39,7 +37,7 @@ cdef __fetch_images(force=False):
 
         images = []
 
-        for image in imagesFromDB:
+        for image in images_from_db:
             image['full_histogram'] = __convert_to_three_dims(image['full_histogram'])
             image['block_histogram'] = __convert_NxN_to_three_dims(image['block_histogram'])
 
@@ -59,7 +57,9 @@ cdef __convert_to_three_dims(histogram):
     ----------
     - histogram -- The histogram to convert.
 
-    Returns: The converted histogram.
+    Returns
+    -------
+    The converted histogram.
     """
     cdef list result = []
 
@@ -78,7 +78,9 @@ cdef __convert_NxN_to_three_dims(histogram):
     ----------
     - histogram -- The NxN block histograms to convert.
 
-    Returns: The converted histograms.
+    Returns
+    -------
+    The converted histograms.
     """
     for row in range(0, len(histogram)):
         for col in range(0, len(histogram[row])):
@@ -101,8 +103,8 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
     - quadrilaterals -- The detected paintings in the image.
     - threshold -- The probability threshold to reach before considering if it is a valid match. Matches with a probability below this threshold are ignored.
 
-    Returns:
-    --------
+    Returns
+    -------
     An array of sorted arrays of probabilities in descending probability order,
     each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
@@ -157,7 +159,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
             LBP_histogram_score = cv2.compareHist(np.array(LBP_histogram, dtype=np.float32), np.array(compare_LBP_histogram, dtype=np.float32), cv2.HISTCMP_CORREL)
 
             combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight + LBP_histogram_score * LBP_histogram_weight) / total_weight
-            if(threshold <= combined_score):
+            if threshold <= combined_score:
                 quad_scores.append(tuple([combined_score, image['filename'], image['room']]))
 
         # sort the array of probabilities in descending probability order

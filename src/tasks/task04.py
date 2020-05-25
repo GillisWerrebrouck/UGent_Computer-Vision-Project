@@ -5,20 +5,18 @@ import cv2
 import multiprocessing
 import base64
 import webview
-from functools import partial
-from contextlib import suppress
 
 from core.logger import get_root_logger
 from core.video import VideoLoop
-from core.visualize import show_image, resize_image, draw_quadrilaterals_opencv
+from core.visualize import resize_image, draw_quadrilaterals_opencv
 from core.detection import detect_quadrilaterals
 from core.hiddenMarkov import HiddenMarkov
 from core.prediction import predict_room, prepare_prediction
 from core.floorplan import Floorplan
 from core.gracefullKiller import GracefulKiller
-from core.transitions import transitions
 
 logger = get_root_logger()
+
 
 def load_html(window, input_pipe):
     hm = HiddenMarkov(min_observations=10)

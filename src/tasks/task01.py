@@ -10,10 +10,9 @@ from core.logger import get_root_logger
 from core.visualize import get_window, resize_image, draw_contour, draw_quadrilaterals, remove_quadrilateral_figures
 from core.detection import detect_contours, pop_contour, pop_contour_with_id
 from core.extractFeatures import extract_features
-from core.shape import Point, Rect, Quadrilateral, detect_dragging_quadrilateral
+from core.shape import Point, Rect, detect_dragging_quadrilateral
 from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format
 from data.imageRepo import create_image
-from data.serializer import pickle_serialize
 
 logger = get_root_logger()
 

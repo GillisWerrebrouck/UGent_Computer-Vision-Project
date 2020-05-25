@@ -27,61 +27,61 @@ def convert_corners_to_uniform_format(corners, width, height):
 
 
 def sort_corners(corners):
-    A, B, C, D = sorted(corners, key = lambda x: (x[1], x[0]))
+    a, b, c, d = sorted(corners, key=lambda x: (x[1], x[0]))
 
-    if A[0] > B[0]:
-        tmp = B
-        B = A
-        A = tmp
+    if a[0] > b[0]:
+        tmp = b
+        b = a
+        a = tmp
 
-    if C[0] < D[0]:
-        tmp = C
-        C = D
-        D = tmp
+    if c[0] < d[0]:
+        tmp = c
+        c = d
+        d = tmp
 
-    return [A, B, C, D]
+    return [a, b, c, d]
 
 
 def __calculate_points_for_rect(x, y, w, h):
-    points = []
-    points.append([x, y])
-    points.append([x + w, y])
-    points.append([x + w, y + h])
-    points.append([x, y+h])
-    return np.array(points, np.int32)
+    return np.array([
+        [x, y],
+        [x + w, y],
+        [x + w, y + h],
+        [x, y + h]
+    ], np.int32)
 
 
 def __reformatPoints(points, width, height):
-    newPoints = []
+    new_points = []
     for point in points:
-        newPoints.append([int(point[0] * height), int(point[1] * width)])
-    return np.array(newPoints, np.int32)
+        new_points.append([int(point[0] * height), int(point[1] * width)])
+    return np.array(new_points, np.int32)
 
 
 def cut_painting(original_image, corners):
-  """
-  Cut the painting from the given image.
+    """
+    Cut the painting from the given image.
 
-  Parameters
-  ----------
-  - image -- A full color image to extract the painting from.
-  - corners -- The corners of the painting.
-  - uniform -- Boolean indicating whether the corners are uniform for the width or height.
+    Parameters
+    ----------
+    - image -- A full color image to extract the painting from.
+    - corners -- The corners of the painting.
+    - uniform -- Boolean indicating whether the corners are uniform for the width or height.
 
-  Returns
-  -------
-  The cut painting.
-  """
-  image = original_image.copy()
-  width, height = image.shape[:2]
-  points = np.array(corners, np.float32)
-  points = __reformatPoints(points, width, height)
-  points.reshape((-1, 1, 2))
-  x, y, w, h = cv2.boundingRect(points)
-  rectPoints = __calculate_points_for_rect(x, y, w, h)
+    Returns
+    -------
+    The cut painting.
+    """
+    image = original_image.copy()
+    width, height = image.shape[:2]
+    points = np.array(corners, np.float32)
+    points = __reformatPoints(points, width, height)
+    points.reshape((-1, 1, 2))
+    x, y, w, h = cv2.boundingRect(points)
+    rect_points = __calculate_points_for_rect(x, y, w, h)
 
-  transformMatrix = cv2.getPerspectiveTransform(
-      np.float32(points), np.float32(rectPoints))
+    transform_matrix = cv2.getPerspectiveTransform(
+      np.float32(points), np.float32(rect_points))
 
-  img_warped = cv2.warpPerspective(image, transformMatrix, (height, width))
-  return img_warped[y:y + h, x:x + w]
+    img_warped = cv2.warpPerspective(image, transform_matrix, (height, width))
+    return img_warped[y:y + h, x:x + w]
