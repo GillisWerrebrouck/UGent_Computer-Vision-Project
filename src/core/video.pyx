@@ -44,7 +44,7 @@ cdef class VideoLoop:
 
         if video is None:
             # first loop through the smartphone videos
-            self.videos = sorted(glob('./datasets/videos/smartphone/*.mp4'))
+            self.videos = sorted(glob('./datasets/videos/smartphone/MSK_08.mp4'))
 
             # then the gopro videos
             self.videos.append(sorted(glob('./datasets/videos/gopro/*.mp4')))
