@@ -6,6 +6,7 @@ import multiprocessing
 import base64
 import webview
 from functools import partial
+from contextlib import suppress
 
 from core.logger import get_root_logger
 from core.video import VideoLoop
@@ -26,7 +27,10 @@ def load_html(window, input_pipe):
 
     while input_pipe.readable:
         if html is not None:
-            window.load_html(html.decode())
+            try:
+                window.load_html(html.decode())
+            except KeyError:
+                exit(0)
 
         quadriliterals, frame, video_file = input_pipe.recv()
         chances = predict_room(frame, quadriliterals, 0.6)
@@ -58,7 +62,7 @@ def on_frame(output_pipe, frame, video_file):
     if output_pipe.writable:
         output_pipe.send((quadriliterals, frame, video_file))
     else:
-        exit(-1)
+        exit(0)
 
 
 def start_video_loop(frames_queue):
