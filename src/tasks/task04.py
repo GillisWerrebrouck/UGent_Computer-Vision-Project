@@ -66,7 +66,8 @@ def on_frame(output_pipe, frame, video_file):
 
 
 def start_video_loop(frames_queue):
-    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=10)
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=10,
+    video_file="./datasets/videos/smartphone/MSK_01.mp4")
     video_loop.start()
 
 
@@ -92,8 +93,4 @@ def run_task_04():
     videoloop = multiprocessing.Process(target=start_video_loop, args=(frames_queue,))
     floorplan_viewer = multiprocessing.Process(target=show_floorplan, args=(parent_pipe,))
 
-    videoloop.start()
-    GracefulKiller([detection, floorplan_viewer])
-
-    if videoloop.is_alive():
-        videoloop.kill()
+    GracefulKiller([videoloop, detection, floorplan_viewer])
