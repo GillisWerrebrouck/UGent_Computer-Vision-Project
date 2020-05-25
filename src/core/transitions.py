@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 indices = {
     '1': 0,
     '2': 1,
@@ -83,8 +85,11 @@ neighbour_list = {
     'V': ['19', 'S', 'V', '12', 'L']
 }
 
+# defaultdict(int) gives 0 as standard when the key is not present
+# this is what we want! This way we don't need to add every missing
+# room with 0 as a chance
 transitions = {
-    'ENTRANCE': {}
+    'ENTRANCE': defaultdict(int)
 }
 
 DECREASE_FACTOR = 2
@@ -94,7 +99,7 @@ for room in entrance:
 
 for room in neighbour_list.keys():
     queue = list([(room, 1, 0)])
-    neighbours = {}
+    neighbours = defaultdict(int)
 
     # add the immediate neighbours with the same chance
     for immediate_neighbour in neighbour_list[room]:
@@ -116,10 +121,5 @@ for room in neighbour_list.keys():
             for decendant in neighbour_list[neighbour]:
                 if decendant not in neighbours:
                     queue.append((decendant, chance / DECREASE_FACTOR, level))
-
-    # fill any missing rooms with chance of 0 for convenience
-    for missing_room in entrance:
-        if missing_room not in neighbours:
-            neighbours[missing_room] = 0
 
     transitions[room] = neighbours

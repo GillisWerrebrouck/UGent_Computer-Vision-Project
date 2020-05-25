@@ -112,7 +112,8 @@ cdef class HiddenMarkov:
         logger.info('Observed room {}'.format(observation))
 
         self._nr_of_samples += 1
-        cdef dict possible_rooms = transitions[self._current_room]
+        # object because it's a default dict
+        cdef object possible_rooms = transitions[self._current_room]
 
         if observation in possible_rooms and possible_rooms[observation] == 0:
             observation = self._current_room
@@ -216,7 +217,8 @@ cdef class HiddenMarkov:
         An array of chances per room, indexed by indices stored in the
         dictionary in the transitions module.
         """
-        cdef dict possible_rooms = transitions[self._current_room]
+        # object because it's a default dict
+        cdef object possible_rooms = transitions[self._current_room]
 
         # delete the filename
         quadrilaterals = np.delete(quadrilaterals, 1, 1)
@@ -242,6 +244,7 @@ cdef class HiddenMarkov:
             room = str(room_np_str)
             if room not in grouped_chances:
                 grouped_chances[room] = np.array([], dtype=np.float64)
+
             grouped_chances[room] = np.append(grouped_chances[room], float(chance))
 
         # calculate an aggregated chance per room
