@@ -238,7 +238,7 @@ cdef class HiddenMarkov:
 
         # add the existing chances if possible from within current room
         for room, chance in self._counters.iteritems():
-            if room in possible_rooms and possible_rooms[room] > 0:
+            if room in possible_rooms:
                 quadrilaterals = np.append(quadrilaterals, [chance, room])
 
         # reshape because numpy flattens when not asked for
@@ -270,7 +270,7 @@ cdef class HiddenMarkov:
         for room in self._counters.keys():
             index = indices[room]
 
-            if room in possible_rooms and possible_rooms[room] > 0:
+            if room in possible_rooms:
                 total += chances[index]
             else:
                 chances[index] = 0
