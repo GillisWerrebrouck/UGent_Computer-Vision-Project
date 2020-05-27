@@ -12,6 +12,7 @@
     "preinstall": "node -e 'throw new Error(\"This is not an npm-package: do not run install!\")'",
     "start-mongo": "docker-compose up --build --force-recreate -d",
     "stop-mongo": "docker-compose down",
-    "start": "cd src && python index.py"
+    "start": "cd src && python index.py",
+    "task4": "cd src && python task04.py"
   }
 }

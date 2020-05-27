@@ -9,3 +9,4 @@ cssselect==1.1.0
 matplotlib==3.2.1
 Cython==0.29.17
 pandas==1.0.3
+scikit-image==0.17.2

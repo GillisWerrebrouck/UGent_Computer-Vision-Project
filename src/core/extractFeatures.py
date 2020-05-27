@@ -2,11 +2,12 @@ import cv2
 import sys
 import numpy as np
 from matplotlib import pyplot as plt
+from skimage.feature import local_binary_pattern
 
-from data.serializer import pickle_serialize
-from data.imageRepo import get_paintings_for_image, update_by_id
 from core.cornerHelpers import cut_painting
+from core.visualize import resize_image_to_width
 from core.equalization import equalize
+
 
 def get_histogram(image):
     """
@@ -25,7 +26,7 @@ def get_histogram(image):
     colors = ('blue', 'green', 'red')
     histograms = np.empty([3], dtype=tuple)
 
-    if(len(image.shape) == 3 and image.shape[2] == 3):
+    if len(image.shape) == 3 and image.shape[2] == 3:
         max = 0
         min = sys.maxsize
         for i, color in enumerate(colors):
@@ -48,7 +49,7 @@ def get_histogram(image):
         for i, color in enumerate(colors):
             histograms[i] = tuple([color, histograms[i]])
 
-    elif(len(image.shape) == 2):
+    elif len(image.shape) == 2:
         histogram = cv2.calcHist([image], [0], None, [256], [0, 256])
 
         v = histogram
@@ -66,11 +67,11 @@ def get_NxN_histograms(image, N=4):
     Parameters
     ----------
     - image -- Image to divide NxN blocks and calculate a histogram for each block.
+    - N -- NxN blocks to use to divide the image.
 
     Returns
     -------
-    - histograms -- Array with NxN histograms.
-    - N -- NxN blocks to use to divide the image.
+    Array with NxN histograms.
     """
     block_height = int(image.shape[0]/N)
     block_width = int(image.shape[1]/N)
@@ -86,6 +87,33 @@ def get_NxN_histograms(image, N=4):
             histograms[row_num][col_num] = get_histogram(block)
 
     return histograms
+
+
+def get_LBP_histogram(image):
+    """
+    Get LBP histogram from an image.
+
+    Parameters
+    ----------
+    - image -- Color image to get histogram from.
+
+    Returns
+    -------
+    - histograms -- Array with 1 histogram.
+    """
+    radius = 4
+    no_points = 8 * radius
+    eps = 1e-7
+
+    image = resize_image_to_width(image, 500)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    lbp = local_binary_pattern(gray, no_points, radius, method='uniform')
+    (hist, _) = np.histogram(lbp.ravel(), bins=np.arange(0, no_points + 3), range=(0, no_points + 2))
+    hist = hist.astype("float")
+    hist /= (hist.sum() + eps)
+
+    return hist
 
 
 def __plot_histogram(histograms):
@@ -135,7 +163,7 @@ def __plot_NxN_histogram(histograms):
     plt.show()
 
 
-def extract_features(image, corners, equalize_=True):
+def extract_features(image, corners, equalize_=False):
     """
     Extract fancy features from the given image.
 
@@ -158,5 +186,6 @@ def extract_features(image, corners, equalize_=True):
     # Extract the two types of histograms for the cut painting
     full_histogram = get_histogram(painting)
     block_histogram = get_NxN_histograms(painting)
+    LBP_histogram = get_LBP_histogram(painting)
 
-    return (full_histogram, block_histogram)
+    return full_histogram, block_histogram, LBP_histogram

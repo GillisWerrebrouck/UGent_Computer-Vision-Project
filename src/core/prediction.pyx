@@ -4,11 +4,9 @@ import time
 
 from core.logger import get_root_logger
 from data.imageRepo import get_all_images
-from core.visualize import show_image, resize_image
-from core.detection import detect_quadrilaterals
-from core.extractFeatures import get_histogram, get_NxN_histograms
-from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format, cut_painting
-from core.transitions import transitions
+from core.extractFeatures import extract_features
+from core.cornerHelpers import sort_corners, convert_corners_to_uniform_format
+
 
 cdef object logger = get_root_logger()
 cdef list images = None
@@ -26,11 +24,12 @@ cdef __fetch_images(force=False):
     # Yes Python, we're using the global variable
     global images
 
-    cdef list imagesFromDB
+    cdef list images_from_db
     if force or images is None:
-        imagesFromDB = get_all_images({
+        images_from_db = get_all_images({
             'full_histogram': 1,
             'block_histogram': 1,
+            'LBP_histogram': 1,
             'filename': 1,
             'room': 1,
             'corners': 1
@@ -38,11 +37,16 @@ cdef __fetch_images(force=False):
 
         images = []
 
-        for image in imagesFromDB:
+        for image in images_from_db:
             image['full_histogram'] = __convert_to_three_dims(image['full_histogram'])
             image['block_histogram'] = __convert_NxN_to_three_dims(image['block_histogram'])
 
             images.append(image)
+
+
+cpdef prepare_prediction():
+    global images
+    __fetch_images()
 
 
 cdef __convert_to_three_dims(histogram):
@@ -53,7 +57,9 @@ cdef __convert_to_three_dims(histogram):
     ----------
     - histogram -- The histogram to convert.
 
-    Returns: The converted histogram.
+    Returns
+    -------
+    The converted histogram.
     """
     cdef list result = []
 
@@ -72,7 +78,9 @@ cdef __convert_NxN_to_three_dims(histogram):
     ----------
     - histogram -- The NxN block histograms to convert.
 
-    Returns: The converted histograms.
+    Returns
+    -------
+    The converted histograms.
     """
     for row in range(0, len(histogram)):
         for col in range(0, len(histogram[row])):
@@ -85,7 +93,7 @@ cdef sort_by_probability(tuple x):
     return x[0]
 
 
-cpdef list predict_room(object original_image, object quadrilaterals, float threshold=0.5, list possible_rooms=transitions['INKOM']):
+cpdef list predict_room(object original_image, object quadrilaterals, float threshold=0.5):
     """
     Predict the room of the given (full color!) image.
 
@@ -94,15 +102,14 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
     - original_image -- The image to predict.
     - quadrilaterals -- The detected paintings in the image.
     - threshold -- The probability threshold to reach before considering if it is a valid match. Matches with a probability below this threshold are ignored.
-    - possible_rooms -- The rooms that are possible at this stage of the prediction.
 
-    Returns:
-    --------
+    Returns
+    -------
     An array of sorted arrays of probabilities in descending probability order,
     each sorted array in the array represents all probablities for a quadrilateral/painting in the image.
     """
 
-    cpdef float t1 = time.time()
+    cpdef double t1 = time.time()
 
     # Yes Python, we're using the global variable
     global images
@@ -113,7 +120,8 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
 
     cpdef int full_histogram_weight = 1
     cpdef int block_histogram_weight = 8
-    cpdef int total_weight = full_histogram_weight + block_histogram_weight
+    cpdef int LBP_histogram_weight = 6
+    cpdef int total_weight = full_histogram_weight + block_histogram_weight + LBP_histogram_weight
 
     cpdef list all_scores = []
 
@@ -129,9 +137,8 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         quad = quad.reshape(4,2)
         quad = sort_corners(convert_corners_to_uniform_format(quad, width, height))
 
-        painting = cut_painting(original_image, quad)
-        src_full_histogram = __convert_to_three_dims(get_histogram(painting))
-        src_block_histogram = get_NxN_histograms(painting)
+        src_full_histogram, src_block_histogram, LBP_histogram = extract_features(original_image, quad)
+        src_full_histogram = __convert_to_three_dims(src_full_histogram)
         src_block_histogram = __convert_NxN_to_three_dims(src_block_histogram)
 
         quad_scores = []
@@ -139,6 +146,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
         for image in images:
             compare_full_histogram = image['full_histogram']
             compare_block_histogram = image['block_histogram']
+            compare_LBP_histogram = image['LBP_histogram']
 
             full_histogram_score = cv2.compareHist(src_full_histogram, compare_full_histogram, cv2.HISTCMP_CORREL)
 
@@ -148,15 +156,17 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
                     block_histogram_score += cv2.compareHist(src_block_histogram[row][col], compare_block_histogram[row][col], cv2.HISTCMP_CORREL)
             block_histogram_score /= len(src_block_histogram)*len(src_block_histogram)
 
-            combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight) / total_weight
-            if(threshold <= combined_score):
+            LBP_histogram_score = cv2.compareHist(np.array(LBP_histogram, dtype=np.float32), np.array(compare_LBP_histogram, dtype=np.float32), cv2.HISTCMP_CORREL)
+
+            combined_score = (full_histogram_score * full_histogram_weight + block_histogram_score * block_histogram_weight + LBP_histogram_score * LBP_histogram_weight) / total_weight
+            if threshold <= combined_score:
                 quad_scores.append(tuple([combined_score, image['filename'], image['room']]))
 
         # sort the array of probabilities in descending probability order
         quad_scores = sorted(quad_scores, key=sort_by_probability, reverse=True)
         all_scores.append(quad_scores)
 
-    cpdef float t2 = time.time()
+    cpdef double t2 = time.time()
     logger.info("room prediction time: {}".format(t2-t1))
 
     return all_scores

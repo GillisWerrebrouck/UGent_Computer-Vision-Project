@@ -3,9 +3,10 @@ from time import sleep
 
 from core.logger import get_root_logger
 
+
 class GracefulKiller:
 
-    def __init__(self, processes_to_watch = []):
+    def __init__(self, processes_to_watch=[]):
         """
         Create a watch for sudden exits of the given processes. This will kill
         all other process in the list as well as the parent process.
@@ -26,7 +27,6 @@ class GracefulKiller:
         # start the child processes
         self.start_processes()
 
-
     def start_processes(self):
         try:
             for process in self._processes:
@@ -40,11 +40,10 @@ class GracefulKiller:
                         self._logger.info(f'Process with PID {process.pid} died, killing the others')
                         self.exit_gracefully(signal.SIGTERM, None)
 
-                sleep(0.5)
+                sleep(2)
         except Exception as err:
             self._logger.error(err)
             self.exit_gracefully(signal.SIGTERM, None)
-
 
     def exit_gracefully(self, signum, frame):
         """

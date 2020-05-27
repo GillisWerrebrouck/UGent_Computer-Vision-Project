@@ -1,10 +1,11 @@
-import os, errno
+import os
+import errno
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def createFolders(path):
+def create_folders(path):
     """
     Creates all folders in the given path if they don't exist yet.
 
@@ -20,7 +21,7 @@ def createFolders(path):
                 raise
 
 
-def createFile(filename):
+def create_file(filename):
     """
     Creates a file with the name and concatenates the current datetime to it.
 
@@ -28,9 +29,11 @@ def createFile(filename):
     ----------
     - filename -- The filename for the file to create.
 
-    Returns: The filename of the created file.
+    Returns
+    -------
+    The filename of the created file.
     """
-    createFolders(filename)
+    create_folders(filename)
 
     now = datetime.now()
     filename += '_' + now.strftime("%m-%d-%Y_%H-%M-%S") + '.txt'
@@ -40,7 +43,7 @@ def createFile(filename):
     return filename
 
 
-def appendFile(filename, line):
+def append_file(filename, line):
     """
     Append text to an existing file.
 
@@ -54,7 +57,7 @@ def appendFile(filename, line):
     file.close()
 
 
-def savePlot(data, title, filename, style='seaborn-muted'):
+def save_plot(data, title, filename, style='seaborn-muted'):
     """
     Saves the plot as png.
 
