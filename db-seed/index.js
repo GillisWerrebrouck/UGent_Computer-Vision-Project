@@ -25,6 +25,7 @@ function formatImages(images) {
             createdAt,
             full_histogram,
             block_histogram,
+            LBP_histogram,
         } = image;
 
         return {
@@ -32,7 +33,8 @@ function formatImages(images) {
             _id: new ObjectId(_id),
             createdAt: new Date(createdAt),
             full_histogram: Buffer.from(full_histogram, 'base64'),
-            block_histogram: Buffer.from(block_histogram, 'base64')
+            block_histogram: Buffer.from(block_histogram, 'base64'),
+            LBP_histogram: Buffer.from(LBP_histogram, 'base64'),
         };
     });
 }

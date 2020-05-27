@@ -19,7 +19,7 @@ logger = get_root_logger()
 
 
 def load_html(window, input_pipe):
-    hm = HiddenMarkov(min_observations=12)
+    hm = HiddenMarkov(min_observations=5)
     fp = Floorplan('floorplan.svg', '')
     if fp is not None:
         html = fp.tostring()

@@ -37,7 +37,7 @@ cdef class HiddenMarkov:
         # we're going to keep the last `min_observations` in a circular array
         self._min_observations = min_observations
         self._circular_index = 0
-        self._circular_buffer = []
+        self._circular_buffer = [None] * min_observations
         self._nr_of_samples = 0
         self._initialized = False
         self.__load_room_factors()
@@ -123,15 +123,22 @@ cdef class HiddenMarkov:
         if observation in possible_rooms and possible_rooms[observation] == 0:
             observation = self._current_room
 
-        if self._initialized:
-            self._current_room = observation
-        elif len(self._circular_buffer) < self._min_observations:
-            self._circular_buffer.append(observation)
-        else:
+        self._circular_buffer[self._circular_index] = observation
+        self._circular_index = (self._circular_index + 1) % self._min_observations
+
+        if self._nr_of_samples >= self._min_observations:
             self._current_room = self.__get_most_common_room()
-            self._initialized = True
+
+        # if self._initialized:
+        #     self._current_room = observation
+        # elif len(self._circular_buffer) < self._min_observations:
+        #     self._circular_buffer.append(observation)
+        # else:
+        #     self._current_room = self.__get_most_common_room()
+        #     self._initialized = True
 
         logger.debug(self._counters)
+        logger.debug(self._circular_buffer)
 
         return self._counters, self._current_room
 
@@ -155,10 +162,11 @@ cdef class HiddenMarkov:
         cdef dict freq_list = {}
 
         for room in self._circular_buffer:
-            if room not in freq_list:
-                freq_list[room] = 0
+            if room is not None:
+                if room not in freq_list:
+                    freq_list[room] = 0
 
-            freq_list[room] += 1
+                freq_list[room] += 1
 
         for room, count in freq_list.iteritems():
             if room != 'ENTRANCE':
