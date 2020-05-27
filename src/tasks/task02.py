@@ -47,9 +47,7 @@ def run_task_02(dataset_folder='dataset_pictures_msk', show=True, save=True):
         ground_truth_paintings = get_paintings_for_image(basename(f))
         detected_paintings = detect_quadrilaterals(image)
 
-        (image, paintings_found, false_negatives, false_positives, average_accuracy) = calculate_accuracy_metrics(image,
-                                                                                                                  ground_truth_paintings,
-                                                                                                                  detected_paintings)
+        (image, paintings_found, false_negatives, false_positives, average_accuracy) = calculate_accuracy_metrics(image, ground_truth_paintings, detected_paintings)
 
         if dataset_folder == 'dataset_pictures_msk':
             if save:

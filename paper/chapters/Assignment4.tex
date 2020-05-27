@@ -4,21 +4,21 @@
 \subsection{Hidden Markov model}
 \label{subsec:hidden-markov}
 
-In order to establish an intelligent localization of the user by eliminating teleportations, a model inspired by the Hidden Markov model (\cite{eddy1996hidden}), was designed. The reason why no pure Hidden Markov can be used is because the input and output of the model is identical. Another reason is that there's no way to determine the initial room of any given video without having a number of observations, which are rooms in this case. Therefor an alternative Hidden Markov model was designed. \cite{jurafsky2014speech}
+In order to establish an intelligent localization of the user by eliminating teleportations, a model inspired by the Hidden Markov model (\cite{eddy1996hidden}), was designed. The reason why no pure Hidden Markov can be used is that the input and output of the model is identical. Another reason is that there's no way to determine the initial room of any given video without having a number of observations, which are rooms in this case. Therefore an alternative Hidden Markov model was designed. \cite{jurafsky2014speech}
 
 \subsection{Alternative Hidden Markov model}
 \label{subsec:alternative-hidden-markov}
 
-The alternative model basicly keeps a history of $n$ observations and predicts the most common observation as the current room. Initially the model doesn't know the current room and therefor doesn't emit any prediction until enough observations are obtained.
+The alternative model basically keeps a history of $n$ observations and predicts the most common observation as the current room. Initially, the model doesn't know the current room and therefore doesn't emit any prediction until enough observations are obtained.
 
-The model takes a list of probabilities per painting as an input which could possibly contain different probabilities for the same room. However the model needs one probability per room. So \formularef{eq:combine-chances} (\cite{genest1986combining}) is used to combine all probabilities for a given room into one probability. In this formula, $P(X = R)$ stands for the chance that the user is in room $R$, $P_{i}(X = R)$ stands for the $i^{th}$ chance, given by the prediction algorithm, that the user is in room $R$ and $P_{i}(X \ne R)$ is logically the chance that the user is not in room $R$.
+The model takes a list of probabilities per painting as an input which could possibly contain different probabilities for the same room. However, the model needs one probability per room. So \formularef{eq:combine-chances} (\cite{genest1986combining}) is used to combine all probabilities for a given room into one probability. In this formula, $P(X = R)$ stands for the chance that the user is in room $R$, $P_{i}(X = R)$ stands for the $i^{th}$ chance, given by the prediction algorithm, that the user is in room $R$ and $P_{i}(X \ne R)$ is logically the chance that the user is not in room $R$.
 
 \begin{equation}
     \label{eq:combine-chances}
     P(X = R) = \frac{\prod_{i} P_{test_i}(X = R)}{\prod_{i} P_{test_i}(X = R) + \prod_{i} P_{test_i}(X \ne R)}
 \end{equation}
 
-Although this formula can combine probabilities, it doesn't take the current room into account. Therefor a weight is added to each of the chances. This weight is equal to 1 when the room is accessible from within the current room and can be choosen for rooms that aren't accessible, the default is 0.5. This results in \formularef{eq:combine-chances-next-level}. If chances per room, e.g. from previous observations, are already known, then these are also taken into account in this calculation.
+Although this formula can combine probabilities, it doesn't take the current room into account. Therefore a weight is added to each of the chances. This weight is equal to 1 when the room is accessible from within the current room and can be chosen for rooms that aren't accessible, the default is 0.5. This results in \formularef{eq:combine-chances-next-level}. If chances per room, e.g. from previous observations, are already known, then these are also taken into account in this calculation.
 
 \begin{equation}
     \label{eq:combine-chances-next-level}
@@ -27,4 +27,4 @@ Although this formula can combine probabilities, it doesn't take the current roo
 
 By calculating the result of this formula per room, a list of probabilities per room is obtained. This list is then used to find the room with the highest probability which will be the observation for this input.
 
-If the current observation is accessible from the current room, it is added to the history of observations. If this is not the case, the current room is added the history. Now, the most common room in the history is taken as the prediction for this input.
+If the current observation is accessible from the current room, it is added to the history of observations. If this is not the case, the current room is added to the history. Now, the most common room in the history is taken as the prediction for this input.
