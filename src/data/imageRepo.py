@@ -47,6 +47,7 @@ def create_image(image):
     # Serialize the histograms before saving to MongoDB, binary is more efficiënt than huge number arrays
     image['full_histogram'] = pickle_serialize(image['full_histogram'])
     image['block_histogram'] = pickle_serialize(image['block_histogram'])
+    image['BLP_histogram'] = pickle_serialize(image['BLP_histogram'])
 
     # Save the image to the database
     db_connection['images'].insert(image)
