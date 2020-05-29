@@ -169,8 +169,8 @@ cdef class HiddenMarkov:
                 freq_list[room] += 1
 
         for room, count in freq_list.iteritems():
-            if room != 'ENTRANCE':
-                count /= self._paintings_per_room[room]
+            # if room != 'ENTRANCE':
+            #     count /= self._paintings_per_room[room]
             # strict greater count OR
             # equal count but strict greater chance
             if count > max_count or (count == max_count and self._counters[room] > self._counters[max_room]):
@@ -196,6 +196,7 @@ cdef class HiddenMarkov:
         The predicted room.
         """
         # first get the updated chances for each room
+        cdef object possible_rooms = transitions[self._current_room]
         cdef object chances = self.__combine_chances(quadrilaterals)
 
         cdef int index
@@ -208,7 +209,7 @@ cdef class HiddenMarkov:
             chance = chances[index]
             self._counters[room] = chance
 
-            if chance > max_chance:
+            if room in possible_rooms and chance > max_chance:
                 max_room = room
                 max_chance = chance
 

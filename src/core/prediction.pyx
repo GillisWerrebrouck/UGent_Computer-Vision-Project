@@ -120,7 +120,7 @@ cpdef list predict_room(object original_image, object quadrilaterals, float thre
 
     cpdef int full_histogram_weight = 1
     cpdef int block_histogram_weight = 8
-    cpdef int LBP_histogram_weight = 6
+    cpdef int LBP_histogram_weight = 0
     cpdef int total_weight = full_histogram_weight + block_histogram_weight + LBP_histogram_weight
 
     cpdef list all_scores = []
