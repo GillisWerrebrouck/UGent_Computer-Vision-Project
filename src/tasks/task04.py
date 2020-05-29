@@ -66,7 +66,7 @@ def on_frame(output_pipe, frame, video_file):
 
 def start_video_loop(frames_queue):
     video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=20,
-    video_file="./datasets/videos/gopro/MSK_01.mp4")
+    video_file="./datasets/videos/smartphone/MSK_01.mp4")
     video_loop.start()
 
 
