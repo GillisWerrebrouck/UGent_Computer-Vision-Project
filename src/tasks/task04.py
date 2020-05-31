@@ -48,7 +48,7 @@ def show_floorplan(input_pipe):
 
 
 def on_frame(output_pipe, frame, video_file):
-    compression_factor = 0.4
+    compression_factor = 0.2
 
     frame_copy = resize_image(frame, compression_factor)
     quadriliterals = detect_quadrilaterals(frame_copy)
@@ -65,8 +65,8 @@ def on_frame(output_pipe, frame, video_file):
 
 
 def start_video_loop(frames_queue):
-    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=20,
-    video_file="./datasets/videos/smartphone/MSK_01.mp4")
+    video_loop = VideoLoop(buffer=frames_queue, nr_of_frames_to_skip=20, blur_threshold=10,
+    video_file="./datasets/videos/smartphone/MSK_08.mp4")
     video_loop.start()
 
 
@@ -86,7 +86,7 @@ def run_task_04():
 
     parent_pipe, child_pipe = multiprocessing.Pipe(duplex=False)
     manager = multiprocessing.Manager()
-    frames_queue = manager.Queue(180)
+    frames_queue = manager.Queue(30)
 
     detection = multiprocessing.Process(target=start_detection, args=(child_pipe,frames_queue))
     videoloop = multiprocessing.Process(target=start_video_loop, args=(frames_queue,))

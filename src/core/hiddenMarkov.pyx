@@ -111,7 +111,7 @@ cdef class HiddenMarkov:
 
         cdef str observation = self._current_room
 
-        if len(flattened):
+        if len(flattened) > 0:
             observation = self.__play_the_odds(flattened)
 
         logger.info('Observed room {}'.format(observation))
@@ -158,7 +158,7 @@ cdef class HiddenMarkov:
         The most common room in the history.
         """
         cdef int index, max_count = 0
-        cdef str max_room = 'ENTRANCE'
+        cdef str max_room = self._current_room
         cdef dict freq_list = {}
 
         for room in self._circular_buffer:
@@ -247,7 +247,7 @@ cdef class HiddenMarkov:
 
         # add the existing chances if possible from within current room
         for room, chance in self._counters.iteritems():
-            if room in possible_rooms:
+            if room in possible_rooms and chance > 0:
                 quadrilaterals = np.append(quadrilaterals, [chance, room])
 
         # reshape because numpy flattens when not asked for
@@ -280,6 +280,9 @@ cdef class HiddenMarkov:
             index = indices[room]
 
             if room in possible_rooms:
+                if chances[index] < 0.01:
+                    chances[index] = 0.01
+
                 total += chances[index]
             else:
                 chances[index] = 0
